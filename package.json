@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-iirose-media-request",
-  "description": "暂定",
+  "description": "蔷薇点视频/音频插件，还没做好",
   "version": "0.0.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -17,5 +17,14 @@
   ],
   "peerDependencies": {
     "koishi": "^4.14.5"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "http-proxy": "^1.18.1",
+    "playwright": "^1.38.1",
+    "puppeteer": "^21.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.3"
   }
 }
