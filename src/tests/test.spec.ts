@@ -12,7 +12,7 @@ test('test', async ({  }) => {
 });
   const page = await context.newPage();
 
-  await page.goto('https://www.example.com', { timeout: 70000 });
+  await page.goto('https://www.example.com', { timeout: 40000 });
   await page.waitForTimeout(15000);
 
   // await browser.close();

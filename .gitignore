@@ -2,12 +2,12 @@ lib
 dist
 
 node_modules
-tests
 npm-debug.log
 yarn-debug.log
 yarn-error.log
 tsconfig.tsbuildinfo
 
+*.spec.ts
 .eslintcache
 .DS_Store
 .idea
