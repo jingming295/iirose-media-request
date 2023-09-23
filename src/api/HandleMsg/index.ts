@@ -8,14 +8,21 @@ export function apply(ctx: Context) {
         const regex = /^\s*\.\s*http/i;
 
         if (regex.test(session.content)) {
-            const url = session.content.substring(1);
+            console.log(`成功进入`)
 
-            const mediaParsing = new MediaParsing()
-            const mediaurl = await mediaParsing.getVideos(url);
+            const url = session.content;
+            const indexOfDot = url.indexOf('.');
+            const originUrl = indexOfDot !== -1 ? url.substring(indexOfDot + 1) : url;
 
-            console.log(mediaurl)
-            if (mediaurl.length === 0) {
-                session.send(`<>该网址没有视频</>`);
+            const mediaParsing = new MediaParsing(originUrl)
+            // const testmediaParsing = new TestingMediaParsing(originUrl);
+            // console.log(await testmediaParsing.testopenBrowser());
+            
+            const mediaurl = await mediaParsing.openBrowser();
+
+            console.log('成功退出')
+            if (mediaurl === undefined) {
+                session.send(`<>没有闻到味儿</>`);
             } else {
                 session.send(`${mediaurl}`);
             }

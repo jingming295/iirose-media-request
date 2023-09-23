@@ -1,11 +1,33 @@
-import { chromium } from 'playwright';
+import  { Browser, BrowserContext, Page, firefox } from 'playwright';
 
+/**
+ * @description 
+ */
 export class MediaParsing {
 
-    async getVideos(url: string) {
-        const browser = await chromium.launch();
-        const context = await browser.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+    originUrl:string
+    browser:Browser
+    context:BrowserContext
+    page:Page
+
+
+    /**
+     * 
+     * @param url 原始网站的url
+     */
+    constructor(url:string){
+        this.originUrl = url
+    }
+    
+
+    /**
+     * @description 只需要开一个browser就好了
+     * @returns 
+     */
+    async openBrowser() {
+        this.browser = await firefox.launch();
+        this.context = await this.browser.newContext({
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
             viewport: { width: 1440, height: 768 },
             extraHTTPHeaders: {
               'Accept-Encoding': 'gzip, deflate, br',
@@ -13,84 +35,79 @@ export class MediaParsing {
               'X-Robots-Tag': 'noindex, nofollow'
             }
           });
+        this.page = await this.context.newPage();
+        const url = await this.getVideos();
+        if (this.browser.isConnected()){
+            await this.browser.close();
+        }
         
-        const page = await context.newPage();
-        
-        await page.goto(url, { timeout: 60000 });
-        
-        // 等待一些时间以确保所有资源加载完成
-        // await page.waitForTimeout(5000);
-        
-        const resourceUrls = await page.evaluate(() => {
-            const resources: string[] = [];
-            const elements = document.querySelectorAll('*');
+        return url
+    }
 
-            for (const element of elements) {
-                if (element instanceof HTMLIFrameElement) {
-                    const iframeSrc = element.src;
-                    if (iframeSrc && !iframeSrc.endsWith('.html')) {
-                        let src = urlparsing(iframeSrc);
-                        resources.push(src);
-                        break;
-                    }
-                } else if (element instanceof HTMLVideoElement && element.src) {
-                    resources.push(element.src);
-                } else if (element instanceof HTMLLinkElement && element.href) {
-                    // resources.push(element.href);
-                } else if (element instanceof HTMLScriptElement && element.src) {
-                    // resources.push(element.src);
-                } else if (element instanceof HTMLIFrameElement) {
-                
-                } else {
-                    // const url = (element as HTMLImageElement).src || (element as HTMLAnchorElement).href;
-                    // if (url && typeof url === 'string' && !url.endsWith('.js') && 
-                    // !url.endsWith('.css') && !url.endsWith('.html') && 
-                    // !url.endsWith('.png') && !url.includes('javascript') && 
-                    // !url.includes('javascript') && !url.startsWith('data:') && !url.endsWith('.xml') ) {
-                    //     resources.push(url);
-                    // }
-                }
-            }
-            
+    /**
+     * @description 主要处理url应该去哪里
+     * @returns 
+     */
+    async getVideos() {
 
-            return resources;
+        const resourceUrls = await this.getMediaUrl();
 
-            function urlparsing(url: string) {
-                const regex = /http.*http/g;
-                    const match = regex.exec(url);
-                    if (match) {
-                        const startIndex = match[0].lastIndexOf('http');
-                        const parsedUrl = decodeURIComponent(url.substring(startIndex));
-                        return parsedUrl;
-                    }
-                    return url;
-            }
-        });
-        
-        await browser.close();
+        console.log(resourceUrls)
 
-        return resourceUrls
+        let mediaUrl:string
+
+        if(resourceUrls.length === 1) return mediaUrl = resourceUrls[0]
+
+        return mediaUrl = resourceUrls[0]
 
         // return this.getMimeType(resourceUrls);
     }
 
-    async getMimeType(url: string []) {
-        const browser = await chromium.launch();
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        const type: string[] = [];
-        
-        await Promise.all(url.map(async (url) => {
-            const response = await page.goto(url);
-            const mimeType = response.headers()['content-type'];
-            type.push(`${url}: ${mimeType}`);
-        }));
-    
-        await browser.close();
-        return type;
+    /**
+     * @description 匹配以这些后缀结尾
+     * @param url 要被匹配的url
+     * @returns true | false
+     */
+    pairExtension(url:string) {
+        const videoExtensions = /\.(m3u8)$/i;
+        if (videoExtensions.test(url)) return true
+        return false
     }
-    
+
+    /**
+     * @description 尝试获取媒体的url
+     * @param page 
+     * @returns 
+     */
+    async getMediaUrl() {
+        const resourceUrls: string [] = []
+        
+        this.page.on('request', async request => {
+            const url = request.url();
+            // application/vnd.apple.mpegURL 
+
+                const response = await request.response();
+                if (response) { // 添加错误处理，确保 response 不是 null
+                    const mimeType = response.headers()['content-type'];
+                    if(
+                        mimeType === 'video/mp4' || mimeType === 'application/vnd.apple.mpegURL' || 
+                        mimeType === 'application/vnd.apple.mpegurl') {
+                        console.log('>>', request.method(), url, mimeType);
+                        if(resourceUrls.length >=3) await this.browser.close()
+                        else resourceUrls.push(url)
+                    }
+                    
+                } else {
+                    if (url.includes('m3u8')) resourceUrls.push(url)
+                    console.error('No response for:', url);
+                }
+            
+        });
+
+        await this.page.goto(this.originUrl);
+        await this.page.waitForTimeout(1000);
 
 
-    
+        return resourceUrls;
+    }
 }
