@@ -1,5 +1,6 @@
 lib
 dist
+/src/tests/
 
 node_modules
 npm-debug.log
