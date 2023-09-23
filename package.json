@@ -10,7 +10,8 @@
   ],
   "license": "MIT",
   "scripts": {
-    "update": "git add . && git commit -m \"更新\" && git push -u origin master",
+    "push": "git add . && git commit -m \"更新\" && git push -u origin master",
+    "pull": "git pull origin master && git merge origin/master && git push origin master",
     "gui": "npx playwright test --ui"
   },
   "keywords": [
