@@ -8,7 +8,11 @@ iirose点视频/音频插件，还没做好
 
 ### 使用方法:
 在iirose的任意房间打 “.视频网址”，点之前或者点之后有空格也可以。
-例子1：“.https://www.example.com”。
-例子2：“       .https://www.example.com” 
-例子3：“.       https://www.example.com”
-例子4：“        .       https://www.example.com”。
+
+例子1：`.https://www.example.com`
+
+例子2：`       .https://www.example.com` 
+
+例子3：`.       https://www.example.com`
+
+例子4：`       .       https://www.example.com`
