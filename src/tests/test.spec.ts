@@ -12,7 +12,7 @@ test('test', async ({  }) => {
 });
   const page = await context.newPage();
 
-  await page.goto('https://v.youku.com/v_show/id_XNjAzNzA5OTM0MA==.html?spm=a2hja.14919748_WEBGAME_JINGXUAN.drawer4.d_zj1_3&playMode=pugv&scm=20140719.manual.4471.video_XNjAzNzA5OTM0MA%3D%3D&playMode=pugv', { timeout: 50000 });
+  await page.goto('https://www.example.com', { timeout: 50000 });
   await page.waitForTimeout(15000);
 
   // await browser.close();

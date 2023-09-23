@@ -2,6 +2,7 @@ lib
 dist
 
 node_modules
+tests
 npm-debug.log
 yarn-debug.log
 yarn-error.log
