@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-iirose-media-request",
-  "description": "适用于IIROSE的@视频和@音频插件，他的原理和游览器和devtools类似，本插件需要用到firefox，也就是说他会，还没做好。如果有bug记得说",
+  "description": "适用于IIROSE的@视频和@音频插件，他的原理和游览器和devtools类似，本插件需要用到firefox，也就是说他会模拟firefox，然后获取资源，插件还没做好。如果有bug记得说",
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",
