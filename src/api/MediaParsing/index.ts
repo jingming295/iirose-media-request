@@ -10,7 +10,6 @@ export class MediaParsing {
     context:BrowserContext
     page:Page
 
-
     /**
      * 
      * @param url 原始网站的url
@@ -105,7 +104,7 @@ export class MediaParsing {
         });
 
         await this.page.goto(this.originUrl);
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(3000);
 
 
         return resourceUrls;
