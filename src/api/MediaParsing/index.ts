@@ -1,5 +1,5 @@
 import  { Browser, BrowserContext, Page, firefox } from 'playwright';
-
+import { CheckMimeType } from '../tools/checkMimeType'
 /**
  * @description 
  */
@@ -35,42 +35,28 @@ export class MediaParsing {
             }
           });
         this.page = await this.context.newPage();
-        const url = await this.getVideos();
-        if (this.browser.isConnected()){
-            await this.browser.close();
+        const MediaData = await this.getVideos();
+        try{
+            if (this.browser.isConnected()){
+                await this.browser.close();
+            }
+            return MediaData
+        }catch(error){
+            MediaData.error = error.message
+            return MediaData
         }
         
-        return url
+        
     }
 
     /**
      * @description 主要处理url应该去哪里
      * @returns 
      */
-    async getVideos() {
+    private async getVideos() {
 
-        const resourceUrls = await this.getMediaUrl();
-
-        console.log(resourceUrls)
-
-        let mediaUrl:string
-
-        if(resourceUrls.length === 1) return mediaUrl = resourceUrls[0]
-
-        return mediaUrl = resourceUrls[0]
-
-        // return this.getMimeType(resourceUrls);
-    }
-
-    /**
-     * @description 匹配以这些后缀结尾
-     * @param url 要被匹配的url
-     * @returns true | false
-     */
-    pairExtension(url:string) {
-        const videoExtensions = /\.(m3u8)$/i;
-        if (videoExtensions.test(url)) return true
-        return false
+        const MediaData = await this.getMedia();
+        return MediaData
     }
 
     /**
@@ -78,35 +64,71 @@ export class MediaParsing {
      * @param page 
      * @returns 
      */
-    async getMediaUrl() {
+    private async getMedia() {
         const resourceUrls: string [] = []
-        
+        let title:string;
+        const mediaData:MediaData = {
+            type: null,
+            name: null,
+            signer: null,
+            cover: null,
+            link: null,
+            url: null,
+            duration: null,
+            bitRate: null,
+            color: null,
+            error: null
+        }
+        try {
         this.page.on('request', async request => {
             const url = request.url();
-            // application/vnd.apple.mpegURL 
-
                 const response = await request.response();
                 if (response) { // 添加错误处理，确保 response 不是 null
+                    const checkMimeType = new CheckMimeType()
                     const mimeType = response.headers()['content-type'];
-                    if(
-                        mimeType === 'video/mp4' || mimeType === 'application/vnd.apple.mpegURL' || 
-                        mimeType === 'application/vnd.apple.mpegurl') {
+                    if(checkMimeType.isVideo(mimeType)) {
                         console.log('>>', request.method(), url, mimeType);
-                        if(resourceUrls.length >=3) await this.browser.close()
-                        else resourceUrls.push(url)
+                        title = await this.page.title();
+                        if(resourceUrls.length>=3) await this.browser.close()
+                        else resourceUrls.push(url); mediaData.type = 'video'
+                    } else if (checkMimeType.isMusic(mimeType)){
+                        console.log('>>', request.method(), url, mimeType);
+                        title = await this.page.title();
+                        if(resourceUrls.length>=3) await this.browser.close()
+                        else resourceUrls.push(url); mediaData.type = 'music'
                     }
                     
-                } else {
-                    if (url.includes('m3u8')) resourceUrls.push(url)
+                } else if (!response) {
+                    if (url.includes('m3u8')) {
+                        resourceUrls.push(url)
+                        title = await this.page.title();
+                        mediaData.link = resourceUrls[0]
+                        mediaData.url = resourceUrls[0]
+                    }
                     console.error('No response for:', url);
+
                 }
             
         });
 
-        await this.page.goto(this.originUrl);
-        await this.page.waitForTimeout(3000);
+        
+            await this.page.goto(this.originUrl);
+            await this.page.waitForTimeout(3000);
+        } catch(error) {
+            console.error('Error:', error.message);
+            mediaData.link = resourceUrls[0]
+            mediaData.url = resourceUrls[0]
+            mediaData.error = error.message
+            return mediaData
+        }
+
+        
+        mediaData.name = title
+        mediaData.link = resourceUrls[0]
+        mediaData.url = resourceUrls[0]
 
 
-        return resourceUrls;
+        return mediaData;
     }
+
 }
