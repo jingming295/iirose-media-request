@@ -2,7 +2,6 @@
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-iirose-media-request?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-iirose-media-request)
 
-![屏幕截图 2023-02-19 174657.png](attachment:f51e0538b0e4e5b028007b95c7fba117)
 
 ### 免责
 此插件仅供学习，原理和真实的游览器以及devtools类似，没有针对任何一家网站进行解密操作，用户的操作与扩展无关，请注意资源的权限和版权，请在下载插件后24小时内删除。
