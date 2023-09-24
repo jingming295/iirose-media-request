@@ -7,10 +7,10 @@
   </a>
   </a>
 
-<h3 align="center">koishi-plugin-adapter-iirose</h3>
+<h3 align="center">koishi-plugin-iirose-media-request</h3>
 
   <p align="center">
-    使koishi机器人平台支持[IIROSE-蔷薇花园](https://www.iirose.com)聊天平台
+    使koishi机器人能够在[IIROSE-蔷薇花园](https://www.iirose.com) 聊天平台@任何视频和歌曲
   </p>
 </div>
 
