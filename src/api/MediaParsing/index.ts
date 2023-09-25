@@ -5,6 +5,18 @@ import { ErrorHandle } from '../ErrorHandle';
  * @description 
  */
 export class MediaParsing {
+    mediaData:MediaData = {
+        type: null,
+        name: null,
+        signer: null,
+        cover: null,
+        link: null,
+        url: null,
+        duration: null,
+        bitRate: null,
+        color: null,
+        error: null
+    }
     errorHandle = new ErrorHandle()
     originUrl:string
     browser:Browser
@@ -25,7 +37,7 @@ export class MediaParsing {
      * @returns 
      */
     async openBrowser() {
-        let MediaData:MediaData
+        let mediaData = this.mediaData
         try{
             this.browser = await firefox.launch();
             this.context = await this.browser.newContext({
@@ -38,26 +50,40 @@ export class MediaParsing {
                 }
             });
             this.page = await this.context.newPage();
-            MediaData = await this.getVideos();
+            mediaData = await this.getVideos();
         
             if (this.browser.isConnected()){
                 await this.browser.close();
             }
-            return MediaData
+            return mediaData
         }catch(error){
-            MediaData.error = error.message
+            mediaData.error = error.message
             if (error.message.includes("Executable doesn't exist")) {
                 console.error('缺少浏览器错误:', error.message);
-                MediaData.error = await this.errorHandle.ErrorHandle(error.message)
+                mediaData.error = await this.errorHandle.ErrorHandle(error.message)
                 
             }
-            return MediaData
+            return mediaData
         }
         
         
     }
 
-    
+    returnMediaData() {
+        const mediaData:MediaData = {
+            type: null,
+            name: null,
+            signer: null,
+            cover: null,
+            link: null,
+            url: null,
+            duration: null,
+            bitRate: null,
+            color: null,
+            error: null
+        }
+        return mediaData
+    }
 
     /**
      * @description 主要处理url应该去哪里
@@ -77,18 +103,7 @@ export class MediaParsing {
     private async getMedia() {
         const resourceUrls: string [] = []
         let title:string;
-        const mediaData:MediaData = {
-            type: null,
-            name: null,
-            signer: null,
-            cover: null,
-            link: null,
-            url: null,
-            duration: null,
-            bitRate: null,
-            color: null,
-            error: null
-        }
+        const mediaData = this.returnMediaData()
         try {
         this.page.on('request', async request => {
             const url = request.url();

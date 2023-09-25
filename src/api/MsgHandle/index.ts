@@ -21,7 +21,7 @@ export function apply(ctx: Context) {
             const mediaData = await mediaParsing.openBrowser();
 
             console.log('成功退出')
-            if (mediaData.url === undefined) {
+            if (mediaData.url === null) {
                 if(mediaData.error!=null){
                     session.send(`错误：${mediaData.error}`);
                 }
