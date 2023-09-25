@@ -7,7 +7,7 @@ yarn-debug.log
 yarn-error.log
 tsconfig.tsbuildinfo
 
-*.spec.ts
+# *.spec.ts
 .eslintcache
 .DS_Store
 .idea

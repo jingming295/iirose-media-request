@@ -11,10 +11,3 @@ interface MediaData {
     color: string
     error: string
 }
-
-interface mediaData {
-    type: string
-    name: string;
-    resourceUrls: string[];
-    error:string
-  }

@@ -22,6 +22,9 @@ export function apply(ctx: Context) {
 
             console.log('成功退出')
             if (mediaData.url === undefined) {
+                if(mediaData.error!=null){
+                    session.send(`错误：${mediaData.error}`);
+                }
                 session.send(`<>没有找到视频</>`);
             } else {
                 const duration = await getMediaLength.mediaLengthInSec(mediaData.url)

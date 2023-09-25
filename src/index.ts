@@ -1,6 +1,6 @@
 import { Context, Schema } from 'koishi'
 
-export * from './api/HandleMsg'
+export * from './api/MsgHandle'
 
 export const name = 'iirose-media-request'
 
