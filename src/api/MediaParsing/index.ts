@@ -1,6 +1,7 @@
 import  { Browser, BrowserContext, Page, firefox } from 'playwright';
 import { CheckMimeType } from '../tools/checkMimeType'
 import { ErrorHandle } from '../ErrorHandle';
+import { DownloadBrowser } from '../Browser/index'
 /**
  * @description 
  */
@@ -39,7 +40,14 @@ export class MediaParsing {
     async openBrowser() {
         let mediaData = this.mediaData
         try{
-            this.browser = await firefox.launch();
+            const downloadBrowser = new DownloadBrowser();
+
+            await downloadBrowser.downloadFirefox(firefox.executablePath());
+
+            this.browser = await firefox.launch({
+              });
+            
+            // this.browser = await firefox.launch();
             this.context = await this.browser.newContext({
                 userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                 viewport: { width: 1440, height: 768 },
@@ -58,7 +66,8 @@ export class MediaParsing {
             return mediaData
         }catch(error){
             mediaData.error = error.message
-            if (error.message.includes("Executable doesn't exist")) {
+            console.log(error)
+            if (error.message.includes("browserType.launch: Executable doesn't exist")) {
                 console.error('缺少浏览器错误:', error.message);
                 mediaData.error = await this.errorHandle.ErrorHandle(error.message)
                 
@@ -112,10 +121,12 @@ export class MediaParsing {
                     const checkMimeType = new CheckMimeType()
                     const mimeType = response.headers()['content-type'];
                     if(checkMimeType.isVideo(mimeType)) {
-                        console.log('>>', request.method(), url, mimeType);
-                        title = await this.page.title();
-                        if(resourceUrls.length>=3) await this.browser.close()
-                        else resourceUrls.push(url); mediaData.type = 'video'
+                        if(!url.includes('p-pc-weboff')){
+                            console.log('>>', request.method(), url, mimeType);
+                            title = await this.page.title();
+                            if(resourceUrls.length>=3) await this.browser.close()
+                            else resourceUrls.push(url); mediaData.type = 'video'
+                        }
                     } else if (checkMimeType.isMusic(mimeType)){
                         console.log('>>', request.method(), url, mimeType);
                         title = await this.page.title();
