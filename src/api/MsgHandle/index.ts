@@ -2,64 +2,64 @@
 import { Context } from 'koishi'
 import { MediaParsing } from '../MediaParsing'
 import { musicOrigin } from 'koishi-plugin-adapter-iirose'
-import { GetMediaLength } from '../tools/getMediaLength'
-
+const comm:string = 'a'
 export function apply(ctx: Context) {
-    const comm:string = 'a'
-    ctx.command(comm, '点歌或者点视频')
-    ctx.on('message', async (session) => {
-        const regex = /^\s*a\s*http/i;
-        if (regex.test(session.content)) {
-            console.log(`成功进入`)
-            session.send(`成功进入`);
-            try {
-                const getMediaLength = new GetMediaLength()
-                const url = session.content;
-                const indexOfat = url.indexOf(comm);
-                const originUrl = indexOfat !== -1 ? url.substring(indexOfat + 1) : url;
-    
-                const mediaParsing = new MediaParsing(originUrl)
-                
-                const mediaData = await mediaParsing.openBrowser();
-    
-                console.log('成功退出')
-                session.send(`成功退出`);
-                if (mediaData.url === undefined || mediaData.url === null ) {
-                    if(mediaData.error!=null){
-                        session.send(`错误：${mediaData.error}`);
+    ctx.command(comm, '链接').option('link', '只发出链接').action(
+        async ({ options }, arg) => {
+            if (arg != undefined){
+                try {
+                    const mediaData = await media(arg, ctx)
+                    if (mediaData.url === undefined || mediaData.url === null ) {
+                        return `<>没有找到视频</>`
+                    } else {
+                        
+                        if(options['link']){
+                            return `${mediaData.url}`
+                        } else {
+                            ctx.emit('iirose/makeMusic', mediaData)
+                            return `${mediaData.url}`
+                            
+                        }
                     }
-                    session.send(`<>没有找到视频</>`);
-                } else {
-                    const duration = await getMediaLength.mediaLengthInSec(mediaData.url)
-                    console.log(`duration: ${duration}`)
-    
-                    const music:musicOrigin = {
-                        type: mediaData.type,
-                        name: mediaData.name,
-                        signer: "未知",
-                        cover: "https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg",
-                        link: mediaData.url,
-                        url: mediaData.url,
-                        duration: duration,
-                        bitRate: 720,
-                        color: 'FFFFFF',
-                    }
-                    ctx.emit('iirose/makeMusic',music)
-                    session.send(`${mediaData.url}`);
-    
-                    if(mediaData.error!=null){
-                        session.send(`错误：${mediaData.error}`);
-                    }
+                } catch (error) {
+                    return error
                 }
-                
-            } catch (error) {
-                session.send(error);
             }
-
         }
-    })
+    )
+
+    
 
     
     
     
+}
+
+async function media(url:string, ctx: Context){
+
+    console.log(url)
+    const regex = /^http/i;
+
+    if (regex.test(url)) {
+        console.log(`成功进入`)
+
+        const mediaParsing = new MediaParsing(url)
+        
+        const mediaData = await mediaParsing.openBrowser();
+
+        console.log('成功退出')
+        const music:musicOrigin = {
+            type: mediaData.type,
+            name: mediaData.name,
+            signer: "未知",
+            cover: "https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg",
+            link: mediaData.url,
+            url: mediaData.url,
+            duration: mediaData.duration,
+            bitRate: 720,
+            color: 'FFFFFF',
+        }
+        return music
+
+    }
 }

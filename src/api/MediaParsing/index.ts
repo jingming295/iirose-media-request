@@ -2,6 +2,7 @@ import  { Browser, BrowserContext, Page, firefox } from 'playwright';
 import { CheckMimeType } from '../tools/checkMimeType'
 import { ErrorHandle } from '../ErrorHandle';
 import { DownloadBrowser } from '../Browser/index'
+import { GetMediaLength } from '../tools/getMediaLength'
 /**
  * @description 
  */
@@ -99,8 +100,11 @@ export class MediaParsing {
      * @returns 
      */
     private async getVideos() {
-
+        const getMediaLength = new GetMediaLength
         const MediaData = await this.getMedia();
+        if(MediaData.url != null || MediaData.url != undefined) {
+            MediaData.duration = await getMediaLength.mediaLengthInSec(MediaData.url)
+        }
         return MediaData
     }
 
@@ -120,14 +124,12 @@ export class MediaParsing {
                 if (response) { // 添加错误处理，确保 response 不是 null
                     const checkMimeType = new CheckMimeType()
                     const mimeType = response.headers()['content-type'];
-                    if(checkMimeType.isVideo(mimeType)) {
-                        if(!url.includes('p-pc-weboff')){
-                            console.log('>>', request.method(), url, mimeType);
-                            title = await this.page.title();
-                            if(resourceUrls.length>=3) await this.browser.close()
-                            else resourceUrls.push(url); mediaData.type = 'video'
-                        }
-                    } else if (checkMimeType.isMusic(mimeType)){
+                    if(checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff')) {
+                        console.log('>>', request.method(), url, mimeType);
+                        title = await this.page.title();
+                        if(resourceUrls.length>=3) await this.browser.close()
+                        else resourceUrls.push(url); mediaData.type = 'video'
+                    } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff')){
                         console.log('>>', request.method(), url, mimeType);
                         title = await this.page.title();
                         if(resourceUrls.length>=3) await this.browser.close()
