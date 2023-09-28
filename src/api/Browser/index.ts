@@ -3,18 +3,15 @@ import * as https from 'https';
 import unzipper from 'unzipper';
 import * as path from 'path';
 import * as os from 'os';
+import { mkdirp } from 'mkdirp'
 
 export class DownloadBrowser {
 
 
     
     private mkdir(targetFolder: string) {
-        const parts = targetFolder.split(path.sep);
-        for (let i = 1; i <= parts.length; i++) {
-            const subPath = path.join(...parts.slice(0, i));
-            if (!fs.existsSync(subPath)) {
-                fs.mkdirSync(subPath);
-            }
+        if (!fs.existsSync(targetFolder)) {
+            mkdirp(targetFolder)
         }
         return targetFolder;
     }
