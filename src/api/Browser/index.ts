@@ -5,10 +5,15 @@ import * as path from 'path';
 
 export class DownloadBrowser {
 
-    private mkdir(path: string) {
-        const targetFolder = path;
-        if (!fs.existsSync(targetFolder)) {
-            fs.mkdirSync(targetFolder);
+
+    
+    private mkdir(targetFolder: string) {
+        const parts = targetFolder.split(path.sep);
+        for (let i = 1; i <= parts.length; i++) {
+            const subPath = path.join(...parts.slice(0, i));
+            if (!fs.existsSync(subPath)) {
+                fs.mkdirSync(subPath);
+            }
         }
         return targetFolder;
     }
