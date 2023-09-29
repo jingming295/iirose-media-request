@@ -66,13 +66,9 @@ export class MediaParsing {
             }
             return mediaData
         }catch(error){
-            mediaData.error = error.message
+            mediaData.error = await this.errorHandle.ErrorHandle(error.message)
             console.log(error)
-            if (error.message.includes("browserType.launch: Executable doesn't exist")) {
-                console.error('缺少浏览器错误:', error.message);
-                mediaData.error = await this.errorHandle.ErrorHandle(error.message)
-                
-            }
+            
             return mediaData
         }
         
