@@ -1,5 +1,5 @@
 
-import { Context } from 'koishi'
+import { Context, Logger } from 'koishi'
 import { MediaParsing } from '../MediaParsing'
 import { musicOrigin } from 'koishi-plugin-adapter-iirose'
 const comm:string = 'a'
@@ -8,16 +8,32 @@ export function apply(ctx: Context) {
         async ({ options }, arg) => {
             if (arg != undefined){
                 try {
+                    const logger = new Logger('iirose-media-request')
                     const mediaData = await media(arg, ctx)
-                    if (mediaData.url === undefined || mediaData.url === null ) {
+                    const music:musicOrigin = {
+                        type: mediaData.type,
+                        name: mediaData.name,
+                        signer: "未知",
+                        cover: "https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg",
+                        link: mediaData.url,
+                        url: mediaData.url,
+                        duration: mediaData.duration,
+                        bitRate: 720,
+                        color: 'FFFFFF',
+                    }
+                    if(mediaData.error != undefined || mediaData.error != null ) {
+                        logger.error(mediaData.error)
+                        return mediaData.error
+                    } 
+                    if (music.url === undefined || music.url === null ) {
                         return `<>没有找到视频</>`
                     } else {
                         
                         if(options['link']){
-                            return `${mediaData.url}`
+                            return `${music.url}`
                         } else {
-                            ctx.emit('iirose/makeMusic', mediaData)
-                            return `${mediaData.url}`
+                            ctx.emit('iirose/makeMusic', music)
+                            return `${music.url}`
                             
                         }
                     }
@@ -48,18 +64,8 @@ async function media(url:string, ctx: Context){
         const mediaData = await mediaParsing.openBrowser();
 
         console.log('成功退出')
-        const music:musicOrigin = {
-            type: mediaData.type,
-            name: mediaData.name,
-            signer: "未知",
-            cover: "https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg",
-            link: mediaData.url,
-            url: mediaData.url,
-            duration: mediaData.duration,
-            bitRate: 720,
-            color: 'FFFFFF',
-        }
-        return music
+        
+        return mediaData
 
     }
 }

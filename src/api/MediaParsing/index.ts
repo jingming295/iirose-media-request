@@ -42,11 +42,8 @@ export class MediaParsing {
         let mediaData = this.mediaData
         try{
             const downloadBrowser = new DownloadBrowser();
-
-            
-
             const firefoxPath = await downloadBrowser.downloadFirefox();
-
+            console.log(firefoxPath)
             this.browser = await firefox.launch({
                 executablePath: firefoxPath
               });
