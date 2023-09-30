@@ -3,6 +3,7 @@ import { CheckMimeType } from '../tools/checkMimeType'
 import { ErrorHandle } from '../ErrorHandle';
 import { DownloadBrowser } from '../Browser/index'
 import { GetMediaLength } from '../tools/getMediaLength'
+import sharp from 'sharp';
 /**
  * @description 
  */
@@ -110,7 +111,7 @@ export class MediaParsing {
     }
 
     /**
-     * @description 尝试获取媒体的url
+     * @description 尝试获取媒体的信息
      * @param page 
      * @returns 
      */
@@ -128,13 +129,13 @@ export class MediaParsing {
                         if(checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff')) {
                             console.log('>>', request.method(), url, mimeType);
                             title = await this.page.title();
-                            if(resourceUrls.length>=3) await this.browser.close()
-                            else resourceUrls.push(url); mediaData.type = 'video'
+                        
+                            resourceUrls.push(url); mediaData.type = 'video'
                         } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff')){
                             console.log('>>', request.method(), url, mimeType);
                             title = await this.page.title();
-                            if(resourceUrls.length>=3) await this.browser.close()
-                            else resourceUrls.push(url); mediaData.type = 'music'
+                     
+                            resourceUrls.push(url); mediaData.type = 'music'
                         }
                         
                     } else if (!response) {
@@ -145,18 +146,18 @@ export class MediaParsing {
                             mediaData.url = resourceUrls[0]
                         }
                         console.error('No response for:', url);
-
                     }
                 
             });
             await this.page.goto(this.originUrl, { timeout: this.timeOut });
             await this.page.waitForTimeout(this.waitTime);
+            if (mediaData.type = 'video') mediaData.cover = await this.getThumbNail()
+            
         } catch(error) {
-            console.error(`Error:, ${error.message} in `);
             mediaData.name = title
             mediaData.link = resourceUrls[0]
             mediaData.url = resourceUrls[0]
-            mediaData.error = error.message
+            mediaData.error = await this.errorHandle.ErrorHandle(error.message)
             return mediaData
         }
 
@@ -167,6 +168,39 @@ export class MediaParsing {
 
 
         return mediaData;
+    }
+
+    private async getThumbNail() {
+        const videoElement = await this.page.$('video');
+        const iframeElement = await this.page.$('iframe');
+        if (iframeElement) {
+            // 在iframe中寻找video元素
+            const frame = await iframeElement.contentFrame();
+            const videoInsideIframe = await frame.$('body video');
+            if (videoInsideIframe) {
+                  await videoInsideIframe.screenshot({ 
+                    path: 'thumbnail.png',
+                })
+                const blurredImageBuffer = await sharp('thumbnail.png')
+                .resize({ width: 160, height: 100 }) // 调整图像尺寸
+                .jpeg({ quality: 95 }) // 调整JPEG图像质量，数值越低，文件越小
+                .toBuffer();
+                const base64BlurredImage = `data:image/png;base64,${blurredImageBuffer.toString('base64')}`;
+                console.log(base64BlurredImage);
+                return base64BlurredImage
+              } else return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
+                
+
+        } else if (videoElement) {
+            await videoElement.screenshot({ path: 'thumbnail.png' });
+            const blurredImageBuffer = await sharp('thumbnail.png')
+                .resize({ width: 160, height: 100 }) // 调整图像尺寸
+                .jpeg({ quality: 95 }) // 调整JPEG图像质量，数值越低，文件越小
+                .toBuffer();
+                const base64BlurredImage = `data:image/png;base64,${blurredImageBuffer.toString('base64')}`;
+                console.log(base64BlurredImage);
+                return base64BlurredImage
+        } else return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
     }
 
 }
