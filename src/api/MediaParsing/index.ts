@@ -3,7 +3,8 @@ import { CheckMimeType } from '../tools/checkMimeType'
 import { ErrorHandle } from '../ErrorHandle';
 import { DownloadBrowser } from '../Browser/index'
 import { GetMediaLength } from '../tools/getMediaLength'
-import sharp from 'sharp';
+import Jimp from 'jimp';
+import * as os from 'os';
 /**
  * @description 
  */
@@ -48,6 +49,10 @@ export class MediaParsing {
         let mediaData = this.mediaData
         const downloadBrowser = new DownloadBrowser();
         const firefoxPath = await downloadBrowser.downloadFirefox();
+        if (firefoxPath === null) {
+            mediaData.error = '暂不支持此系统'
+            return mediaData
+        } 
         try{
  
             this.browser = await firefox.launch({
@@ -115,7 +120,7 @@ export class MediaParsing {
      * @param page 
      * @returns 
      */
-    private async getMedia() {
+    private async getMedia(): Promise<MediaData> {
         const resourceUrls: string [] = []
         let title:string;
         const mediaData = this.returnMediaData()
@@ -151,8 +156,8 @@ export class MediaParsing {
             });
             await this.page.goto(this.originUrl, { timeout: this.timeOut });
             await this.page.waitForTimeout(this.waitTime);
-            if (mediaData.type = 'video') mediaData.cover = await this.getThumbNail()
-            
+            if (mediaData.type === 'video') mediaData.cover = await this.getThumbNail()
+            else mediaData.cover = 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
         } catch(error) {
             mediaData.name = title
             mediaData.link = resourceUrls[0]
@@ -170,37 +175,36 @@ export class MediaParsing {
         return mediaData;
     }
 
-    private async getThumbNail() {
-        const videoElement = await this.page.$('video');
-        const iframeElement = await this.page.$('iframe');
-        if (iframeElement) {
-            // 在iframe中寻找video元素
-            const frame = await iframeElement.contentFrame();
-            const videoInsideIframe = await frame.$('body video');
-            if (videoInsideIframe) {
-                  await videoInsideIframe.screenshot({ 
-                    path: 'thumbnail.png',
-                })
-                const blurredImageBuffer = await sharp('thumbnail.png')
-                .resize({ width: 160, height: 100 }) // 调整图像尺寸
-                .jpeg({ quality: 95 }) // 调整JPEG图像质量，数值越低，文件越小
-                .toBuffer();
-                const base64BlurredImage = `data:image/png;base64,${blurredImageBuffer.toString('base64')}`;
-                console.log(base64BlurredImage);
-                return base64BlurredImage
-              } else return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
-                
+private async getThumbNail(): Promise<string> {
+    const path = os.homedir();
 
-        } else if (videoElement) {
-            await videoElement.screenshot({ path: 'thumbnail.png' });
-            const blurredImageBuffer = await sharp('thumbnail.png')
-                .resize({ width: 160, height: 100 }) // 调整图像尺寸
-                .jpeg({ quality: 95 }) // 调整JPEG图像质量，数值越低，文件越小
-                .toBuffer();
-                const base64BlurredImage = `data:image/png;base64,${blurredImageBuffer.toString('base64')}`;
-                console.log(base64BlurredImage);
-                return base64BlurredImage
-        } else return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
+    const videoElement = await this.page.$('video');
+    const iframeElement = await this.page.$('iframe');
+    if (iframeElement) {
+        // 在iframe中寻找video元素
+        const frame = await iframeElement.contentFrame();
+        const videoInsideIframe = frame ? await frame.$('body video') : null;
+        if (videoInsideIframe) {
+            await videoInsideIframe.screenshot({ 
+                path: `${path}/thumbnail.png`,
+            });
+            const image = await Jimp.read(`${path}/thumbnail.png`);
+            image.resize(160, 100);
+            const base64BlurredImage = `data:image/jpeg;base64,${(await image.getBufferAsync(Jimp.MIME_JPEG)).toString('base64')}`;
+            console.log(base64BlurredImage)
+            return base64BlurredImage;
+        } else {
+            return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg'
+        }
+    } else if (videoElement) {
+        await videoElement.screenshot({ path: `${path}/playwright/thumbnail.png` });
+        const image = await Jimp.read(`${path}/playwright/thumbnail.png`);
+        image.resize(160, 100);
+        const base64BlurredImage = `data:image/png;base64,${image.getBufferAsync(Jimp.MIME_JPEG)}`;
+        return base64BlurredImage;
+    } else {
+        return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
     }
+}
 
 }

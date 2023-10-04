@@ -80,14 +80,18 @@ export function apply(ctx: Context, config: Config) {
     const handler = new MediaHandler(ctx, config)
     ctx.command(comm, '链接').option('link', '只发出链接').action(
         async ({ options }, arg) => {
-            const msg = handler.handleLink(options, arg)
-            if(msg)return msg
+            try {
+                const msg = handler.handleLink(options, arg)
+                if(msg)return msg
+            } catch (error) {
+                return error
+            }
         }
     )
 
-    ctx.command('cut', '切当前媒体').action(
-        async ({ options }, arg) => {
-            return 'cut'
-        }
-    )
+    // ctx.command('cut', '切当前媒体').action(
+    //     async () => {
+    //         return 'cut'
+    //     }
+    // )
 }

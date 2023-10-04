@@ -7,10 +7,6 @@ import { mkdirp } from 'mkdirp';
 import { Logger } from 'koishi'
 
 export class DownloadBrowser {
-
-
-    
-
     private async mkdir(targetFolder: string) {
         await mkdirp(targetFolder)
         return targetFolder;
@@ -91,10 +87,10 @@ export class DownloadBrowser {
             downloadUrl = 'https://playwright.azureedge.net/builds/firefox/1424/firefox-win64.zip';
         } else if (platform === 'linux') {
             downloadUrl = 'https://playwright.azureedge.net/builds/firefox/1424/firefox-ubuntu-22.04.zip';
-        }
+        } else return null
+
 
         if (fs.existsSync(firefoxPath)) {
-            console.log(`游览器文件存在${firefoxPath}`);
             logger.info(`游览器文件存在${firefoxPath}`)
             return firefoxPath;
         }
@@ -109,7 +105,6 @@ export class DownloadBrowser {
         if(platform === 'linux') await this.addExecutePermission(firefoxPath)
 
         logger.info(`游览器文件下载并解压完成`)
-        console.log('游览器文件下载并解压完成');
         return firefoxPath
     }
 }
