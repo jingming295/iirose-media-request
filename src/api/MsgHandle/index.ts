@@ -38,7 +38,7 @@ class MediaHandler {
      * @param arg 
      * @returns 
      */
-    public async handleLink(options: { link?: boolean }, arg: string) {
+    public async handleLink(options: { link?: boolean }, arg: string, userName:string) {
         if (arg != undefined) {
             try {
                 const mediaData = await this.parseMedia(arg)
@@ -46,7 +46,7 @@ class MediaHandler {
                 const music: musicOrigin = {
                     type: mediaData.type,
                     name: mediaData.name,
-                    signer: "未知",
+                    signer: userName,
                     cover: mediaData.cover,
                     link: mediaData.url,
                     url: mediaData.url,
@@ -59,13 +59,13 @@ class MediaHandler {
                     return mediaData.error
                 }
                 if (!music.url) {
-                    return `<>没有找到视频</>`
+                    return `<>没有找到媒体</>`
                 } else {
                     if (options['link']) {
                         return `${music.url}`
                     } else {
                         this.ctx.emit('iirose/makeMusic', music)
-                        return `${music.url}`
+                        // return `${music.url}`
                     }
                 }
             } catch (error) {
@@ -79,9 +79,10 @@ export function apply(ctx: Context, config: Config) {
     const comm: string = 'a'
     const handler = new MediaHandler(ctx, config)
     ctx.command(comm, '链接').option('link', '只发出链接').action(
-        async ({ options }, arg) => {
+        async ({ session, options }, arg) => {
+            if (session.platform !== 'iirose') return `${session.platform}平台不支持此插件`
             try {
-                const msg = handler.handleLink(options, arg)
+                const msg = handler.handleLink(options, arg, session.username)
                 if(msg)return msg
             } catch (error) {
                 return error
