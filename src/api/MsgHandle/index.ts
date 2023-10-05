@@ -17,20 +17,23 @@ class MediaHandler {
      * @param url 
      * @returns 
      */
-    private async parseMedia(url: string) {
-        const regex = /^http/i;
-        if (regex.test(url)) {
-            console.log(`成功进入`)
-            const mediaParsing = new MediaParsing(url, this.config['timeOut'], this.config['waitTime'])
+     private async parseMedia(url: string) {
+        const regex = /(http\S+)/i;
+        const match = url.match(regex);
+        console.log(url)
+        if (match) {
+            console.log('dasdsaas')
+            const extractedUrl = match[0];
+            console.log(`成功进入`);
+            console.log(`提取到的网址是：${extractedUrl}`);
+            const mediaParsing = new MediaParsing(extractedUrl, this.config['timeOut'], this.config['waitTime'], this.config['SESSDATA'], this.config['qn'], this.config['platform']);
             const mediaData = await mediaParsing.openBrowser();
-            console.log('成功退出')
-            return mediaData
+            console.log('成功退出');
+            return mediaData;
         } else {
-            return null
+            return null;
         }
     }
-
-    
 
     /**
      * 处理MediaData到musicOrigin
@@ -46,12 +49,12 @@ class MediaHandler {
                 const music: musicOrigin = {
                     type: mediaData.type,
                     name: mediaData.name,
-                    signer: userName,
-                    cover: mediaData.cover,
+                    signer: mediaData.signer || userName,
+                    cover: mediaData.cover || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg',
                     link: mediaData.url,
                     url: mediaData.url,
                     duration: mediaData.duration,
-                    bitRate: 720,
+                    bitRate: mediaData.bitRate||720,
                     color: 'FFFFFF',
                 }
                 if (mediaData.error != undefined || mediaData.error != null) {
@@ -65,7 +68,7 @@ class MediaHandler {
                         return `${music.url}`
                     } else {
                         this.ctx.emit('iirose/makeMusic', music)
-                        // return `${music.url}`
+                        // return `${JSON.stringify(music, null, 2)}`
                     }
                 }
             } catch (error) {
@@ -79,10 +82,16 @@ export function apply(ctx: Context, config: Config) {
     const comm: string = 'a'
     const handler = new MediaHandler(ctx, config)
     ctx.command(comm, '链接').option('link', '只发出链接').action(
-        async ({ session, options }, arg) => {
+        async ({ session, options }, ...rest) => {
             if (session.platform !== 'iirose') return `${session.platform}平台不支持此插件`
+            console.log(rest)
             try {
-                const msg = handler.handleLink(options, arg, session.username)
+                let msg:string
+                if (rest) {
+                    rest.forEach(async (item) => {
+                      msg = await handler.handleLink(options, item, session.username);
+                    });
+                  }
                 if(msg)return msg
             } catch (error) {
                 return error

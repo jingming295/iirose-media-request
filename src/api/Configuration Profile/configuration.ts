@@ -1,7 +1,31 @@
 import { Schema } from "koishi";
 export interface Config {}
 
-export const Config: Schema<Config> = Schema.object({
-    timeOut: Schema.number().role('slider').min(1000).max(100000).default(30000).description('等待页面加载的超时时长'),
-    waitTime : Schema.number().role('slider').min(100).max(50000).default(3000).description('页面加载完成后的等待时间'),
-}).description('游览器页面相关设置')
+export const Config: Schema<Config> = Schema.intersect([ 
+    Schema.object({
+        timeOut: Schema.number().role('slider').min(1000).max(100000).default(30000).description('等待页面加载的超时时长'),
+        waitTime : Schema.number().role('slider').min(100).max(50000).default(3000).description('页面加载完成后的等待时间'),
+    }).description('游览器页面相关设置'),
+    Schema.object({
+        SESSDATA: Schema.string().default('').description('bilibili的SESSDATA，在cookie获取，不填只能获取360p的视频，填了能获取1080p的视频'),
+        qn : Schema.union([
+            Schema.const(6),
+            Schema.const(16),
+            Schema.const(64),
+            Schema.const(74),
+            Schema.const(80),
+            Schema.const(112).experimental(),
+            Schema.const(116).experimental(),
+            Schema.const(120).experimental(),
+            Schema.const(125).experimental(),
+            Schema.const(126).experimental(),
+            Schema.const(127).experimental(),
+          ]).default(80).description('视频的清晰度，具体看https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/info.md'),
+          platform : Schema.union([
+            Schema.const('pc'),
+            Schema.const('html5'),
+          ]).default('html5').description('pc能获得最高1080p的视频，html5能获得最高720p的视频。如果pc拿不到视频链接，或者视频链接不可用的话，就用html5'),
+    }).description('bilibili视频相关设置')
+    
+
+])
