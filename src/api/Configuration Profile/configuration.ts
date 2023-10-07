@@ -20,12 +20,14 @@ export const Config: Schema<Config> = Schema.intersect([
             Schema.const(125).experimental(),
             Schema.const(126).experimental(),
             Schema.const(127).experimental(),
-          ]).default(80).description('视频的清晰度，具体看https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/info.md'),
+          ]).default(80).description('视频的清晰度，拉到的视频播不出来就切16，具体看https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/info.md'),
           platform : Schema.union([
             Schema.const('pc'),
             Schema.const('html5'),
-          ]).default('html5').description('pc能获得最高1080p的视频，html5能获得最高720p的视频。如果pc拿不到视频链接，或者视频链接不可用的话，就用html5'),
-    }).description('bilibili视频相关设置')
-    
+          ]).default('html5').description('对Bangumi无效，pc能获得最高1080p的视频，html5能获得最高720p的视频。如果pc拿不到视频链接，或者视频链接不可用的话，就用html5'),
+    }).description('bilibili视频相关设置'),
+    Schema.object({
+      mediaCardColor: Schema.string().default('FFFFFF').description('艾特媒体的时候的媒体卡片颜色，使用HEX，不需要#, 具体参考https://www.sojson.com/web/panel.html'),
+  }).description('点视频的相关设置')
 
 ])
