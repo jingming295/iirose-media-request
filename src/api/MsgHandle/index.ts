@@ -34,7 +34,8 @@ class MediaHandler
                 this.config['waitTime'],
                 this.config['SESSDATA'],
                 this.config['qn'],
-                this.config['platform']
+                this.config['platform'],
+                this.ctx
             );
             const mediaData = await mediaParsing.openBrowser();
             console.log('成功退出');
@@ -50,7 +51,8 @@ class MediaHandler
                 this.config['waitTime'],
                 this.config['SESSDATA'],
                 this.config['qn'],
-                this.config['platform']
+                this.config['platform'],
+                this.ctx
             );
             const mediaData = await mediaParsing.openBrowser();
             console.log('成功退出');

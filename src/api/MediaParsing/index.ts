@@ -1,11 +1,13 @@
-import { Browser, BrowserContext, ElementHandle, Page, firefox } from 'playwright';
+// import { Browser, BrowserContext, ElementHandle, Page, firefox } from 'playwright';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { ErrorHandle } from '../ErrorHandle';
 import { DownloadBrowser } from '../Browser/index';
 import { GetMediaLength } from '../tools/getMediaLength';
+import { ElementHandle, Page } from 'koishi-plugin-puppeteer'
 import Jimp from 'jimp';
 import * as os from 'os';
 import axios from 'axios';
+import { Context } from 'koishi';
 
 declare global
 {
@@ -32,12 +34,13 @@ export class MediaParsing
     };
     errorHandle = new ErrorHandle();
     originUrl: string;
-    browser: Browser;
-    context: BrowserContext;
-    page: Page;
+    // browser: Browser;
+    // context: BrowserContext;
+    page:Page;
+    ctx: Context
 
-    
-    constructor(url: string, timeOut: number, waitTime: number, biliBiliSessData: string, biliBiliqn: number, biliBiliPlatform: string)
+
+    constructor(url: string, timeOut: number, waitTime: number, biliBiliSessData: string, biliBiliqn: number, biliBiliPlatform: string, ctx:Context)
     {
         this.originUrl = url;
         this.timeOut = timeOut;
@@ -45,7 +48,7 @@ export class MediaParsing
         this.biliBiliSessData = biliBiliSessData;
         this.biliBiliqn = biliBiliqn;
         this.biliBiliPlatform = biliBiliPlatform;
-
+        this.ctx = ctx
     }
 
 
@@ -55,39 +58,13 @@ export class MediaParsing
      */
     async openBrowser()
     {
+
         let mediaData = this.mediaData;
-        const downloadBrowser = new DownloadBrowser();
-        const firefoxPath = await downloadBrowser.downloadFirefox();
-        if (firefoxPath === null)
-        {
-            mediaData.error = '暂不支持此操作系统';
-            return mediaData;
-        }
         try
         {
-
-            this.browser = await firefox.launch({
-                executablePath: firefoxPath,
-                ignoreDefaultArgs: ['--mute-audio']
-            });
-
-            this.context = await this.browser.newContext({
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                viewport: { width: 1440, height: 768 },
-                extraHTTPHeaders: {
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8',
-                    'X-Robots-Tag': 'noindex, nofollow'
-                }
-            });
-
-            this.page = await this.context.newPage();
+            this.page = await this.ctx.puppeteer.page()
             mediaData = await this.HandleUrl();
-
-            if (this.browser.isConnected())
-            {
-                await this.browser.close();
-            }
+            await this.page.close();
             return mediaData;
         } catch (error)
         {
@@ -139,11 +116,12 @@ export class MediaParsing
             this.originUrl = this.originUrl.replace(/\?/g, '/');
             const MediaData = await this.handleBilibiliMedia();
             return MediaData;
-        } else
+        }
+        else
         {
             const getMediaLength = new GetMediaLength;
             const MediaData = await this.getMedia();
-            if (MediaData.url != null || MediaData.url != undefined)
+            if (MediaData.url && !MediaData.duration)
             {
                 MediaData.duration = await getMediaLength.mediaLengthInSec(MediaData.url);
             }
@@ -151,6 +129,7 @@ export class MediaParsing
         }
 
     }
+
 
     /**
      * 针对有重定向的链接，获取重定向后的链接
@@ -190,12 +169,12 @@ export class MediaParsing
             {
                 this.changeBilibiliQn();
                 bangumiStream = await this.getBangumiStream(ep);
-                if(this.biliBiliqn === 6) break;
+                if (this.biliBiliqn === 6) break;
             }
 
 
             const targetEpisodeInfo = bangumiInfo.episodes.find(episodes => episodes.ep_id === ep);
-            mediaData.bitRate = this.getQuality(bangumiStream.quality)
+            mediaData.bitRate = this.getQuality(bangumiStream.quality);
             mediaData.cover = targetEpisodeInfo.cover;
             mediaData.duration = (targetEpisodeInfo.duration / 1000) + 1;
             mediaData.link = bangumiStream.durl[0].url;
@@ -323,10 +302,10 @@ export class MediaParsing
                     this.changeBilibiliQn();
                 }
                 videoStream = await this.getBilibiliVideoStream(avid, bvid, cid);
-                if(this.biliBiliqn === 6) break;
+                if (this.biliBiliqn === 6) break;
             }
 
-            mediaData.bitRate = this.getQuality(videoStream.quality)
+            mediaData.bitRate = this.getQuality(videoStream.quality);
 
 
             mediaData.cover = videoInfo.pic;
@@ -449,7 +428,8 @@ export class MediaParsing
     /**
      * 更换bilibiliQn
      */
-    private changeBilibiliQn() {
+    private changeBilibiliQn()
+    {
         switch (this.biliBiliqn)
         {
             case 127: // 8k
@@ -492,7 +472,8 @@ export class MediaParsing
      * @param quality 
      * @returns 
      */
-    private getQuality(qn){
+    private getQuality(qn)
+    {
         switch (qn)
         {
             case 127://8k
@@ -510,7 +491,7 @@ export class MediaParsing
             case 80:
                 return 1080;
             case 74: //720p60帧
-            return 720;
+                return 720;
             case 64:
                 return 720;
             case 16:// 未登录的默认值
@@ -518,7 +499,7 @@ export class MediaParsing
             case 6://仅 MP4 格式支持, 仅platform=html5时有效
                 return 240;
             default:
-                return 720
+                return 720;
         }
     }
 
@@ -532,44 +513,45 @@ export class MediaParsing
         const mediaData = this.returnMediaData();
         try
         {
-            this.page.on('request', async request =>
-            {
-                const url = request.url();
+            this.page.on('request', async request => {
+                const url = await request.url();
+                await new Promise(resolve => setTimeout(resolve, 1000))
                 const response = await request.response();
-                if (response)
-                { // 添加错误处理，确保 response 不是 null
+                if(url.includes('video.acfun.cn')){
+                    console.log(`url: ${url}\nresponse: ${response}`)
+                }
+                
+                if (response) {
                     const checkMimeType = new CheckMimeType();
                     const mimeType = response.headers()['content-type'];
-                    if (checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff'))
-                    {
-                        console.log('>>', request.method(), url, mimeType);
-                        resourceUrls.push(url); mediaData.type = 'video';
-                    } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff'))
-                    {
-                        console.log('>>', request.method(), url, mimeType);
-                        resourceUrls.push(url); mediaData.type = 'music';
+                    
+                    if (checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff')) {
+                        processMedia('video', url, mimeType);
+                    } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff')) {
+                        processMedia('music', url, mimeType);
                     }
-                } else if (!response)
-                {
-                    if (url.includes('m3u8') || url.includes('m4a'))
-                    {
-                        if (url.includes('m4a')) mediaData.type = 'music';
-                        else mediaData.type = 'video';
-                        resourceUrls.push(url);
-                        mediaData.link = resourceUrls[0];
-                        mediaData.url = resourceUrls[0];
-                        console.error(`No response for (is m3u8 or m4a): ${url}`);
-                    }
-                    console.error('No response for:', url);
+                } else if (url.includes('.m3u8') || url.includes('.m4a')) {
+                    const mediaType = url.includes('.m4a') ? 'music' : 'video';
+                    processMedia(mediaType, url, null);
+                    // console.error(`No response for (is m3u8 or m4a): ${url}`);
                 }
-
             });
+            
+
+            
+            function processMedia(type, url, mimeType) {
+                console.log('>>', type, url, mimeType);
+                resourceUrls.push(url);
+                mediaData.type = type;
+                mediaData.link = resourceUrls[0];
+                mediaData.url = resourceUrls[0];
+            }
             await this.page.goto(this.originUrl, { timeout: this.timeOut });
             await this.clickBtn();
             await this.page.waitForTimeout(this.waitTime);
-            mediaData.name = await this.page.title() || '无法获取标题';
             if (mediaData.type === 'video') mediaData.cover = await this.getThumbNail() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
             if (mediaData.type === 'music') mediaData.cover = await this.searchImg() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+            mediaData.name = await this.page.title() || '无法获取标题';
         } catch (error)
         {
             console.log(error);
@@ -580,6 +562,7 @@ export class MediaParsing
         }
         mediaData.link = resourceUrls[0];
         mediaData.url = resourceUrls[0];
+
         return mediaData;
     }
 
@@ -705,16 +688,17 @@ export class MediaParsing
         // 如果找到了元素，执行点击操作
         if (elementHandle)
         {
-            // const elementInfo = await elementHandle.evaluate(node => {
-            //     return {
-            //         tagName: node.tagName,
-            //         attributes: [...node.attributes].map(attr => ({name: attr.name, value: attr.value})),
-            //         classList: [...node.classList]
-            //     };
-            //   });
-            //   console.log('Element TagName:', elementInfo.tagName);
-            //   console.log('Element Attributes:', elementInfo.attributes);
-            //   console.log('Element ClassList:', elementInfo.classList);
+            const elementInfo = await elementHandle.evaluate(node =>
+            {
+                return {
+                    tagName: node.tagName,
+                    attributes: [...node.attributes].map(attr => ({ name: attr.name, value: attr.value })),
+                    classList: [...node.classList]
+                };
+            });
+            console.log('Element TagName:', elementInfo.tagName);
+            console.log('Element Attributes:', elementInfo.attributes);
+            console.log('Element ClassList:', elementInfo.classList);
             await elementHandle.click();
         }
     }
@@ -723,29 +707,24 @@ export class MediaParsing
      * 查找特定的图片，音乐网站会用到
      * @returns 
      */
-    private async searchImg()
-    {
+     private async searchImg() {
         const frames = this.page.frames();
-        for (const frame of frames)
-        {
-            const imgsInFrame = await frame.$$('img'); // 获取 frame 中的所有 img 元素
-            for (const img of imgsInFrame)
-            {
-                const dataSrc = await img.getAttribute('data-src'); // 获取 img 元素的 data-src 属性
-                // console.log(`data-src: ${dataSrc}`);
-                if (dataSrc) return dataSrc;
-            }
-        }
-
-        // 如果在 frame 中没有找到，则在整个 document 中查找
-        const imgsInDocument = await this.page.$$('img');
-        for (const img of imgsInDocument)
-        {
-            const dataSrc = await img.getAttribute('data-src'); // 获取 img 元素的 data-src 属性
-            // console.log(`data-src: ${dataSrc}`);
+      
+        for (const frame of frames) {
+          const imgsInFrame = await frame.$$('img');
+          for (const img of imgsInFrame) {
+            const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
             if (dataSrc) return dataSrc;
+          }
         }
-    }
+      
+        const imgsInDocument = await this.page.$$('img');
+        for (const img of imgsInDocument) {
+          const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
+          if (dataSrc) return dataSrc;
+        }
+      }
+      
 
 
 

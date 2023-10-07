@@ -27,7 +27,8 @@
   ],
   "peerDependencies": {
     "koishi": "^4.14.5",
-    "koishi-plugin-adapter-iirose": "^0.2.23"
+    "koishi-plugin-adapter-iirose": "^0.2.23",
+    "koishi-plugin-puppeteer": "^3.5.0"
   },
   "dependencies": {
     "get-video-duration": "^4.1.0",
