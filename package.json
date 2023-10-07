@@ -1,10 +1,10 @@
 {
   "name": "koishi-plugin-iirose-media-request",
-  "description": "适用于IIROSE的@视频和@音频插件，他的原理和游览器和devtools类似，本插件需要用到firefox，所以在首次运行的时候会自动下载一个firefox，然后获取资源，插件还没做好。如果有bug记得说",
+  "description": "适用于IIROSE的@视频和@音频插件，他的原理和游览器和devtools类似，本插件需要用到puppeteer，最好设置chrome或者edge的路径，不要使用chromium，如果有bug记得说",
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",
-  "version": "0.2.47",
+  "version": "0.3.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -35,7 +35,6 @@
     "http-proxy": "^1.18.1",
     "jimp": "^0.22.10",
     "mkdirp": "^3.0.1",
-    "playwright": "^1.38.1",
     "unzipper": "^0.10.14"
   },
   "devDependencies": {

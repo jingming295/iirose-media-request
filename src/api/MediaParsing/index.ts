@@ -1,9 +1,8 @@
 // import { Browser, BrowserContext, ElementHandle, Page, firefox } from 'playwright';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { ErrorHandle } from '../ErrorHandle';
-import { DownloadBrowser } from '../Browser/index';
 import { GetMediaLength } from '../tools/getMediaLength';
-import { ElementHandle, Page } from 'koishi-plugin-puppeteer'
+import { ElementHandle, Page } from 'koishi-plugin-puppeteer';
 import Jimp from 'jimp';
 import * as os from 'os';
 import axios from 'axios';
@@ -36,11 +35,11 @@ export class MediaParsing
     originUrl: string;
     // browser: Browser;
     // context: BrowserContext;
-    page:Page;
-    ctx: Context
+    page: Page;
+    ctx: Context;
 
 
-    constructor(url: string, timeOut: number, waitTime: number, biliBiliSessData: string, biliBiliqn: number, biliBiliPlatform: string, ctx:Context)
+    constructor(url: string, timeOut: number, waitTime: number, biliBiliSessData: string, biliBiliqn: number, biliBiliPlatform: string, ctx: Context)
     {
         this.originUrl = url;
         this.timeOut = timeOut;
@@ -48,7 +47,7 @@ export class MediaParsing
         this.biliBiliSessData = biliBiliSessData;
         this.biliBiliqn = biliBiliqn;
         this.biliBiliPlatform = biliBiliPlatform;
-        this.ctx = ctx
+        this.ctx = ctx;
     }
 
 
@@ -62,7 +61,7 @@ export class MediaParsing
         let mediaData = this.mediaData;
         try
         {
-            this.page = await this.ctx.puppeteer.page()
+            this.page = await this.ctx.puppeteer.page();
             mediaData = await this.HandleUrl();
             await this.page.close();
             return mediaData;
@@ -513,33 +512,40 @@ export class MediaParsing
         const mediaData = this.returnMediaData();
         try
         {
-            this.page.on('request', async request => {
+            this.page.on('request', async request =>
+            {
                 const url = await request.url();
-                await new Promise(resolve => setTimeout(resolve, 1000))
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 为什么要等一秒？因为request.response()就是要等
                 const response = await request.response();
-                if(url.includes('video.acfun.cn')){
-                    console.log(`url: ${url}\nresponse: ${response}`)
+                if (url.includes('video.acfun.cn'))
+                {
+                    console.log(`url: ${url}\nresponse: ${response}`);
                 }
-                
-                if (response) {
+
+                if (response)
+                {
                     const checkMimeType = new CheckMimeType();
                     const mimeType = response.headers()['content-type'];
-                    
-                    if (checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff')) {
+
+                    if (checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff'))
+                    {
                         processMedia('video', url, mimeType);
-                    } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff')) {
+                    } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff'))
+                    {
                         processMedia('music', url, mimeType);
                     }
-                } else if (url.includes('.m3u8') || url.includes('.m4a')) {
+                } else if (url.includes('.m3u8') || url.includes('.m4a'))
+                {
                     const mediaType = url.includes('.m4a') ? 'music' : 'video';
                     processMedia(mediaType, url, null);
                     // console.error(`No response for (is m3u8 or m4a): ${url}`);
                 }
             });
-            
 
-            
-            function processMedia(type, url, mimeType) {
+
+
+            function processMedia(type, url, mimeType)
+            {
                 console.log('>>', type, url, mimeType);
                 resourceUrls.push(url);
                 mediaData.type = type;
@@ -707,24 +713,28 @@ export class MediaParsing
      * 查找特定的图片，音乐网站会用到
      * @returns 
      */
-     private async searchImg() {
+    private async searchImg()
+    {
         const frames = this.page.frames();
-      
-        for (const frame of frames) {
-          const imgsInFrame = await frame.$$('img');
-          for (const img of imgsInFrame) {
+
+        for (const frame of frames)
+        {
+            const imgsInFrame = await frame.$$('img');
+            for (const img of imgsInFrame)
+            {
+                const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
+                if (dataSrc) return dataSrc;
+            }
+        }
+
+        const imgsInDocument = await this.page.$$('img');
+        for (const img of imgsInDocument)
+        {
             const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
             if (dataSrc) return dataSrc;
-          }
         }
-      
-        const imgsInDocument = await this.page.$$('img');
-        for (const img of imgsInDocument) {
-          const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
-          if (dataSrc) return dataSrc;
-        }
-      }
-      
+    }
+
 
 
 
