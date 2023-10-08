@@ -115,7 +115,7 @@ class MediaHandler
                     {
                         this.ctx.emit('iirose/makeMusic', music);
                         if (music.bitRate < 720)
-                            return `检测到视频的分辨率小于720p，是不是SESSDATA刷新啦`;
+                            return `检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质`;
                     }
                 }
             }

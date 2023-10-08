@@ -1,4 +1,3 @@
-// import { Browser, BrowserContext, ElementHandle, Page, firefox } from 'playwright';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../tools/getMediaLength';
@@ -112,6 +111,7 @@ export class MediaParsing
         } else if (this.originUrl.includes('b23.tv'))
         {
             this.originUrl = await this.getRedirectUrl(this.originUrl);
+            console.log(this.originUrl)
             this.originUrl = this.originUrl.replace(/\?/g, '/');
             const MediaData = await this.handleBilibiliMedia();
             return MediaData;
@@ -305,10 +305,9 @@ export class MediaParsing
             }
 
             mediaData.bitRate = this.getQuality(videoStream.quality);
-
-
+            if (videoInfo.pages) mediaData.duration = getDurationByCid(videoInfo.pages, cid);
+            else mediaData.duration = videoInfo.duration + 1;
             mediaData.cover = videoInfo.pic;
-            mediaData.duration = videoInfo.duration + 1;
             mediaData.link = videoStream.durl[0].url;
             mediaData.url = videoStream.durl[0].url;
             mediaData.name = videoInfo.title;
@@ -319,6 +318,11 @@ export class MediaParsing
             // console.log(videoInfo)
 
             return mediaData;
+
+            function getDurationByCid(pages, cid) {
+                const page = pages.find(page => page.cid === cid);
+                return page ? page.duration : null;
+            }
         } catch (error)
         {
             mediaData.error = error;
@@ -619,93 +623,61 @@ export class MediaParsing
     /**
      * 点击按钮，尽量找到播放按钮
      */
-    private async clickBtn()
-    {
-        // 获取所有的 iframe
-        const frames = this.page.frames();
-        let elementHandle;
-
-        // 如果存在 iframe
-        if (frames.length > 1)
-        {
-            for (let frame of frames)
-            {
-                // 在 iframe 中查找所有元素
-                const elements = await frame.$$('body *');
-                for (let element of elements)
-                {
-                    // 获取元素的所有属性值和类名
-                    const attributes = await element.evaluate(node =>
-                    {
-                        const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
-                        return { tagName: node.tagName, attrs, classList: [...node.classList] };
-                    });
-                    // 检查属性值或类名是否包含 "play" 作为一个单独的单词
-                    if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
-                    {
-                        // 检查元素是否在视口内
-                        const isVisible = await element.evaluate(node =>
-                        {
-                            const rect = node.getBoundingClientRect();
-                            return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
-                        });
-                        if (isVisible)
-                        {
-                            elementHandle = element;
-                            break;
-                        }
-                    }
-                }
-                if (elementHandle) break;
-            }
-        }
-
-        // 如果不存在 iframe 或在 iframe 中未找到元素
-        if (!elementHandle)
-        {
-            // 在主页面中查找所有元素
-            const elements = await this.page.$$('body *');
-            for (let element of elements)
-            {
-                // 获取元素的所有属性值和类名
-                const attributes = await element.evaluate(node =>
-                {
-                    const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
-                    return { tagName: node.tagName, attrs, classList: [...node.classList] };
+     private async findClickableElement(elements) {
+        for (let element of elements) {
+            const attributes = await element.evaluate(node => {
+                const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
+                return { tagName: node.tagName, attrs, classList: [...node.classList] };
+            });
+            
+            if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play')) {
+                const isVisible = await element.evaluate(node => {
+                    const rect = node.getBoundingClientRect();
+                    return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
                 });
-                // 检查属性值或类名是否包含 "play" 作为一个单独的单词
-                if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
-                {
-                    // 检查元素是否在视口内
-                    const isVisible = await element.evaluate(node =>
-                    {
-                        const rect = node.getBoundingClientRect();
-                        return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
-                    });
-                    if (isVisible)
-                    {
-                        elementHandle = element;
-                        break;
-                    }
+    
+                if (isVisible) {
+                    return element;
                 }
             }
         }
-
-        // 如果找到了元素，执行点击操作
-        if (elementHandle)
-        {
-            const elementInfo = await elementHandle.evaluate(node =>
-            {
+    
+        return null;
+    }
+    
+    private async clickBtn() {
+        const frames = this.page.frames();
+        let elementHandle = null;
+    
+        for (let frame of frames) {
+            const elements = await frame.$$('body *');
+            elementHandle = await this.findClickableElement(elements);
+            if (elementHandle) break;
+        }
+    
+        if (!elementHandle) {
+            const elements = await this.page.$$('body *');
+            elementHandle = await this.findClickableElement(elements);
+        }
+    
+        if (elementHandle) {
+            const elementInfo = await elementHandle.evaluate(node => {
                 return {
                     tagName: node.tagName,
                     attributes: [...node.attributes].map(attr => ({ name: attr.name, value: attr.value })),
                     classList: [...node.classList]
                 };
             });
+    
             console.log('Element TagName:', elementInfo.tagName);
             console.log('Element Attributes:', elementInfo.attributes);
             console.log('Element ClassList:', elementInfo.classList);
-            await elementHandle.click();
+    
+            try {
+                await elementHandle.click();
+            } catch (error) {
+                console.error('Error clicking element:', error);
+            }
         }
     }
 

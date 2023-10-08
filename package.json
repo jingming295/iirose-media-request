@@ -4,7 +4,7 @@
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -32,13 +32,9 @@
   },
   "dependencies": {
     "get-video-duration": "^4.1.0",
-    "http-proxy": "^1.18.1",
-    "jimp": "^0.22.10",
-    "mkdirp": "^3.0.1",
-    "unzipper": "^0.10.14"
+    "jimp": "^0.22.10"
   },
   "devDependencies": {
-    "@playwright/test": "^1.38.1",
     "@types/node": "^20.6.3"
   }
 }
