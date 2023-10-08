@@ -3,8 +3,10 @@ import { MediaParsing } from '../MediaParsing';
 import { musicOrigin } from 'koishi-plugin-adapter-iirose';
 import { Config } from '../Configuration Profile/configuration';
 
+
+
 /**
- * 获取并处理MediaData
+ * @description 处理媒体
  */
 class MediaHandler
 {
@@ -12,15 +14,17 @@ class MediaHandler
     constructor(private ctx: Context, private config: Config)
     {
         this.logger = new Logger('iirose-media-request');
+        
     }
 
     /**
      * 获取MediaData
-     * @param url 
-     * @returns 
+     * @param url 链接
+     * @returns mediaData || null
      */
     private async parseMedia(url: string)
     {
+        
         const regex = /(http\S+)/i;
         const match = url.match(regex);
         const bvMatch = url.match(/(BV\w+)/i);
@@ -30,10 +34,15 @@ class MediaHandler
             console.log(`成功进入`);
             const mediaParsing = new MediaParsing(
                 extractedUrl,
+                // @ts-ignore
                 this.config['timeOut'],
+                // @ts-ignore
                 this.config['waitTime'],
+                // @ts-ignore
                 this.config['SESSDATA'],
+                // @ts-ignore
                 this.config['qn'],
+                // @ts-ignore
                 this.config['platform'],
                 this.ctx
             );
@@ -47,10 +56,15 @@ class MediaHandler
             console.log(`成功进入`);
             const mediaParsing = new MediaParsing(
                 extractedUrl,
+                // @ts-ignore
                 this.config['timeOut'],
+                // @ts-ignore
                 this.config['waitTime'],
+                // @ts-ignore
                 this.config['SESSDATA'],
+                // @ts-ignore
                 this.config['qn'],
+                // @ts-ignore
                 this.config['platform'],
                 this.ctx
             );
@@ -68,18 +82,18 @@ class MediaHandler
     /**
      * 处理MediaData到musicOrigin
      * @param options 
-     * @param arg 
+     * @param arg 传入的字符串
+     * @param userName 用户名
      * @returns 
      */
-    public async handleLink(options: { link?: boolean; }, arg: string, userName: string)
+    public async handleLink(options: { link?: boolean; data?: boolean; }, arg: string, userName: string)
     {
         if (arg != undefined)
         {
             try
             {
                 const mediaData = await this.parseMedia(arg);
-                if (mediaData === null)
-                    return null;
+                if (mediaData === null) return null;
                 const music: musicOrigin = {
                     type: mediaData.type,
                     name: mediaData.name,
@@ -89,41 +103,43 @@ class MediaHandler
                     url: mediaData.url,
                     duration: mediaData.duration,
                     bitRate: mediaData.bitRate || 720,
-                    color: this.config['mediaCardColor'],
+                    // @ts-ignore
+                    color: this.config['mediaCardColor'] || 'FFFFFF',
                 };
                 if (mediaData.error)
                 {
                     this.logger.error(mediaData.error);
                     return mediaData.error;
                 }
-
-                if (!music.url)
-                {
-                    return `<>没有找到媒体</>`;
-                }
                 else
                 {
                     if (options['link'])
                     {
-                        return `${music.url}`;
+                        return `<><parent><at id="${userName}"/><child/></parent>${music.url}</>`;
                     }
                     else if (options['data'])
                     {
-                        return `${JSON.stringify(music, null, 2)}`;
+                        return `<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(music, null, 2)}</>`;
                     }
                     else
                     {
+                        let returnmsg: string | null = null;
+                        // @ts-ignore
+                        if (this.config['trackUser']) returnmsg = `<><parent><at id="${userName}"/>点播了 ${mediaData.name}<child/></parent></>`;
+                        if (music.bitRate < 720) returnmsg += `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
+
                         this.ctx.emit('iirose/makeMusic', music);
-                        if (music.bitRate < 720)
-                            return `检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质`;
+                        if (returnmsg) return returnmsg;
+                        else return null;
                     }
                 }
             }
-            catch (error)
+            catch (error: any)
             {
-                return error;
+                console.log(error);
             }
         }
+        return null;
     }
 }
 
@@ -133,11 +149,13 @@ export function apply(ctx: Context, config: Config)
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
         .option('link', '只发出链接')
-        .option('data', '把整个music对象发出来').action(
+        .option('data', '把整个music对象发出来').action(// @ts-ignore
             async ({ session, options }, ...rest) =>
             {
+                if (!session || !session.username || !options) return;
                 if (session.platform !== 'iirose')
                     return `${session.platform}平台不支持此插件`;
+
                 try
                 {
                     let msgs: string[] = [];
@@ -145,7 +163,22 @@ export function apply(ctx: Context, config: Config)
                     {
                         for (const item of rest)
                         {
-                            const msg: string = await handler.handleLink(options, item, session.username);
+                            // @ts-ignore
+                            if (config['noHentai'])
+                            {
+                                if (
+                                    item.includes('porn') ||
+                                    item.includes('hanime') ||
+                                    item.includes('xvideo') ||
+                                    item.includes('dlsite') ||
+                                    item.includes('hentai')
+                                )
+                                {
+                                    return `禁止涩链接`;
+                                }
+                            }
+
+                            const msg: string | null = await handler.handleLink(options, item, session.username);
                             if (msg) msgs.push(msg);
                         }
                     }

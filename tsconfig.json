@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "strict": true,
     "rootDir": "src",
     "outDir": "lib",
     "target": "es2022",

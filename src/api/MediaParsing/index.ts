@@ -11,6 +11,9 @@ declare global
 {
     interface Window { __INITIAL_STATE__: any; }
 }
+/**
+ * 主要处理获取媒体的各种信息
+ */
 export class MediaParsing
 {
     timeOut: number;
@@ -18,26 +21,23 @@ export class MediaParsing
     biliBiliSessData: string;
     biliBiliqn: number;
     biliBiliPlatform: string;
-    mediaData: MediaData = {
-        type: null,
-        name: null,
-        signer: null,
-        cover: null,
-        link: null,
-        url: null,
-        duration: null,
-        bitRate: null,
-        color: null,
-        error: null
-    };
+
     errorHandle = new ErrorHandle();
     originUrl: string;
-    // browser: Browser;
-    // context: BrowserContext;
-    page: Page;
+    page!: Page;
     ctx: Context;
 
 
+    /**
+     * 
+     * @param url 链接
+     * @param timeOut 超时时间
+     * @param waitTime 等待时间
+     * @param biliBiliSessData 
+     * @param biliBiliqn 
+     * @param biliBiliPlatform 
+     * @param ctx 
+     */
     constructor(url: string, timeOut: number, waitTime: number, biliBiliSessData: string, biliBiliqn: number, biliBiliPlatform: string, ctx: Context)
     {
         this.originUrl = url;
@@ -49,75 +49,112 @@ export class MediaParsing
         this.ctx = ctx;
     }
 
+    /**
+     * @description 返回mediaData对象
+     * @returns mediaData
+     */
+    // private returnMediaData()
+    // {
+    //     const mediaData: MediaData = {
+    //         type: 'music',
+    //         name: '0',
+    //         signer: '0',
+    //         cover: '0',
+    //         link: '0',
+    //         url: '0',
+    //         duration: 0,
+    //         bitRate: 0,
+    //         color: '0',
+    //         error: '0'
+    //     };
+    //     return mediaData;
+    // }
+
+    private returnCompleteMediaData(
+        type: 'music' | 'video',
+        name:string,
+        signer:string,
+        cover:string,
+        url:string,
+        duration:number,
+        bitRate:number
+
+        ){
+        const mediaData:MediaData = {
+            type: type,
+            name: name,
+            signer: signer,
+            cover: cover,
+            link: url,
+            url: url,
+            duration: duration,
+            bitRate: bitRate,
+            error: null,
+        }
+        return mediaData
+    }
+
+    private returnErrorMediaData(errorMsg:string) {
+        const mediaData:MediaData = {
+            type: 'music',
+            name: '0',
+            signer: '0',
+            cover: '0',
+            link: '0',
+            url: '0',
+            duration: 0,
+            bitRate: 0,
+            error: errorMsg,
+        }
+        return mediaData
+    }
+
 
     /**
-     * 只需要开一个browser就好了
-     * @returns 
+     * @description 打开页面
+     * @returns mediaData
      */
     async openBrowser()
     {
 
-        let mediaData = this.mediaData;
+        // let mediaData = this.returnMediaData();
         try
         {
             this.page = await this.ctx.puppeteer.page();
             if (!this.page)
             {
-                mediaData.error = '游览器没有正确打开，请检查日志';
+                const mediaData = this.returnErrorMediaData('游览器没有正确打开，请检查日志')
                 return mediaData;
             }
-            mediaData = await this.HandleUrl();
+            const client = await this.page.target().createCDPSession();
+            await client.send('Page.setDownloadBehavior', {
+                behavior: 'deny',
+                downloadPath: './',
+            });
+            const mediaData = await this.HandleUrl();
             await this.page.close();
             return mediaData;
-        } catch (error)
+        } catch (error: any)
         {
-            mediaData.error = await this.errorHandle.ErrorHandle(error.message);
-
+            const mediaData = this.returnErrorMediaData(this.errorHandle.ErrorHandle(error.message)) 
             return mediaData;
         }
-
-
     }
 
+
+
     /**
-     * 返回mediaData对象
+     * @description 主要处理url应该去哪里，url不一定是url，也可能是bv号
      * @returns mediaData
-     */
-    private returnMediaData()
-    {
-        const mediaData: MediaData = {
-            type: null,
-            name: null,
-            signer: null,
-            cover: null,
-            link: null,
-            url: null,
-            duration: null,
-            bitRate: null,
-            color: null,
-            error: null
-        };
-        return mediaData;
-    }
-
-    /**
-     * @description 主要处理url应该去哪里
-     * @returns 
      */
     private async HandleUrl()
     {
 
-        if (await this.isDownloadLink())
-        {
-            const mediaData = this.returnMediaData();
-            mediaData.error = '这是个下载链接！';
-            return mediaData;
-        }
         if (this.originUrl.includes('bilibili') && this.originUrl.includes('BV') || (this.originUrl.includes('BV') && !this.originUrl.includes('http')))
         {
-            const MediaData = await this.handleBilibiliMedia();
-            return MediaData;
-        } else if ((this.originUrl.includes('bilibili') || this.originUrl.includes('b23.tv')) && this.originUrl.includes('ep'))
+            const mediaData = await this.handleBilibiliMedia();
+            return mediaData;
+        } else if ((this.originUrl.includes('bilibili') || this.originUrl.includes('b23.tv')) && this.originUrl.includes('bangumi'))
         {
             return await this.handleBilibiliBangumi();
         } else if (this.originUrl.includes('b23.tv'))
@@ -125,37 +162,37 @@ export class MediaParsing
             this.originUrl = await this.getRedirectUrl(this.originUrl);
             console.log(this.originUrl);
             this.originUrl = this.originUrl.replace(/\?/g, '/');
-            const MediaData = await this.handleBilibiliMedia();
-            return MediaData;
+            const mediaData = await this.handleBilibiliMedia();
+            return mediaData;
         }
         else
         {
-            const getMediaLength = new GetMediaLength;
-            const MediaData = await this.getMedia();
-            if (MediaData.url && !MediaData.duration)
+            if (await this.isDownloadLink())
             {
-                MediaData.duration = await getMediaLength.mediaLengthInSec(MediaData.url);
+                const mediaData = this.returnErrorMediaData('这是个下载链接！')
+                return mediaData;
             }
-            return MediaData;
+            const mediaData = await this.getMedia();
+            return mediaData;
         }
-
     }
 
     /**
-     * 检查看看链接是不是一个下载链接
-     * @returns 
+     * @description 检查看看链接是不是一个下载链接
+     * @returns boolean
      */
-    async isDownloadLink(): Promise<MediaData>
+    async isDownloadLink(): Promise<boolean>
     {
         const response = await axios.head(this.originUrl);
         const contentDisposition = response.headers['content-disposition'];
-        return contentDisposition && contentDisposition.startsWith('attachment');
+        if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html')) return true;
+        else return false;
     }
 
 
     /**
-     * 针对有重定向的链接，获取重定向后的链接
-     * @param shortUrl 
+     * @description 针对有重定向的链接，获取重定向后的链接
+     * @param shortUrl 重定向前的链接
      * @returns 
      */
     private async getRedirectUrl(shortUrl: string)
@@ -164,7 +201,7 @@ export class MediaParsing
         {
             const response = await axios.get(shortUrl, { maxRedirects: 0 });
             return response.headers.location;
-        } catch (error)
+        } catch (error: any)
         {
             const response = error.response;
             const redirectUrl = response.headers.location;
@@ -173,12 +210,18 @@ export class MediaParsing
     }
 
     /**
-     * 处理Bangumi的媒体
-     * @returns 
+     * @description 处理Bangumi的媒体
+     * @returns mediaData
      */
     private async handleBilibiliBangumi()
     {
-        const mediaData = this.returnMediaData();
+        let type: 'music' | 'video'
+        let name:string
+        let signer:string
+        let cover:string
+        let url:string
+        let duration:number
+        let bitRate:number
         const regex = /\/ep(\d+)/;
         const match = this.originUrl.match(regex);
         if (match)
@@ -186,24 +229,27 @@ export class MediaParsing
             const ep: number = parseInt(match[1], 10);
             const bangumiInfo = await this.getBangumiData(ep);
             let bangumiStream = await this.getBangumiStream(ep);
-
+            if (!bangumiInfo && !bangumiStream)
+            {
+                const mediaData = this.returnErrorMediaData('获取番剧信息失败，可能接口已经改变')
+                return mediaData;
+            }
             while (await this.checkResponseStatus(bangumiStream.durl[0].url) === false)
             {
                 this.changeBilibiliQn();
                 bangumiStream = await this.getBangumiStream(ep);
                 if (this.biliBiliqn === 6) break;
             }
+            const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
+            bitRate = this.getQuality(bangumiStream.quality);
+            cover = targetEpisodeInfo.cover;
+            duration = (targetEpisodeInfo.duration / 1000) + 1;
+            url = bangumiStream.durl[0].url;
+            name = targetEpisodeInfo.share_copy;
+            type = 'video';
+            signer = bangumiInfo.up_info.uname || '未定';
 
-
-            const targetEpisodeInfo = bangumiInfo.episodes.find(episodes => episodes.ep_id === ep);
-            mediaData.bitRate = this.getQuality(bangumiStream.quality);
-            mediaData.cover = targetEpisodeInfo.cover;
-            mediaData.duration = (targetEpisodeInfo.duration / 1000) + 1;
-            mediaData.link = bangumiStream.durl[0].url;
-            mediaData.url = bangumiStream.durl[0].url;
-            mediaData.name = targetEpisodeInfo.share_copy;
-            mediaData.type = 'video';
-            mediaData.signer = bangumiInfo.up_info.uname || '未定';
+            const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate)
 
             // console.log(bangumiInfo.episodes)
             // console.log(bangumiStream)
@@ -211,13 +257,13 @@ export class MediaParsing
 
 
         }
+        const mediaData = this.returnErrorMediaData('链接中没有发现ep号，请重新拿到链接')
+        return mediaData;
     }
 
     /**
-     * 主要获取Bangumi的url
-     * @param avid bilibili avid
-     * @param bvid bilibili bvid
-     * @param cid bilibili cid
+     * @description 主要获取Bangumi的url
+     * @param ep bilibili ep
      * @returns 
      */
     private async getBangumiStream(ep: number)
@@ -246,15 +292,15 @@ export class MediaParsing
             {
                 throw new Error(response.data.message);
             }
-        } catch (error)
+        } catch (error: any)
         {
             throw new Error(error.message);
         }
     }
 
     /**
-     * 主要获取Bangumi的各种信息
-     * @param ep 
+     * @description 主要获取Bangumi的各种信息
+     * @param ep bilibili ep
      * @returns 
      */
     private async getBangumiData(ep: number)
@@ -277,7 +323,7 @@ export class MediaParsing
             {
                 return null;
             }
-        } catch (error)
+        } catch (error: any)
         {
             console.error('Error:', error.message);
         }
@@ -285,30 +331,36 @@ export class MediaParsing
     }
 
     /**
-     * 处理bilibili的媒体
-     * @returns 
+     * @description 处理bilibili的媒体
+     * @returns mediaData
      */
     private async handleBilibiliMedia()
     {
-        const mediaData = this.returnMediaData();
+        let type: 'music' | 'video'
+        let name:string
+        let signer:string
+        let cover:string
+        let url:string
+        let duration:number
+        let bitRate:number
         try
         {
             let bvid: string;
             if (this.originUrl.includes('http') && this.originUrl.includes('video'))
             {
                 bvid = this.originUrl.split('/video/')[1].split('/')[0];
-            } else if (this.originUrl.includes('BV') || this.originUrl.includes('bv') )
+            } else if (this.originUrl.includes('BV') || this.originUrl.includes('bv'))
             {
                 bvid = this.originUrl;
             } else
             {
-                mediaData.error = '暂不支持';
+                const mediaData = this.returnErrorMediaData('暂不支持');
                 return mediaData;
             }
             const videoInfo = await this.getBilibiliVideoData(bvid);
             if (!videoInfo)
             {
-                mediaData.error = '这个不是正确的bv号';
+                const mediaData = this.returnErrorMediaData('这个不是正确的bv号');
                 return mediaData;
             }
             const cid = videoInfo.pages[0].cid;
@@ -327,40 +379,40 @@ export class MediaParsing
                 if (this.biliBiliqn === 6) break;
             }
 
-            mediaData.bitRate = this.getQuality(videoStream.quality);
-            if (videoInfo.pages) mediaData.duration = getDurationByCid(videoInfo.pages, cid);
-            else mediaData.duration = videoInfo.duration + 1;
-            mediaData.cover = videoInfo.pic;
-            mediaData.link = videoStream.durl[0].url;
-            mediaData.url = videoStream.durl[0].url;
-            mediaData.name = videoInfo.title;
-            mediaData.type = 'video';
-            mediaData.url = videoStream.durl[0].url;
-            mediaData.signer = videoInfo.owner.name;
+            bitRate = this.getQuality(videoStream.quality);
+            if (videoInfo.pages) duration = getDurationByCid(videoInfo.pages, cid);
+            else duration = videoInfo.duration + 1;
+            cover = videoInfo.pic;
+            url = videoStream.durl[0].url;
+            name = videoInfo.title;
+            type = 'video';
+            signer = videoInfo.owner.name;
+
+            const mediaData = this.returnCompleteMediaData(type,name,signer,cover,url,duration,bitRate)
             // console.log(videoStream)
             // console.log(videoInfo)
 
             return mediaData;
 
-            function getDurationByCid(pages, cid)
+            function getDurationByCid(pages: any[], cid: any)
             {
-                const page = pages.find(page => page.cid === cid);
+                const page = pages.find((page: { cid: any; }) => page.cid === cid);
                 return page ? page.duration : null;
             }
-        } catch (error)
+        } catch (error: any)
         {
-            mediaData.error = error;
+            const mediaData = this.returnErrorMediaData(error.message)
             return mediaData;
         }
 
     }
 
     /**
-     * 检查看看一个url是否返回403，或者无法访问
-     * @param videoStream 
+     * @description 检查看看一个url是否返回403，或者无法访问
+     * @param url  链接
      * @returns boolean
      */
-    private async checkResponseStatus(url)
+    private async checkResponseStatus(url: string)
     {
         try
         {
@@ -380,7 +432,7 @@ export class MediaParsing
     }
 
     /**
-     * 主要获取视频的各种信息
+     * @description 主要获取视频的各种信息
      * @param bvid bilibili bvid
      * @returns 
      */
@@ -404,7 +456,7 @@ export class MediaParsing
             {
                 return null;
             }
-        } catch (error)
+        } catch (error: any)
         {
             console.error('Error:', error.message);
         }
@@ -412,7 +464,7 @@ export class MediaParsing
     }
 
     /**
-     * 主要获取视频的url
+     * @description 主要获取视频的url
      * @param avid bilibili avid
      * @param bvid bilibili bvid
      * @param cid bilibili cid
@@ -446,14 +498,14 @@ export class MediaParsing
             {
                 console.error('Error:', response.data.message);
             }
-        } catch (error)
+        } catch (error: any)
         {
             console.error('Error:', error.message);
         }
     }
 
     /**
-     * 更换bilibiliQn
+     * @description 更换bilibiliQn
      */
     private changeBilibiliQn()
     {
@@ -495,11 +547,11 @@ export class MediaParsing
     }
 
     /**
-     * 根据qn获取quality
-     * @param quality 
+     * @description 根据qn获取quality
+     * @param qn bilibili qn 
      * @returns 
      */
-    private getQuality(qn)
+    private getQuality(qn: any)
     {
         switch (qn)
         {
@@ -537,7 +589,14 @@ export class MediaParsing
     private async getMedia(): Promise<MediaData>
     {
         const resourceUrls: string[] = [];
-        const mediaData = this.returnMediaData();
+        let type: 'music' | 'video' | null = null
+        let name:string
+        let signer:string
+        let cover:string | null = null
+        let url:string
+        let duration:number
+        let bitRate:number
+        let error:null
         try
         {
             this.page.on('request', async request =>
@@ -572,39 +631,57 @@ export class MediaParsing
 
 
 
-            function processMedia(type, url, mimeType)
+            function processMedia(typee: 'music' | 'video', url: string, mimeType: string | null)
             {
-                console.log('>>', type, url, mimeType);
+                console.log('>>', typee, url, mimeType);
                 resourceUrls.push(url);
-                mediaData.type = type;
-                mediaData.link = resourceUrls[0];
-                mediaData.url = resourceUrls[0];
+
+                type = typee;
+                resourceUrls[0];
             }
             await this.page.goto(this.originUrl, { timeout: this.timeOut });
             await this.clickBtn();
             await this.page.waitForTimeout(this.waitTime);
-            if (mediaData.type === 'video') mediaData.cover = await this.getThumbNail() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
-            if (mediaData.type === 'music') mediaData.cover = await this.searchImg() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
-            mediaData.name = await this.page.title() || '无法获取标题';
-        } catch (error)
+            if (type){
+                if (type === 'video') cover = await this.getThumbNail() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+                if (type === 'music') cover = await this.searchImg() || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+            }   
+            
+            name = await this.page.title() || '无法获取标题';
+        } catch (error: any)
         {
-            console.log(error);
-            mediaData.link = resourceUrls[0];
-            mediaData.url = resourceUrls[0];
-            mediaData.error = await this.errorHandle.ErrorHandle(error.message);
+            const mediaData = this.returnErrorMediaData(await this.errorHandle.ErrorHandle(error.message))
             return mediaData;
         }
-        mediaData.link = resourceUrls[0];
-        mediaData.url = resourceUrls[0];
+        if(resourceUrls[0].length){
+            url = resourceUrls[0];
+            signer = '无法获取'
+            bitRate = 720
 
-        return mediaData;
+            if(type != null && cover) {
+                const getMediaLength = new GetMediaLength()
+                duration = await getMediaLength.mediaLengthInSec(url);
+                const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate)
+                return mediaData;
+            } else {
+                const mediaData = this.returnErrorMediaData('<>没有找到媒体，主要是无法获取type或者cover</>')
+                return mediaData
+            }
+        } else {
+            const mediaData = this.returnErrorMediaData('<>没有找到媒体</>')
+            return mediaData
+        }
+
+        
+
+        
     }
 
     /**
-     * 获取缩略图
+     * @description 获取缩略图
      * @returns 
      */
-    private async getThumbNail(): Promise<string>
+    private async getThumbNail(): Promise<string | null>
     {
         const path = os.homedir();
         const videoElement = await this.page.$('video');
@@ -626,7 +703,7 @@ export class MediaParsing
 
 
     /**
-     * 用截图转换成base64
+     * @description 用截图转换成base64
      * @param element 
      * @param path 
      * @returns base64 image
@@ -645,21 +722,22 @@ export class MediaParsing
     }
 
     /**
-     * 点击按钮，尽量找到播放按钮
+     * @description 点击按钮，尽量找到播放按钮
+     * @param elements elements
      */
-    private async findClickableElement(elements)
+    private async findClickableElement(elements: ElementHandle<Element>[])
     {
         for (let element of elements)
         {
-            const attributes = await element.evaluate(node =>
+            const attributes = await element.evaluate((node: { attributes: any; tagName: any; classList: any; }) =>
             {
                 const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
                 return { tagName: node.tagName, attrs, classList: [...node.classList] };
             });
 
-            if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
+            if (attributes.attrs.some((attr: { value: string; }) => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
             {
-                const isVisible = await element.evaluate(node =>
+                const isVisible = await element.evaluate((node: { getBoundingClientRect: () => any; }) =>
                 {
                     const rect = node.getBoundingClientRect();
                     return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
@@ -675,6 +753,9 @@ export class MediaParsing
         return null;
     }
 
+    /**
+     * @description 尝试寻找并点击play按钮
+     */
     private async clickBtn()
     {
         const frames = this.page.frames();
@@ -695,7 +776,7 @@ export class MediaParsing
 
         if (elementHandle)
         {
-            const elementInfo = await elementHandle.evaluate(node =>
+            const elementInfo = await elementHandle.evaluate((node: { tagName: any; attributes: any; classList: any; }) =>
             {
                 return {
                     tagName: node.tagName,
@@ -719,7 +800,7 @@ export class MediaParsing
     }
 
     /**
-     * 查找特定的图片，音乐网站会用到
+     * @description 查找特定的图片，音乐网站会用到
      * @returns 
      */
     private async searchImg()
