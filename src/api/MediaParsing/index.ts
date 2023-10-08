@@ -61,9 +61,10 @@ export class MediaParsing
         try
         {
             this.page = await this.ctx.puppeteer.page();
-            if(!this.page){
-                mediaData.error = '游览器没有正确打开，请检查日志'
-                return mediaData
+            if (!this.page)
+            {
+                mediaData.error = '游览器没有正确打开，请检查日志';
+                return mediaData;
             }
             mediaData = await this.HandleUrl();
             await this.page.close();
@@ -105,6 +106,13 @@ export class MediaParsing
      */
     private async HandleUrl()
     {
+
+        if (await this.isDownloadLink())
+        {
+            const mediaData = this.returnMediaData();
+            mediaData.error = '这是个下载链接！';
+            return mediaData;
+        }
         if (this.originUrl.includes('bilibili') && this.originUrl.includes('BV') || (this.originUrl.includes('BV') && !this.originUrl.includes('http')))
         {
             const MediaData = await this.handleBilibiliMedia();
@@ -115,7 +123,7 @@ export class MediaParsing
         } else if (this.originUrl.includes('b23.tv'))
         {
             this.originUrl = await this.getRedirectUrl(this.originUrl);
-            console.log(this.originUrl)
+            console.log(this.originUrl);
             this.originUrl = this.originUrl.replace(/\?/g, '/');
             const MediaData = await this.handleBilibiliMedia();
             return MediaData;
@@ -131,6 +139,17 @@ export class MediaParsing
             return MediaData;
         }
 
+    }
+
+    /**
+     * 检查看看链接是不是一个下载链接
+     * @returns 
+     */
+    async isDownloadLink(): Promise<MediaData>
+    {
+        const response = await axios.head(this.originUrl);
+        const contentDisposition = response.headers['content-disposition'];
+        return contentDisposition && contentDisposition.startsWith('attachment');
     }
 
 
@@ -278,7 +297,7 @@ export class MediaParsing
             if (this.originUrl.includes('http') && this.originUrl.includes('video'))
             {
                 bvid = this.originUrl.split('/video/')[1].split('/')[0];
-            } else if (this.originUrl.includes('BV'))
+            } else if (this.originUrl.includes('BV') || this.originUrl.includes('bv') )
             {
                 bvid = this.originUrl;
             } else
@@ -323,7 +342,8 @@ export class MediaParsing
 
             return mediaData;
 
-            function getDurationByCid(pages, cid) {
+            function getDurationByCid(pages, cid)
+            {
                 const page = pages.find(page => page.cid === cid);
                 return page ? page.duration : null;
             }
@@ -627,59 +647,72 @@ export class MediaParsing
     /**
      * 点击按钮，尽量找到播放按钮
      */
-     private async findClickableElement(elements) {
-        for (let element of elements) {
-            const attributes = await element.evaluate(node => {
+    private async findClickableElement(elements)
+    {
+        for (let element of elements)
+        {
+            const attributes = await element.evaluate(node =>
+            {
                 const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
                 return { tagName: node.tagName, attrs, classList: [...node.classList] };
             });
-            
-            if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play')) {
-                const isVisible = await element.evaluate(node => {
+
+            if (attributes.attrs.some(attr => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
+            {
+                const isVisible = await element.evaluate(node =>
+                {
                     const rect = node.getBoundingClientRect();
                     return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
                 });
-    
-                if (isVisible) {
+
+                if (isVisible)
+                {
                     return element;
                 }
             }
         }
-    
+
         return null;
     }
-    
-    private async clickBtn() {
+
+    private async clickBtn()
+    {
         const frames = this.page.frames();
         let elementHandle = null;
-    
-        for (let frame of frames) {
+
+        for (let frame of frames)
+        {
             const elements = await frame.$$('body *');
             elementHandle = await this.findClickableElement(elements);
             if (elementHandle) break;
         }
-    
-        if (!elementHandle) {
+
+        if (!elementHandle)
+        {
             const elements = await this.page.$$('body *');
             elementHandle = await this.findClickableElement(elements);
         }
-    
-        if (elementHandle) {
-            const elementInfo = await elementHandle.evaluate(node => {
+
+        if (elementHandle)
+        {
+            const elementInfo = await elementHandle.evaluate(node =>
+            {
                 return {
                     tagName: node.tagName,
                     attributes: [...node.attributes].map(attr => ({ name: attr.name, value: attr.value })),
                     classList: [...node.classList]
                 };
             });
-    
+
             console.log('Element TagName:', elementInfo.tagName);
             console.log('Element Attributes:', elementInfo.attributes);
             console.log('Element ClassList:', elementInfo.classList);
-    
-            try {
+
+            try
+            {
                 await elementHandle.click();
-            } catch (error) {
+            } catch (error)
+            {
                 console.error('Error clicking element:', error);
             }
         }
