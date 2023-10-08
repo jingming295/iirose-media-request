@@ -61,6 +61,10 @@ export class MediaParsing
         try
         {
             this.page = await this.ctx.puppeteer.page();
+            if(!this.page){
+                mediaData.error = '游览器没有正确打开，请检查日志'
+                return mediaData
+            }
             mediaData = await this.HandleUrl();
             await this.page.close();
             return mediaData;
