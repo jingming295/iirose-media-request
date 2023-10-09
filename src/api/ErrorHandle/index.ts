@@ -7,7 +7,7 @@ export class ErrorHandle
     /**
      * @description 处理错误
      * @param ErrorMsg 错误信息
-     * @returns string
+     * @return string
      */
     ErrorHandle(ErrorMsg: string)
     {

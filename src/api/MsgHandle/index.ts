@@ -11,20 +11,20 @@ import { Config } from '../Configuration Profile/configuration';
 class MediaHandler
 {
     private logger: Logger;
-    constructor(private ctx: Context, private config: Config)
+    constructor(private ctx: Context, private config: any)
     {
         this.logger = new Logger('iirose-media-request');
-        
+
     }
 
     /**
-     * 获取MediaData
+     * @description 获取MediaData
      * @param url 链接
      * @returns mediaData || null
      */
     private async parseMedia(url: string)
     {
-        
+
         const regex = /(http\S+)/i;
         const match = url.match(regex);
         const bvMatch = url.match(/(BV\w+)/i);
@@ -34,15 +34,10 @@ class MediaHandler
             console.log(`成功进入`);
             const mediaParsing = new MediaParsing(
                 extractedUrl,
-                // @ts-ignore
                 this.config['timeOut'],
-                // @ts-ignore
                 this.config['waitTime'],
-                // @ts-ignore
                 this.config['SESSDATA'],
-                // @ts-ignore
                 this.config['qn'],
-                // @ts-ignore
                 this.config['platform'],
                 this.ctx
             );
@@ -56,15 +51,10 @@ class MediaHandler
             console.log(`成功进入`);
             const mediaParsing = new MediaParsing(
                 extractedUrl,
-                // @ts-ignore
                 this.config['timeOut'],
-                // @ts-ignore
                 this.config['waitTime'],
-                // @ts-ignore
                 this.config['SESSDATA'],
-                // @ts-ignore
                 this.config['qn'],
-                // @ts-ignore
                 this.config['platform'],
                 this.ctx
             );
@@ -80,11 +70,11 @@ class MediaHandler
 
 
     /**
-     * 处理MediaData到musicOrigin
-     * @param options 
+     * @description 处理MediaData到musicOrigin
+     * @param options 选项
      * @param arg 传入的字符串
      * @param userName 用户名
-     * @returns 
+     * @returns string | null
      */
     public async handleLink(options: { link?: boolean; data?: boolean; }, arg: string, userName: string)
     {
@@ -103,7 +93,6 @@ class MediaHandler
                     url: mediaData.url,
                     duration: mediaData.duration,
                     bitRate: mediaData.bitRate || 720,
-                    // @ts-ignore
                     color: this.config['mediaCardColor'] || 'FFFFFF',
                 };
                 if (mediaData.error)
@@ -143,14 +132,19 @@ class MediaHandler
     }
 }
 
-export function apply(ctx: Context, config: Config)
+/**
+ * @description apply
+ * @param ctx ctx
+ * @param config config
+ */
+export function apply(ctx: Context, config: any)
 {
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
         .option('link', '只发出链接')
-        .option('data', '把整个music对象发出来').action(// @ts-ignore
-            async ({ session, options }, ...rest) =>
+        .option('data', '把整个music对象发出来').action(
+            async ({ session, options }, ...rest): Promise<any> =>
             {
                 if (!session || !session.username || !options) return;
                 if (session.platform !== 'iirose')
@@ -163,7 +157,7 @@ export function apply(ctx: Context, config: Config)
                     {
                         for (const item of rest)
                         {
-                            // @ts-ignore
+
                             if (config['noHentai'])
                             {
                                 if (
