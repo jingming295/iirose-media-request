@@ -1,7 +1,6 @@
 import { Context, Logger } from 'koishi';
 import { MediaParsing } from '../MediaParsing';
 import { musicOrigin } from 'koishi-plugin-adapter-iirose';
-import { Config } from '../Configuration Profile/configuration';
 
 
 
