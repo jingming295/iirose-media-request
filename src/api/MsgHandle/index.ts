@@ -1,8 +1,13 @@
 import { Context, Logger } from 'koishi';
 import { MediaParsing } from '../MediaParsing';
 import { musicOrigin } from 'koishi-plugin-adapter-iirose';
+import { UpdateChecker } from '../CheckForUpdate';
 
-
+interface msgInfo
+{
+    hasRespond: boolean;
+    messageContent: string | null;
+}
 
 /**
  * @description 处理媒体
@@ -14,6 +19,23 @@ class MediaHandler
     {
         this.logger = new Logger('iirose-media-request');
 
+    }
+
+    private returnNoRespondMsgInfo(msg: string | null)
+    {
+        const msgInfo: msgInfo = {
+            hasRespond: false,
+            messageContent: msg
+        };
+        return msgInfo
+    }
+
+    private returnHasRespondMsgInfo(msg: string | null) {
+        const msgInfo: msgInfo = {
+            hasRespond: true,
+            messageContent: msg
+        };
+        return msgInfo
     }
 
     /**
@@ -80,7 +102,7 @@ class MediaHandler
             try
             {
                 const mediaData = await this.parseMedia(arg);
-                if (mediaData === null) return null;
+                if (mediaData === null) return this.returnNoRespondMsgInfo(null);
                 const music: musicOrigin = {
                     type: mediaData.type,
                     name: mediaData.name,
@@ -95,17 +117,17 @@ class MediaHandler
                 if (mediaData.error)
                 {
                     this.logger.error(mediaData.error);
-                    return mediaData.error;
+                    return this.returnHasRespondMsgInfo(mediaData.error);
                 }
                 else
                 {
                     if (options['link'])
                     {
-                        return `<><parent><at id="${userName}"/><child/></parent>${music.url}</>`;
+                        return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${music.url}</>`);
                     }
                     else if (options['data'])
                     {
-                        return `<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(music, null, 2)}</>`;
+                        return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(music, null, 2)}</>`);
                     }
                     else
                     {
@@ -115,8 +137,8 @@ class MediaHandler
                         if (music.bitRate < 720) returnmsg += `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
 
                         this.ctx.emit('iirose/makeMusic', music);
-                        if (returnmsg) return returnmsg;
-                        else return null;
+                        if (returnmsg) return this.returnHasRespondMsgInfo(returnmsg);
+                        else return this.returnHasRespondMsgInfo(null);;
                     }
                 }
             }
@@ -125,7 +147,7 @@ class MediaHandler
                 console.log(error);
             }
         }
-        return null;
+        return this.returnNoRespondMsgInfo(null);
     }
 }
 
@@ -144,12 +166,11 @@ export function apply(ctx: Context, config: any)
             async ({ session, options }, ...rest): Promise<any> =>
             {
                 if (!session || !session.username || !options) return;
-                if (session.platform !== 'iirose')
-                    return `${session.platform}平台不支持此插件`;
-
+                if (session.platform !== 'iirose') return `${session.platform}平台不支持此插件`;
                 try
                 {
                     let msgs: string[] = [];
+                    let response:boolean = false
                     if (rest)
                     {
                         for (const item of rest)
@@ -169,12 +190,25 @@ export function apply(ctx: Context, config: any)
                                 }
                             }
 
-                            const msg: string | null = await handler.handleLink(options, item, session.username);
-                            if (msg) msgs.push(msg);
+                            const msg = await handler.handleLink(options, item, session.username);
+
+                            if (msg.messageContent) msgs.push(msg.messageContent);
+                            if(msg.hasRespond) response = true
                         }
                     }
-                    if (msgs)
-                        return msgs[0];
+                    console.log(response)
+                    if (msgs && msgs.length > 0) session.send(msgs[0]);
+                    if (config['detectUpdate'] && response)
+                    {
+                        const updateChecker = new UpdateChecker();
+                        const updateInfo = await updateChecker.checkForUpdates();
+                        if (!updateInfo.latest)
+                        {
+                            session?.send(updateInfo.messageContent);
+                        }
+                    }
+
+                    return;
                 } catch (error)
                 {
                     return error;
@@ -182,3 +216,4 @@ export function apply(ctx: Context, config: any)
             }
         );
 }
+

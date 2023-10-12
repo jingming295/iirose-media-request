@@ -111,6 +111,10 @@ export class MediaParsing
     {
         try
         {
+            if(!await ctx.puppeteer){
+                const mediaData = this.returnErrorMediaData('puppeteer 未安装或没有正确配置，请在插件市场安装');
+                return mediaData;
+            }
             this.page = await ctx.puppeteer.page();
             if (!this.page)
             {
@@ -127,6 +131,7 @@ export class MediaParsing
             return mediaData;
         } catch (error: any)
         {
+            console.log(error)
             const mediaData = this.returnErrorMediaData(this.errorHandle.ErrorHandle(error.message));
             return mediaData;
         }

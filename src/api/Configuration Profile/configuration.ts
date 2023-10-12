@@ -7,7 +7,7 @@ export interface Config { }
 export const Config: Schema<Config> = Schema.intersect([
   Schema.object({
     timeOut: Schema.number().role('slider').min(1000).max(100000).default(30000).description('等待页面加载的超时时长'),
-    waitTime: Schema.number().role('slider').min(100).max(50000).default(3000).description('页面加载完成后的等待时间'),
+    waitTime: Schema.number().role('slider').min(100).max(50000).default(2000).description('页面加载完成后的等待时间'),
   }).description('游览器页面相关设置'),
   Schema.object({
     SESSDATA: Schema.string().default('').description('bilibili的SESSDATA，在cookie获取，不填只能获取360p的视频，填了能获取1080p的视频'),
@@ -33,6 +33,7 @@ export const Config: Schema<Config> = Schema.intersect([
     mediaCardColor: Schema.string().default('FFFFFF').description('艾特媒体的时候的媒体卡片颜色，使用HEX，不需要#, 具体参考https://www.sojson.com/web/panel.html'),
     noHentai: Schema.boolean().default(true).description('是否禁止抓取涩涩网站'),
     trackUser: Schema.boolean().default(false).description('机器人是否说明是谁点播的视频（以确保他人点播违规视频的时候有证据）'),
-  }).description('点视频的相关设置')
+    detectUpdate: Schema.boolean().default(true).description('是否检测本插件更新，打开的话，如果检测到不是最新版，机器人将提示'),
+  }).description('插件的相关设置')
 
 ]);
