@@ -1,26 +1,8 @@
 import { Context, Logger } from 'koishi';
-import { musicOrigin } from 'koishi-plugin-adapter-iirose';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaParsing, BiliBili, Netease } from '../MediaParsing';
 
-interface msgInfo
-{
-    hasRespond: boolean;
-    messageContent: string | null;
-    mediaData: MediaData | null;
-}
-interface Config
-{
-    timeOut: number;
-    waitTime: number;
-    SESSDATA: string;
-    qn: number;
-    platform: string;
-    mediaCardColor: string;
-    noHentai: boolean;
-    trackUser: boolean;
-    detectUpdate: boolean;
-}
+
 
 /**
  * @description 处理媒体
@@ -28,7 +10,7 @@ interface Config
 class MediaHandler
 {
     private logger: Logger;
-    constructor(private ctx: Context, private config: any)
+    constructor(private ctx: Context, private config: Config)
     {
         this.logger = new Logger('iirose-media-request');
 
@@ -213,7 +195,7 @@ export function apply(ctx: Context, config: Config)
             {
                 if (!session || !session.username || !options) return;
                 const logger = new Logger('iirose-media-request');
-                
+
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')
