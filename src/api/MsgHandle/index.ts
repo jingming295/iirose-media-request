@@ -35,8 +35,8 @@ async function handleMediaRequests(
     session: Session,
     config: Config
 ): Promise<void> {
+    const logger = new Logger('iirose-media-request');
     try {
-        const logger = new Logger('iirose-media-request');
         const forbiddenKeywords: string[] = ['porn', 'hanime', 'xvideo', 'dlsite', 'hentai'];
         const responseArray: boolean[] = await Promise.all(rest.map(async item => {
             if (config['noHentai'] && forbiddenKeywords.some(keyword => item.includes(keyword))) {
