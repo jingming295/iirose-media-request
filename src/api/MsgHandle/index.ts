@@ -9,6 +9,18 @@ interface msgInfo
     messageContent: string | null;
     mediaData: MediaData | null;
 }
+interface Config
+{
+    timeOut: number;
+    waitTime: number;
+    SESSDATA: string;
+    qn: number;
+    platform: string;
+    mediaCardColor: string;
+    noHentai: boolean;
+    trackUser: boolean;
+    detectUpdate: boolean;
+}
 
 /**
  * @description 处理媒体
@@ -128,7 +140,7 @@ class MediaHandler
      * @param userName 用户名
      * @returns string | null
      */
-    public async handleMediaRequest(options: { link?: boolean; data?: boolean; param?: boolean; }, arg: string, userName: string, uid: any)
+    public async handleMediaRequest(options: { link?: boolean; data?: boolean; param?: boolean; }, arg: string, userName: string, uid: string)
     {
         if (arg === undefined) return this.returnNoRespondMsgInfo(null, null);
         try
@@ -163,7 +175,6 @@ class MediaHandler
                     return this.returnHasRespondMsgInfo(`&lt;${mediaData.name} - ${mediaData.signer} - ${mediaData.cover}&gt; ${mediaData.url}`, null);
                 default:
                     let returnmsg: string | null = null;
-                    // @ts-ignore
                     if (this.config['trackUser'])
                     {
                         returnmsg = `<><parent><at id="${userName}"/>点播了 ${mediaData.name}<child/></parent></>`;
@@ -175,7 +186,7 @@ class MediaHandler
             }
 
         }
-        catch (error: any)
+        catch (error)
         {
             this.logger.error(error);
         }
@@ -189,19 +200,20 @@ class MediaHandler
  * @param ctx ctx
  * @param config config
  */
-export function apply(ctx: Context, config: any)
+export function apply(ctx: Context, config: Config)
 {
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
-
     ctx.command(comm, 'iirose艾特视频/音频')
         .option('link', '只发出链接')
         .option('data', '把整个music对象发出来')
         .option('cut', '如果是iirose平台就cut视频')
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
-            async ({ session, options }, ...rest): Promise<any> =>
+            async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
                 if (!session || !session.username || !options) return;
+                let logger: Logger;
+                logger = new Logger('iirose-media-request');
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')
@@ -211,9 +223,9 @@ export function apply(ctx: Context, config: any)
                 }
                 try
                 {
-                    const forbiddenKeywords = ['porn', 'hanime', 'xvideo', 'dlsite', 'hentai'];
+                    const forbiddenKeywords: string[] = ['porn', 'hanime', 'xvideo', 'dlsite', 'hentai'];
 
-                    const responseArray = await Promise.all(rest.map(async item =>
+                    const responseArray: boolean[] = await Promise.all(rest.map(async item =>
                     {
                         if (config['noHentai'] && forbiddenKeywords.some(keyword => item.includes(keyword)))
                         {
@@ -251,7 +263,7 @@ export function apply(ctx: Context, config: any)
                     return;
                 } catch (error)
                 {
-                    return error;
+                    logger.error(error);
                 }
             }
         );

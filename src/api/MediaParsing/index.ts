@@ -343,7 +343,7 @@ export class MediaParsing
         const frames = page.frames();
         let elementHandle = null;
 
-        for (let frame of frames)
+        for (const frame of frames)
         {
             const elements = await frame.$$('body *');
             elementHandle = await this.findClickableElement(elements);
