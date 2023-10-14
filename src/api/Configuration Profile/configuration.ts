@@ -32,7 +32,7 @@ export const Config: Schema<Config> = Schema.intersect([
   Schema.object({
     mediaCardColor: Schema.string().default('FFFFFF').description('艾特媒体的时候的媒体卡片颜色，使用HEX，不需要#, 具体参考https://www.sojson.com/web/panel.html'),
     noHentai: Schema.boolean().default(true).description('是否禁止抓取涩涩网站'),
-    trackUser: Schema.boolean().default(false).description('机器人是否说明是谁点播的视频（以确保他人点播违规视频的时候有证据）'),
+    trackUser: Schema.boolean().default(false).description('机器人是否说明是谁点播和cut的视频（以确保他人点播违规视频的时候有证据）'),
     detectUpdate: Schema.boolean().default(true).description('是否检测本插件更新，打开的话，如果检测到不是最新版，机器人将提示'),
   }).description('插件的相关设置')
 
