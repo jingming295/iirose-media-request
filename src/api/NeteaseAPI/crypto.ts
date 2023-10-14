@@ -12,7 +12,7 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7cl
 
 const eapiKey = 'e82ckenh8dichen8';
 
-const aesEncrypt = (buffer: Buffer, mode: string, key: any, iv: any): Buffer => {
+const aesEncrypt = (buffer: Buffer, mode: string, key: Uint8Array | string, iv: Buffer | string): Buffer => {
   const cipher = crypto.createCipheriv('aes-128-' + mode, key, iv);
   return Buffer.concat([cipher.update(buffer), cipher.final()]);
 };
@@ -22,12 +22,7 @@ const rsaEncrypt = (buffer: Buffer, key: string): Buffer => {
   return crypto.publicEncrypt({ key: key, padding: crypto.constants.RSA_NO_PADDING }, buffer);
 };
 
-interface WeapiResult {
-  params: string;
-  encSecKey: string;
-}
-
-const weapi = (object: any) => {
+const weapi = (object: ParamsObject) => {
   const text = JSON.stringify(object);
   const secretKey = crypto.randomBytes(16).map((n) => base62.charAt(n % 62).charCodeAt(0));
 
@@ -48,7 +43,7 @@ interface LinuxapiResult {
   eparams: string;
 }
 
-const linuxapi = (object: any): LinuxapiResult => {
+const linuxapi = (object: ParamsObject): LinuxapiResult => {
   const text = JSON.stringify(object);
   return {
     eparams: aesEncrypt(Buffer.from(text), 'ecb', linuxapiKey, '')
@@ -61,7 +56,7 @@ interface EapiResult {
   params: string;
 }
 
-const eapi = (url: string, object: any): EapiResult => {
+const eapi = (url: string, object: ParamsObject): EapiResult => {
   const text = typeof object === 'object' ? JSON.stringify(object) : object;
   const message = `nobody${url}use${text}md5forencrypt`;
   const digest = crypto.createHash('md5').update(message).digest('hex');

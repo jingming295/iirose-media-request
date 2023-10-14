@@ -169,6 +169,12 @@ export class MediaParsing
      */
     private async getMedia(page: Page, originUrl: string, timeOut: number, waitTime: number): Promise<MediaData>
     {
+        function processMedia(type: 'music' | 'video', url: string, mimeType: string | null)
+        {
+            console.log('>>', type, url, mimeType);
+            resourceUrls.push(url);
+            mediaType = type;
+        }
         const resourceUrls: string[] = [];
         let mediaType: 'music' | 'video' | null = null;
         let name: string;
@@ -202,15 +208,6 @@ export class MediaParsing
                     // console.error(`No response for (is m3u8 or m4a): ${url}`);
                 }
             });
-
-
-
-            function processMedia(type: 'music' | 'video', url: string, mimeType: string | null)
-            {
-                console.log('>>', type, url, mimeType);
-                resourceUrls.push(url);
-                mediaType = type;
-            }
             await page.goto(originUrl, { timeout: timeOut });
             await this.clickBtn(page);
             await page.waitForTimeout(waitTime);
@@ -693,7 +690,7 @@ export class Netease extends MediaParsing
             songData = songData.songs[0];
             let songResource = await neteaseApi.getSongResource(id);
             songResource = songResource[0];
-            url = await neteaseApi.getRedirectUrl(songResource.url);
+            url = await this.getRedirectUrl(songResource.url);
             type = 'music';
             name = songData.name;
             cover = songResource.pic;

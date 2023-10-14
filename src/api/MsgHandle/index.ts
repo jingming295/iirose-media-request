@@ -145,6 +145,7 @@ class MediaHandler
         if (arg === undefined) return this.returnNoRespondMsgInfo(null, null);
         try
         {
+            let returnmsg: string | null = null;
             const mediaArgument = this.parseMediaArgument(arg);
             if (!mediaArgument) return this.returnNoRespondMsgInfo(null, null); // mediaArgument为空
 
@@ -174,7 +175,6 @@ class MediaHandler
                 case options['param']:
                     return this.returnHasRespondMsgInfo(`&lt;${mediaData.name} - ${mediaData.signer} - ${mediaData.cover}&gt; ${mediaData.url}`, null);
                 default:
-                    let returnmsg: string | null = null;
                     if (this.config['trackUser'])
                     {
                         returnmsg = `<><parent><at id="${userName}"/>点播了 ${mediaData.name}<child/></parent></>`;
@@ -212,8 +212,8 @@ export function apply(ctx: Context, config: Config)
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
                 if (!session || !session.username || !options) return;
-                let logger: Logger;
-                logger = new Logger('iirose-media-request');
+                const logger = new Logger('iirose-media-request');
+                
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')

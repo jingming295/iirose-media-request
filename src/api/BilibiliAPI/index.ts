@@ -33,9 +33,9 @@ export class BiliBiliApi
             {
                 throw new Error(response.data.message);
             }
-        } catch (error: any)
+        } catch (error)
         {
-            throw new Error(error.message);
+            throw new Error((error as Error).message);
         }
     }
 
@@ -66,10 +66,10 @@ export class BiliBiliApi
             {
                 return null;
             }
-        } catch (error: any)
+        } catch (error)
         {
+            console.error('Error:', (error as Error).message);
             return null;
-            console.error('Error:', error.message);
         }
 
     }
@@ -101,9 +101,9 @@ export class BiliBiliApi
             {
                 return null;
             }
-        } catch (error: any)
+        } catch (error)
         {
-            console.error('Error:', error.message);
+            console.error('Error:', (error as Error).message);
         }
 
     }
@@ -144,9 +144,9 @@ export class BiliBiliApi
             {
                 console.error('Error:', response.data.message);
             }
-        } catch (error: any)
+        } catch (error)
         {
-            console.error('Error:', error.message);
+            console.error('Error:', (error as Error).message);
         }
     }
 }
