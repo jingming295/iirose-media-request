@@ -17,7 +17,7 @@
 [![npm](https://img.shields.io/npm/v/koishi-plugin-iirose-media-request?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-iirose-media-request)
 
 
-# 🎉隆重介绍，万能的花园@媒体插件
+# 🎉隆重介绍，万能的适用全平台的点播媒体插件
 
 ## [IIROSE-MEDIA-REQUEST](https://github.com/jingming295/koishi-plugin-iirose-media-request)
 
@@ -42,7 +42,7 @@
 
 **如果是b站视频，你也可以这样**
 
-例子1：`a 【镇魂街 第一季：第1话 镇魂街】 https://www.bilibili.com/bangumi/play/ep86866/?share_source=copy_web`
+例子1：`a 【【甘城なつき】猫猫惨叫！】 https://www.bilibili.com/video/BV1Yw411c7cC/?share_source=copy_web`
 
 例子2：`a BV1Bx411K7Dd` 
 
@@ -72,7 +72,7 @@
 
 例子1：`a --link https://www.example.com`
 
-例子2：`a --link 【镇魂街 第一季：第1话 镇魂街】 https://www.bilibili.com/bangumi/play/ep86866/?share_source=copy_web`
+例子2：`a --link 【【甘城なつき】猫猫惨叫！】 https://www.bilibili.com/video/BV1Yw411c7cC/?share_source=copy_web`
 
 例子3：`a --link BV1Bx411K7Dd` 
 
@@ -201,19 +201,13 @@
 
 ## 🐛Bug反馈
 
-**如果发现bug可以私聊我： [*铭铭.*] 说，也可以去[koishi-plugin-iirose-media-request](https://github.com/jingming295/koishi-plugin-iirose-media-request/issues)开Issues**
+**如果发现bug可以去[koishi-plugin-iirose-media-request](https://github.com/jingming295/koishi-plugin-iirose-media-request/issues)开Issues**
 
 ***
 
 ## 🙇
 
 **这个插件真的很好用，求求你们用啦**
-
-***
-
-## 🧪试用
-
-** [*铭铭280*] 常驻在 [_6433d0efdeb20_] （大概）**
 
 ***
 

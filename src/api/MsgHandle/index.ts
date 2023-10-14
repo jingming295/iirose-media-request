@@ -7,6 +7,7 @@ interface msgInfo
 {
     hasRespond: boolean;
     messageContent: string | null;
+    mediaData: MediaData | null;
 }
 
 /**
@@ -26,11 +27,12 @@ class MediaHandler
      * @param msg 信息
      * @returns 
      */
-    private returnNoRespondMsgInfo(msg: string | null)
+    private returnNoRespondMsgInfo(msg: string | null, mediaData: MediaData | null)
     {
         const msgInfo: msgInfo = {
             hasRespond: false,
-            messageContent: msg
+            messageContent: msg,
+            mediaData: mediaData
         };
         return msgInfo;
     }
@@ -40,11 +42,12 @@ class MediaHandler
      * @param msg 信息
      * @returns 
      */
-    private returnHasRespondMsgInfo(msg: string | null)
+    private returnHasRespondMsgInfo(msg: string | null, mediaData: MediaData | null)
     {
         const msgInfo: msgInfo = {
             hasRespond: true,
-            messageContent: msg
+            messageContent: msg,
+            mediaData: mediaData
         };
         return msgInfo;
     }
@@ -108,7 +111,8 @@ class MediaHandler
             default:
                 if (await mediaParsing.isDownloadLink(originMediaArgument))
                 {
-                    return mediaParsing.returnErrorMediaData('这是个下载链接！');
+                    console.log('sadadas');
+                    return mediaParsing.returnErrorMediaData('点播失败！');
                 }
                 return await mediaParsing.openBrowser(this.ctx, originMediaArgument, timeOut, waitTime);
         }
@@ -126,14 +130,14 @@ class MediaHandler
      */
     public async handleMediaRequest(options: { link?: boolean; data?: boolean; param?: boolean; }, arg: string, userName: string, uid: any)
     {
-        if (arg === undefined) return this.returnNoRespondMsgInfo(null);
+        if (arg === undefined) return this.returnNoRespondMsgInfo(null, null);
         try
         {
             const mediaArgument = this.parseMediaArgument(arg);
-            if (!mediaArgument) return this.returnNoRespondMsgInfo(null); // mediaArgument为空
+            if (!mediaArgument) return this.returnNoRespondMsgInfo(null, null); // mediaArgument为空
 
-            const mediaData = await this.processMediaArgument(mediaArgument);
-            const music: musicOrigin = {
+            let mediaData = await this.processMediaArgument(mediaArgument);
+            mediaData = {
                 type: mediaData.type,
                 name: mediaData.name,
                 signer: mediaData.signer || '无法获取',
@@ -142,21 +146,21 @@ class MediaHandler
                 url: mediaData.url,
                 duration: mediaData.duration,
                 bitRate: mediaData.bitRate || 720,
-                color: this.config['mediaCardColor'] || 'FFFFFF',
+                error: mediaData.error
             };
             if (mediaData.error)
             {
                 this.logger.error(mediaData.error);
-                return this.returnHasRespondMsgInfo(mediaData.error);
+                return this.returnHasRespondMsgInfo(mediaData.error, mediaData);
             }
             switch (true)
             {
                 case options['link']:
-                    return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${music.url}</>`);
+                    return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${mediaData.url}</>`, null);
                 case options['data']:
-                    return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(music, null, 2)}</>`);
+                    return this.returnHasRespondMsgInfo(`<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(mediaData, null, 2)}</>`, null);
                 case options['param']:
-                    return this.returnHasRespondMsgInfo(`&lt;${music.name} - ${music.signer} - ${music.cover}&gt; ${music.url}`);
+                    return this.returnHasRespondMsgInfo(`&lt;${mediaData.name} - ${mediaData.signer} - ${mediaData.cover}&gt; ${mediaData.url}`, null);
                 default:
                     let returnmsg: string | null = null;
                     // @ts-ignore
@@ -165,10 +169,9 @@ class MediaHandler
                         returnmsg = `<><parent><at id="${userName}"/>点播了 ${mediaData.name}<child/></parent></>`;
                         this.logger.info(`用户名：${userName} 唯一标识：${uid} 点播了 ${mediaData.name}: ${mediaData.url}`);
                     }
-                    if (music.bitRate < 720 && music.type === 'video') returnmsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
-                    this.ctx.emit('iirose/makeMusic', music);
-                    if (returnmsg) return this.returnHasRespondMsgInfo(returnmsg);
-                    else return this.returnHasRespondMsgInfo(null);
+                    if (mediaData.bitRate < 720 && mediaData.type === 'video') returnmsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
+                    if (returnmsg) return this.returnHasRespondMsgInfo(returnmsg, mediaData);
+                    else return this.returnHasRespondMsgInfo(null, mediaData);
             }
 
         }
@@ -177,7 +180,7 @@ class MediaHandler
             this.logger.error(error);
         }
 
-        return this.returnNoRespondMsgInfo(null);
+        return this.returnNoRespondMsgInfo(null, null);
     }
 }
 
@@ -206,9 +209,6 @@ export function apply(ctx: Context, config: any)
                     session.send('cut');
                     if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut了视频<child/></parent></>`);
                 }
-
-                if (session.platform !== 'iirose') return `${session.platform}平台不支持此插件`;
-
                 try
                 {
                     const forbiddenKeywords = ['porn', 'hanime', 'xvideo', 'dlsite', 'hentai'];
@@ -217,12 +217,23 @@ export function apply(ctx: Context, config: any)
                     {
                         if (config['noHentai'] && forbiddenKeywords.some(keyword => item.includes(keyword)))
                         {
-                            session?.send("禁止涩链接")
+                            session?.send("禁止涩链接");
                             return false;
                         }
                         const msg = await handler.handleMediaRequest(options, item, username, uid);
-                        if(msg.messageContent){
-                            session.send(msg.messageContent)
+                        if (msg.messageContent)
+                        {
+                            session.send(msg.messageContent);
+                        }
+                        if (msg.mediaData !== null && msg.mediaData.error === null)
+                        {
+                            if (msg.mediaData.type === 'music')
+                            {
+                                session.send(`<audio name="${msg.mediaData.name}" url="${msg.mediaData.url}" author="${msg.mediaData.signer}" cover="${msg.mediaData.cover}" duration="${msg.mediaData.duration}" bitRate="${msg.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                            } else
+                            {
+                                session.send(`<video name="${msg.mediaData.name}" url="${msg.mediaData.url}" author="${msg.mediaData.signer}" cover="${msg.mediaData.cover}" duration="${msg.mediaData.duration}" bitRate="${msg.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                            }
                         }
                         return msg.hasRespond;
                     }));

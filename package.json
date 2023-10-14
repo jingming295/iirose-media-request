@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-iirose-media-request",
-  "description": "适用于IIROSE的@视频和@音频插件，他的原理和游览器和devtools类似，本插件需要用到puppeteer，最好设置chrome或者edge的路径，不要使用chromium，如果有bug记得说",
+  "description": "适用于**全平台**的**点播视频**和**点播音频**插件，你只需要提供想要拉取的视频的目标网址，插件就会解析给你，他的原理和游览器和devtools类似，本插件需要用到puppeteer，最好设置chrome或者edge的路径，不要使用chromium，如果有bug记得说",
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",

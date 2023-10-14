@@ -119,13 +119,20 @@ export class MediaParsing
      * 检查看看链接是不是一个下载链接
      * @returns boolean
      */
-    async isDownloadLink(originUrl: string): Promise<boolean>
-    {
-        const response = await axios.head(originUrl);
-        const contentDisposition = response.headers['content-disposition'];
-        if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html')) return true;
-        else return false;
+     async isDownloadLink(originUrl: string): Promise<boolean> {
+        try {
+            const response = await axios.head(originUrl);
+            const contentDisposition = response.headers['content-disposition'];
+            if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html')) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            return true;
+        }
     }
+    
 
 
     /**
@@ -659,15 +666,13 @@ export class Netease extends MediaParsing
         const neteaseApi = new NeteaseApi();
         try
         {
-            let id: string;
-            if (originUrl.includes('http') && originUrl.includes('song'))
-            {
-                const match = originUrl.match(/id=(\d+)/);
-                if (match)
-                {
-                    id = match[1];
-                } else
-                {
+            let id: string|null;
+            if (originUrl.includes('http') && originUrl.includes('song')) {
+                const match1 = originUrl.match(/id=(\d+)/);
+                const match2 = originUrl.match(/\/song\/(\d+)/);
+            
+                id = match1 ? match1[1] : (match2 ? match2[1] : null);
+                if(id===null){
                     const mediaData = this.returnErrorMediaData('暂不支持');
                     return mediaData;
                 }
@@ -677,21 +682,18 @@ export class Netease extends MediaParsing
                 const mediaData = this.returnErrorMediaData('暂不支持');
                 return mediaData;
             }
-
-            
             let songData = await neteaseApi.getNeteaseMusicDetail(id);
             songData = songData.songs[0];
             let songResource = await neteaseApi.getSongResource(id);
             songResource = songResource[0];
             url = await neteaseApi.getRedirectUrl(songResource.url);
-            type = 'music'
-            name = songData.name
-            cover = songResource.pic
+            type = 'music';
+            name = songData.name;
+            cover = songResource.pic;
             bitRate = songData.hMusic ? (songData.hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
-            signer = songData.artists[0].name
-            duration = songData.duration/1000
+            signer = songData.artists[0].name;
+            duration = songData.duration / 1000;
             const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
-
             return mediaData;
         } catch (error: any)
         {
