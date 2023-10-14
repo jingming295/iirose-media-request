@@ -474,6 +474,11 @@ export class BiliBili extends MediaParsing
      */
     public async handleBilibiliMedia(originUrl: string, biliBiliSessData: string, biliBiliPlatform: string, biliBiliqn: number)
     {
+        function getDurationByCid(pages: PageInfo[], cid: number)
+        {
+            const page = pages.find((page: { cid: number; }) => page.cid === cid);
+            return page ? page.duration : 0;
+        }
         let type: 'music' | 'video';
         let name: string;
         let signer: string;
@@ -530,15 +535,8 @@ export class BiliBili extends MediaParsing
             const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
             // console.log(videoStream)
             // console.log(videoInfo)
-            console.log(videoInfo.pages)
+            console.log(videoInfo.pages);
             return mediaData;
-
-            
-            function getDurationByCid(pages: PageInfo[], cid: number)
-            {
-                const page = pages.find((page: { cid: number; }) => page.cid === cid);
-                return page ? page.duration : 0;
-            }
         } catch (error)
         {
             const mediaData = this.returnErrorMediaData((error as Error).message);
