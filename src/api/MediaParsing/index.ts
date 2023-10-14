@@ -9,10 +9,6 @@ import { Context } from 'koishi';
 import { BiliBiliApi } from '../BilibiliAPI';
 import { NeteaseApi } from '../NeteaseAPI';
 
-declare global
-{
-    interface Window { __INITIAL_STATE__: any; }
-}
 /**
  * 主要处理通用网站
  */
@@ -107,10 +103,9 @@ export class MediaParsing
             const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime);
             await page.close();
             return mediaData;
-        } catch (error: any)
+        } catch (error)
         {
-            console.log(error);
-            const mediaData = this.returnErrorMediaData(this.errorHandle.ErrorHandle(error.message));
+            const mediaData = this.returnErrorMediaData(this.errorHandle.ErrorHandle((error as Error).message));
             return mediaData;
         }
     }
@@ -119,20 +114,25 @@ export class MediaParsing
      * 检查看看链接是不是一个下载链接
      * @returns boolean
      */
-     async isDownloadLink(originUrl: string): Promise<boolean> {
-        try {
+    async isDownloadLink(originUrl: string): Promise<boolean>
+    {
+        try
+        {
             const response = await axios.head(originUrl);
             const contentDisposition = response.headers['content-disposition'];
-            if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html')) {
+            if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html'))
+            {
                 return true;
-            } else {
+            } else
+            {
                 return false;
             }
-        } catch (error) {
+        } catch (error)
+        {
             return true;
         }
     }
-    
+
 
 
     /**
@@ -149,11 +149,16 @@ export class MediaParsing
                 responseType: 'stream' // 将 responseType 设置为 'stream'
             });
             return response.headers.location;
-        } catch (error: any)
+        } catch (error)
         {
-            const response = error.response;
-            const redirectUrl = response.headers.location;
-            return redirectUrl;
+            if (axios.isAxiosError(error) && error.response)
+            {
+                const redirectUrl = error.response.headers.location;
+                return redirectUrl;
+            } else
+            {
+                throw error; // 如果没有 response 对象，将错误重新抛出
+            }
         }
     }
 
@@ -216,9 +221,9 @@ export class MediaParsing
             }
 
             name = await page.title() || '无法获取标题';
-        } catch (error: any)
+        } catch (error)
         {
-            const mediaData = this.returnErrorMediaData(await this.errorHandle.ErrorHandle(error.message));
+            const mediaData = this.returnErrorMediaData(await this.errorHandle.ErrorHandle((error as Error).message));
             return mediaData;
         }
         console.log(`resourceUrls: ${resourceUrls.length}`);
@@ -296,7 +301,7 @@ export class MediaParsing
      */
     private async findClickableElement(elements: ElementHandle<Element>[])
     {
-        for (let element of elements)
+        for (const element of elements)
         {
             // 判断是否是 <a> 标签，如果是就跳过
             const tagName = await element.evaluate(node => node.tagName.toLowerCase());
@@ -305,15 +310,15 @@ export class MediaParsing
                 continue;
             }
 
-            const attributes = await element.evaluate((node: { attributes: any; tagName: any; classList: any; }) =>
+            const attributes = await element.evaluate((node: Element) =>
             {
                 const attrs = [...node.attributes].map(attr => ({ name: attr.name, value: attr.value }));
-                return { tagName: node.tagName, attrs, classList: [...node.classList] };
+                return { tagName: node.tagName.toLowerCase(), attrs, classList: [...node.classList] } as ElementAttributes;
             });
 
             if (attributes.attrs.some((attr: { value: string; }) => new RegExp('\\bplay\\b').test(attr.value)) || attributes.classList.includes('play'))
             {
-                const isVisible = await element.evaluate((node: { getBoundingClientRect: () => any; }) =>
+                const isVisible = await element.evaluate((node: { getBoundingClientRect: () => DOMRect; }) =>
                 {
                     const rect = node.getBoundingClientRect();
                     return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
@@ -353,12 +358,13 @@ export class MediaParsing
 
         if (elementHandle)
         {
-            const elementInfo = await elementHandle.evaluate((node: { tagName: any; attributes: any; classList: any; }) =>
+            const elementInfo = await elementHandle.evaluate((node: Element) =>
             {
+                const elem = node as HTMLElement;
                 return {
-                    tagName: node.tagName,
-                    attributes: [...node.attributes].map(attr => ({ name: attr.name, value: attr.value })),
-                    classList: [...node.classList]
+                    tagName: elem.tagName,
+                    attributes: [...elem.attributes].map(attr => ({ name: attr.name, value: attr.value })),
+                    classList: [...elem.classList]
                 };
             });
 
@@ -524,17 +530,18 @@ export class BiliBili extends MediaParsing
             const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
             // console.log(videoStream)
             // console.log(videoInfo)
-
+            console.log(videoInfo.pages)
             return mediaData;
 
-            function getDurationByCid(pages: any[], cid: any)
+            
+            function getDurationByCid(pages: PageInfo[], cid: number)
             {
-                const page = pages.find((page: { cid: any; }) => page.cid === cid);
-                return page ? page.duration : null;
+                const page = pages.find((page: { cid: number; }) => page.cid === cid);
+                return page ? page.duration : 0;
             }
-        } catch (error: any)
+        } catch (error)
         {
-            const mediaData = this.returnErrorMediaData(error.message);
+            const mediaData = this.returnErrorMediaData((error as Error).message);
             return mediaData;
         }
 
@@ -588,7 +595,7 @@ export class BiliBili extends MediaParsing
      * @param qn bilibili qn 
      * @returns 
      */
-    private getQuality(qn: any)
+    private getQuality(qn: number)
     {
         switch (qn)
         {
@@ -641,7 +648,7 @@ export class BiliBili extends MediaParsing
             {
                 return true;
             }
-        } catch (error: any)
+        } catch (error)
         {
             return false;
         }
@@ -666,13 +673,15 @@ export class Netease extends MediaParsing
         const neteaseApi = new NeteaseApi();
         try
         {
-            let id: string|null;
-            if (originUrl.includes('http') && originUrl.includes('song')) {
+            let id: string | null;
+            if (originUrl.includes('http') && originUrl.includes('song'))
+            {
                 const match1 = originUrl.match(/id=(\d+)/);
                 const match2 = originUrl.match(/\/song\/(\d+)/);
-            
+
                 id = match1 ? match1[1] : (match2 ? match2[1] : null);
-                if(id===null){
+                if (id === null)
+                {
                     const mediaData = this.returnErrorMediaData('暂不支持');
                     return mediaData;
                 }
@@ -695,9 +704,9 @@ export class Netease extends MediaParsing
             duration = songData.duration / 1000;
             const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
             return mediaData;
-        } catch (error: any)
+        } catch (error)
         {
-            const mediaData = this.returnErrorMediaData(error.message);
+            const mediaData = this.returnErrorMediaData((error as Error).message);
             return mediaData;
         }
 
