@@ -15,7 +15,7 @@
 </div>
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-iirose-media-request?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-iirose-media-request)
-
+[![CodeFactor](https://www.codefactor.io/repository/github/jingming295/koishi-plugin-iirose-media-request/badge)](https://www.codefactor.io/repository/github/jingming295/koishi-plugin-iirose-media-request)
 
 # 🎉隆重介绍，万能的适用全平台的点播媒体插件
 
