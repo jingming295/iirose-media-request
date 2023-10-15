@@ -1,4 +1,6 @@
-import { MediaParsing, BiliBili, Netease } from '../MediaParsing';
+import { MediaParsing } from '../MediaParsing';
+import { Netease } from '../MediaParsing/Netease';
+import { BiliBili } from '../MediaParsing/BiliBili';
 import { Context, Logger } from 'koishi';
 /**
  * @description 处理媒体
