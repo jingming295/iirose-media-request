@@ -49,6 +49,7 @@
 ## 🔍效果
 
 ![替代文本](http://r.iirose.com/i/23/10/8/11/5729-OG.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request?ref=badge_shield)
 
 ![替代文本](http://r.iirose.com/i/23/10/8/12/0000-1I.png)
 
@@ -220,3 +221,6 @@
 ## 📜License
 
 **MIT license**
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request?ref=badge_large)
