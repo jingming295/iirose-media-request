@@ -295,28 +295,33 @@ export class MediaParsing
      * @param ctx 
      * @returns 
      */
-    private async processMediaData(resourceUrls: string[], mediaType: 'music' | 'video' | null, cover: string | null, name: string, ctx: Context): Promise<MediaData> {
+    private async processMediaData(resourceUrls: string[], mediaType: 'music' | 'video' | null, cover: string | null, name: string, ctx: Context): Promise<MediaData>
+    {
         let url: string;
-        let signer: string = '无法获取';
-        let bitRate: number = 720;
+        const signer: string = '无法获取';
+        const bitRate: number = 720;
         let duration: number;
-    
-        if (resourceUrls && resourceUrls.length > 0) {
+
+        if (resourceUrls && resourceUrls.length > 0)
+        {
             url = resourceUrls[0];
-    
-            if (mediaType != null && cover) {
+
+            if (mediaType != null && cover)
+            {
                 const getMediaLength = new GetMediaLength();
                 duration = await getMediaLength.mediaLengthInSec(url, ctx);
-    
+
                 return this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
-            } else {
+            } else
+            {
                 return this.returnErrorMediaData('<>没有找到媒体，主要是无法获取type或者cover</>');
             }
-        } else {
+        } else
+        {
             return this.returnErrorMediaData('<>没有找到媒体</>');
         }
     }
-    
+
     /**
      * 处理错误
      * @param error 错误
