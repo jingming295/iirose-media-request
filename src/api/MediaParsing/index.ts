@@ -1,11 +1,12 @@
 import { ErrorHandle } from '../ErrorHandle';
-import { GetMediaLength } from '../tools/getMediaLength';
-import { ElementHandle, Page } from 'koishi-plugin-puppeteer';
+import { GetMediaLength } from '../GetVideoDuration';
+import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
 import Jimp from 'jimp';
 import * as os from 'os';
 import axios from 'axios';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
+import osUtils from 'os-utils';
 
 
 /**
@@ -78,7 +79,7 @@ export class MediaParsing
      * 打开页面
      * @returns mediaData
      */
-    public async openBrowser(ctx: Context, originUrl: string, timeOut: number, waitTime: number)
+    public async openBrowser(ctx: Context, originUrl: string, timeOut: number, waitTime: number, maxCpuUsage:number)
     {
         try
         {
@@ -99,8 +100,22 @@ export class MediaParsing
                 downloadPath: './',
             });
 
-            const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime);
-            await page.close();
+            // 如果检测到异常的cpu占用率（表示可能是挖矿页面），就关闭页面
+            const intervalId = setInterval(async () => {
+                osUtils.cpuUsage((v) => {
+                  if (v > maxCpuUsage) {
+                    try {
+                        page.close();
+                    } catch (error) {
+                        
+                    }
+                  }
+                });
+              }, 500);
+
+            const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime, ctx, client);
+            await this.closePage(page)
+            clearInterval(intervalId);
             return mediaData;
         } catch (error)
         {
@@ -194,14 +209,19 @@ export class MediaParsing
      * 尝试获取媒体的信息
      * @returns 
      */
-    private async getMedia(page: Page, originUrl: string, timeOut: number, waitTime: number): Promise<MediaData>
+    private async getMedia(page: Page, originUrl: string, timeOut: number, waitTime: number, ctx:Context, client: CDPSession): Promise<MediaData>
     {
-        function processMedia(type: 'music' | 'video', url: string, mimeType: string | null)
+        async function processMedia(type: 'music' | 'video', url: string, mimeType: string | null)
         {
             console.log('>>', type, url, mimeType);
             resourceUrls.push(url);
             mediaType = type;
+            if(resourceUrls.length>=1 && !page.isClosed() && !isstopLoading) {
+                isstopLoading = 1
+                await client.send('Page.stopLoading');
+            }
         }
+        if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
         const resourceUrls: string[] = [];
         let mediaType: 'music' | 'video' | null = null;
         let name: string;
@@ -210,8 +230,11 @@ export class MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
+        let isstopLoading = 0
+
         try
         {
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
             page.on('request', async request =>
             {
                 const url = await request.url();
@@ -223,10 +246,11 @@ export class MediaParsing
                     const mimeType = response.headers()['content-type'];
                     if (checkMimeType.isVideo(mimeType) && !url.includes('p-pc-weboff'))
                     {
-                        processMedia('video', url, mimeType);
+                        await processMedia('video', url, mimeType);
+
                     } else if (checkMimeType.isMusic(mimeType) && !url.includes('p-pc-weboff'))
                     {
-                        processMedia('music', url, mimeType);
+                        await processMedia('music', url, mimeType);
                     }
                 } else if (url.includes('.m3u8') || url.includes('.m4a'))
                 {
@@ -235,22 +259,25 @@ export class MediaParsing
                     // console.error(`No response for (is m3u8 or m4a): ${url}`);
                 }
             });
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
             await page.goto(originUrl, { timeout: timeOut });
-            await this.clickBtn(page);
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
             await page.waitForTimeout(waitTime);
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
+            await this.clickBtn(page);
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
             if (mediaType)
             {
                 if (mediaType === 'video') cover = await this.getThumbNail(page) || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
                 if (mediaType === 'music') cover = await this.searchImg(page) || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
             }
-
+            if(page.isClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`)
             name = await page.title() || '无法获取标题';
         } catch (error)
         {
             const mediaData = this.returnErrorMediaData(await this.errorHandle.ErrorHandle((error as Error).message));
             return mediaData;
         }
-        console.log(`resourceUrls: ${resourceUrls.length}`);
         if (resourceUrls && resourceUrls.length > 0)
         {
             url = resourceUrls[0];
@@ -260,7 +287,8 @@ export class MediaParsing
             if (mediaType != null && cover)
             {
                 const getMediaLength = new GetMediaLength();
-                duration = await getMediaLength.mediaLengthInSec(url);
+                duration = await getMediaLength.mediaLengthInSec(url, ctx);
+
                 const mediaData = this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
                 return mediaData;
             } else
@@ -382,19 +410,19 @@ export class MediaParsing
 
         if (elementHandle)
         {
-            const elementInfo = await elementHandle.evaluate((node: Element) =>
-            {
-                const elem = node as HTMLElement;
-                return {
-                    tagName: elem.tagName,
-                    attributes: [...elem.attributes].map(attr => ({ name: attr.name, value: attr.value })),
-                    classList: [...elem.classList]
-                };
-            });
+            // const elementInfo = await elementHandle.evaluate((node: Element) =>
+            // {
+            //     const elem = node as HTMLElement;
+            //     return {
+            //         tagName: elem.tagName,
+            //         attributes: [...elem.attributes].map(attr => ({ name: attr.name, value: attr.value })),
+            //         classList: [...elem.classList]
+            //     };
+            // });
 
-            console.log('Element TagName:', elementInfo.tagName);
-            console.log('Element Attributes:', elementInfo.attributes);
-            console.log('Element ClassList:', elementInfo.classList);
+            // console.log('Element TagName:', elementInfo.tagName);
+            // console.log('Element Attributes:', elementInfo.attributes);
+            // console.log('Element ClassList:', elementInfo.classList);
 
             try
             {
@@ -429,6 +457,16 @@ export class MediaParsing
         {
             const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
             if (dataSrc) return dataSrc;
+        }
+    }
+
+    private async closePage(page: Page){
+        try {
+            if (!page.isClosed()) {
+                await page.close();
+              }
+        } catch (error) {
+            
         }
     }
 }

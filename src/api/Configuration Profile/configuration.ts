@@ -34,6 +34,8 @@ export const Config: Schema<Config> = Schema.intersect([
     noHentai: Schema.boolean().default(true).description('是否禁止抓取涩涩网站'),
     trackUser: Schema.boolean().default(false).description('机器人是否说明是谁点播和cut的视频（以确保他人点播违规视频的时候有证据）'),
     detectUpdate: Schema.boolean().default(true).description('是否检测本插件更新，打开的话，如果检测到不是最新版，机器人将提示'),
+    maxCpuUsage: Schema.number().role('slider').min(0.01).max(1).step(0.01).default(0.95).description('cpu使用阈值，如果超过的话，就关掉page。这个设置是为了防范挖矿网页')
+
   }).description('插件的相关设置')
 
 ]);

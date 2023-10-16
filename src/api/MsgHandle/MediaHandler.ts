@@ -77,6 +77,7 @@ export class MediaHandler
         const qn = this.config['qn'];
         const timeOut = this.config['timeOut'];
         const waitTime = this.config['waitTime'];
+        const maxCpuUsage = this.config['maxCpuUsage'];
 
         switch (true)
         {
@@ -103,10 +104,9 @@ export class MediaHandler
             default:
                 if (await mediaParsing.isDownloadLink(originMediaArgument))
                 {
-                    console.log('sadadas');
                     return mediaParsing.returnErrorMediaData('点播失败！');
                 }
-                return await mediaParsing.openBrowser(this.ctx, originMediaArgument, timeOut, waitTime);
+                return await mediaParsing.openBrowser(this.ctx, originMediaArgument, timeOut, waitTime, maxCpuUsage);
         }
 
     }

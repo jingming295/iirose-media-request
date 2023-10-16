@@ -22,6 +22,17 @@ export class ErrorHandle
                 return `<>此网站的证书有问题，无法获取媒体链接</>`;
             case ErrorMsg.includes("Timeout"):
                 return `<>访问网站超时</>`;
+
+            case ErrorMsg.includes("page has been closed"):
+                return `
+                <>
+                <parent>
+                页面被关闭<child/>
+                可能的原因：<child/>
+                CPU占用达到设定的阈值（可能去到挖矿页面了）<child/>
+                </parent>
+                </>
+                `
             default:
                 console.log(ErrorMsg);
                 return ErrorMsg;

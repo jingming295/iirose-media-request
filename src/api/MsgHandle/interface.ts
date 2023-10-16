@@ -15,4 +15,5 @@ interface Config
     noHentai: boolean;
     trackUser: boolean;
     detectUpdate: boolean;
+    maxCpuUsage: number;
 }

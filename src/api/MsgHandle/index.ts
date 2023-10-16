@@ -15,6 +15,7 @@ export function apply(ctx: Context, config: Config)
         .option('link', '只发出链接')
         .option('data', '把整个music对象发出来')
         .option('cut', '如果是iirose平台就cut视频')
+        .option('cutall', '如果是iirose平台就cut all视频')
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
@@ -27,6 +28,9 @@ export function apply(ctx: Context, config: Config)
                 {
                     session.send('cut');
                     if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut了视频<child/></parent></>`);
+                } else if (options['cutall'] && session.platform === 'iirose'){
+                    session.send('cut all');
+                    if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut all了视频<child/></parent></>`);
                 }
                 try
                 {
