@@ -8,7 +8,7 @@ interface Player {
 /**
  * videojs是由https://vjs.zencdn.net/7.14.3/video.js提供
  */
-declare var videojs: Player;
+declare const videojs: Player;
 /**
  * @description 获取媒体长度
  */
