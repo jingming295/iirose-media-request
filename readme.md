@@ -16,6 +16,7 @@
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-iirose-media-request?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-iirose-media-request)
 [![CodeFactor](https://www.codefactor.io/repository/github/jingming295/koishi-plugin-iirose-media-request/badge)](https://www.codefactor.io/repository/github/jingming295/koishi-plugin-iirose-media-request)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjingming295%2Fkoishi-plugin-iirose-media-request?ref=badge_shield&issueType=license)
 
 # 🎉隆重介绍，万能的适用全平台的点播媒体插件
 
