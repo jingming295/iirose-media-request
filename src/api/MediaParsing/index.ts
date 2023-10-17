@@ -236,7 +236,7 @@ export class MediaParsing
         let name: string;
         let cover: string | null = null;
         let isstopLoading = 0;
-        let resourceUrls: ResourceUrls[] = [
+        const resourceUrls: ResourceUrls[] = [
             { url: null, mimetype: null }
         ];
 

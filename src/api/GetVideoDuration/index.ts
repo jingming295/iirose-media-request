@@ -24,52 +24,46 @@ export class GetMediaLength
      */
     private async mediaLengthInSec(mediaurl: string, ctx: Context): Promise<number>
     {
-        try
+        const page = await ctx.puppeteer.page();
+        await page.addScriptTag({ url: 'https://vjs.zencdn.net/7.14.3/video.js' });
+
+
+        const duration: number = await page.evaluate((mediaurl) =>
         {
-            const page = await ctx.puppeteer.page();
-            await page.addScriptTag({ url: 'https://vjs.zencdn.net/7.14.3/video.js' });
-
-
-            const duration: number = await page.evaluate((mediaurl) =>
+            return new Promise((resolve, reject) =>
             {
-                return new Promise((resolve, reject) =>
+                // 创建 video 元素
+                const video = document.createElement('video');
+                video.id = 'my-video';
+                video.classList.add('video-js');
+                video.controls = true;
+                video.preload = 'auto';
+                video.width = 640;
+                video.height = 360;
+                // 创建 source 元素
+                const source = document.createElement('source');
+                source.src = mediaurl; // 使用传入的mediaurl
+                // 将 source 添加到 video 中
+                video.appendChild(source);
+                // 将 video 添加到 body 中
+                document.body.appendChild(video);
+                videojs('my-video');
+                // 监听 loadedmetadata 事件
+                video.addEventListener('loadedmetadata', function ()
                 {
-                    // 创建 video 元素
-                    const video = document.createElement('video');
-                    video.id = 'my-video';
-                    video.classList.add('video-js');
-                    video.controls = true;
-                    video.preload = 'auto';
-                    video.width = 640;
-                    video.height = 360;
-                    // 创建 source 元素
-                    const source = document.createElement('source');
-                    source.src = mediaurl; // 使用传入的mediaurl
-                    // 将 source 添加到 video 中
-                    video.appendChild(source);
-                    // 将 video 添加到 body 中
-                    document.body.appendChild(video);
-                    videojs('my-video');
-                    // 监听 loadedmetadata 事件
-                    video.addEventListener('loadedmetadata', function ()
-                    {
-                        resolve(video.duration);
-                    });
-
-                    // 设置超时时间
-                    setTimeout(() =>
-                    {
-                        reject(1);
-                    }, 5000);  // 等待5秒
+                    resolve(video.duration);
                 });
-            }, mediaurl) as number;
 
-            await page.close();
-            return duration;
-        } catch (error)
-        {
-            throw error;
-        }
+                // 设置超时时间
+                setTimeout(() =>
+                {
+                    reject(1);
+                }, 5000);  // 等待5秒
+            });
+        }, mediaurl) as number;
+
+        await page.close();
+        return duration;
     }
 
     /**
@@ -118,43 +112,53 @@ export class GetMediaLength
      */
     private async parseM3U8(data: Uint8Array, url: string)
     {
+
         const text = new TextDecoder().decode(data);
         const lines = text.split('\n');
-        let duration: number = 0;
+        let duration = 0;
         let m3u8Url = '';
-        let count = 0;
 
         for (const line of lines)
         {
             if (line.includes('.m3u8'))
             {
                 m3u8Url = line.trim();
-                const baseUrl = url.substring(0, url.lastIndexOf('/') + 1); // 获取基础链接
-                const fullM3U8Url = new URL(m3u8Url, baseUrl).toString(); // 组合成完整的链接
-                data = await this.getM3U8NextFile(fullM3U8Url);
-                const text = new TextDecoder().decode(data);
-                const lines = text.split('\n');
-                for (const line of lines)
-                {
-                    if (line && line.startsWith('#EXTINF:'))
-                    {
-                        const parts = line.split(':');
-                        if (parts.length > 1)
-                        {
-                            const EXTINFDuration = parseFloat(parts[1]);
-                            if (!isNaN(EXTINFDuration))
-                            {
-                                count = count + 1;
-                                duration = duration + EXTINFDuration;
-                            }
-                        }
-                    }
-                }
+                const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                const fullM3U8Url = new URL(m3u8Url, baseUrl).toString();
+                duration += await this.processM3U8Url(fullM3U8Url);
                 return duration;
             }
         }
+
         throw new Error(`parseM3U8: 没找到m3u8的时长`);
+
     }
+    private async processM3U8Url(url: string): Promise<number>
+    {
+        const data = await this.getM3U8NextFile(url);
+        const text = new TextDecoder().decode(data);
+        const lines = text.split('\n');
+        let duration = 0;
+
+        for (const line of lines)
+        {
+            if (line && line.startsWith('#EXTINF:'))
+            {
+                const parts = line.split(':');
+                if (parts.length > 1)
+                {
+                    const EXTINFDuration = parseFloat(parts[1]);
+                    if (!isNaN(EXTINFDuration))
+                    {
+                        duration += EXTINFDuration;
+                    }
+                }
+            }
+        }
+
+        return duration;
+    }
+
 
     private async getM3U8NextFile(url: string)
     {
@@ -183,8 +187,8 @@ export class GetMediaLength
         let position = 0;
         while (position < data.length)
         {
-            let size = data[position] << 24 | data[position + 1] << 16 | data[position + 2] << 8 | data[position + 3];
-            let type = String.fromCharCode(data[position + 4], data[position + 5], data[position + 6], data[position + 7]);
+            const size = data[position] << 24 | data[position + 1] << 16 | data[position + 2] << 8 | data[position + 3];
+            const type = String.fromCharCode(data[position + 4], data[position + 5], data[position + 6], data[position + 7]);
             if (type === 'moov')
             {
                 return this.parseMoov(data.subarray(position + 8), size - 8);
@@ -204,15 +208,10 @@ export class GetMediaLength
         let position = 0;
         while (position < size)
         {
-            let boxSize = data[position] << 24 | data[position + 1] << 16 | data[position + 2] << 8 | data[position + 3];
-            let type = String.fromCharCode(data[position + 4], data[position + 5], data[position + 6], data[position + 7]);
+            const boxSize = data[position] << 24 | data[position + 1] << 16 | data[position + 2] << 8 | data[position + 3];
+            const type = String.fromCharCode(data[position + 4], data[position + 5], data[position + 6], data[position + 7]);
 
-            if (type === 'trak')
-            {
-            } else if (type === 'mvhd')
-            {
-                return this.parseMvhd(data.subarray(position + 8, position + boxSize));
-            }
+            if (type === 'mvhd') return this.parseMvhd(data.subarray(position + 8, position + boxSize));
 
             position += boxSize;
         }
