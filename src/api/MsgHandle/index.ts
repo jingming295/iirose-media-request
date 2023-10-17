@@ -2,13 +2,19 @@ import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 
+import { GetMediaLength } from '../GetVideoDuration';
+
 /**
  * @description apply
  * @param ctx ctx
  * @param config config
  */
-export function apply(ctx: Context, config: Config)
+export async function apply(ctx: Context, config: Config)
 {
+    const getMediaLength = new GetMediaLength()
+
+    // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
+
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')

@@ -41,3 +41,10 @@ interface PageInfo
     };
     first_frame: string;
 }
+
+interface ResourceUrls
+{
+    url: string | null,
+    mimetype: string | null;
+
+}

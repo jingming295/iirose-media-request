@@ -128,7 +128,6 @@ export class BiliBili extends MediaParsing
             const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
             // console.log(videoStream)
             // console.log(videoInfo)
-            console.log(videoInfo.pages);
             return mediaData;
         } catch (error)
         {
