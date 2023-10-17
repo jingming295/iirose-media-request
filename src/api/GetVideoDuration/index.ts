@@ -1,4 +1,5 @@
 import { Context } from 'koishi';
+import axios from 'axios';
 /**
  * 随便填的
  */
@@ -82,19 +83,19 @@ export class GetMediaLength
                 mimeType !== 'application/vnd.apple.mpegurl'
             ) return await this.mediaLengthInSec(url, ctx);
         if (!url) url = 'https://cdn.cloudflare.steamstatic.com/steam/apps/256757170/movie480.webm?t=1563970531';
-        const response = await fetch(url, {
+        const response = await axios.get(url, {
             headers: {
                 Range: 'bytes=0-100000'
             }
         });
-        if (!response.ok)
+        if (response.status !== 200 && response.status !== 206)
         {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.data;
+        const buffer = Buffer.from(data, 'binary');
 
-
-        const data = await response.arrayBuffer(); // 将响应体读取为 ArrayBuffer
-        const uint8Array = new Uint8Array(data);
+        const uint8Array = new Uint8Array(buffer);
 
         if (mimeType === 'video/mp4') return this.parseMP4Duration(uint8Array);
         else if (
@@ -112,37 +113,42 @@ export class GetMediaLength
      */
     private async parseM3U8(data: Uint8Array, url: string)
     {
-
         const text = new TextDecoder().decode(data);
-        const lines = text.split('\n');
-        let duration = 0;
-        let m3u8Url = '';
+        const m3u8Url = this.parseM3U8File(text);
 
-        for (const line of lines)
+        if (m3u8Url)
+        {
+            const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
+            const fullM3U8Url = new URL(m3u8Url, baseUrl).toString();
+
+            const m3u8Data = await this.getM3U8NextFile(fullM3U8Url);
+            const m3u8Text = new TextDecoder().decode(m3u8Data);
+
+            return this.processM3U8Text(m3u8Text);
+        }
+
+        return this.processM3U8Text(text);
+    }
+
+
+    private parseM3U8File(text: string): string | null
+    {
+        for (const line of text.split('\n'))
         {
             if (line.includes('.m3u8'))
             {
-                m3u8Url = line.trim();
-                const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
-                const fullM3U8Url = new URL(m3u8Url, baseUrl).toString();
-                duration += await this.processM3U8Url(fullM3U8Url);
-                return duration;
+                return line.trim();
             }
         }
-
-        throw new Error(`parseM3U8: 没找到m3u8的时长`);
-
+        return null;
     }
-    private async processM3U8Url(url: string): Promise<number>
-    {
-        const data = await this.getM3U8NextFile(url);
-        const text = new TextDecoder().decode(data);
-        const lines = text.split('\n');
-        let duration = 0;
 
-        for (const line of lines)
+    private processM3U8Text(text: string): number
+    {
+        let duration = 0;
+        for (const line of text.split('\n'))
         {
-            if (line && line.startsWith('#EXTINF:'))
+            if (line.startsWith('#EXTINF:'))
             {
                 const parts = line.split(':');
                 if (parts.length > 1)
@@ -155,26 +161,26 @@ export class GetMediaLength
                 }
             }
         }
-
         return duration;
     }
 
 
+
+
     private async getM3U8NextFile(url: string)
     {
-        const response = await fetch(url, {
+        const response = await axios.get(url, {
             headers: {
                 Range: 'bytes=0-100000'
             }
         });
-        if (!response.ok)
+        if (response.status !== 200 && response.status !== 206)
         {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-
-        const data = await response.arrayBuffer(); // 将响应体读取为 ArrayBuffer
-        const uint8Array = new Uint8Array(data);
+        const data = await response.data;
+        const buffer = Buffer.from(data, 'binary');
+        const uint8Array = new Uint8Array(buffer);
         return uint8Array;
     }
 

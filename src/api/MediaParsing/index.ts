@@ -1,7 +1,6 @@
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../GetVideoDuration';
 import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
-import Jimp from 'jimp';
 import axios from 'axios';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
@@ -81,14 +80,15 @@ export class MediaParsing
     public async openBrowser(ctx: Context, originUrl: string, timeOut: number, waitTime: number, maxCpuUsage: number)
     {
         let intervalId;
+        if (!await ctx.puppeteer)
+        {
+            const mediaData = this.returnErrorMediaData('puppeteer 未安装或没有正确配置，请在插件市场安装');
+            return mediaData;
+        }
+        const page = await ctx.puppeteer.page();
         try
         {
-            if (!await ctx.puppeteer)
-            {
-                const mediaData = this.returnErrorMediaData('puppeteer 未安装或没有正确配置，请在插件市场安装');
-                return mediaData;
-            }
-            const page = await ctx.puppeteer.page();
+
             if (!page)
             {
                 const mediaData = this.returnErrorMediaData('游览器没有正确打开，请检查日志');
@@ -118,6 +118,7 @@ export class MediaParsing
             return mediaData;
         } catch (error)
         {
+            await this.closePage(page);
             clearInterval(intervalId);
             const mediaData = this.returnErrorMediaData(this.errorHandle.ErrorHandle((error as Error).message));
             return mediaData;
@@ -134,6 +135,7 @@ export class MediaParsing
         {
             const response = await axios.head(originUrl);
             const contentDisposition = response.headers['content-disposition'];
+
             if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html'))
             {
                 return true;
@@ -143,7 +145,7 @@ export class MediaParsing
             }
         } catch (error)
         {
-            return true;
+            return false;
         }
     }
 
@@ -216,10 +218,10 @@ export class MediaParsing
             console.log('>>', type, url, mimeType);
             resourceUrls[urlCount] = {
                 url: url,
-                mimetype:mimeType
-            }
+                mimetype: mimeType
+            };
             mediaType = type;
-            urlCount = urlCount + 1
+            urlCount = urlCount + 1;
             if (resourceUrls.length >= 1 && !isstopLoading)
             {
                 isstopLoading = 1;
@@ -231,7 +233,7 @@ export class MediaParsing
         {
             return page.isClosed();
         }
-        let urlCount = 0
+        let urlCount = 0;
         let mediaType: 'music' | 'video' | null = null;
         let name: string;
         let cover: string | null = null;
@@ -276,7 +278,7 @@ export class MediaParsing
             if (mediaType)
             {
                 if (isPageClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`);
-                cover = (mediaType === 'video') ? await this.getThumbNail(page) : await this.searchImg(page) || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+                cover = (mediaType === 'video') ? await this.getThumbNail(page) : await this.searchImg(page);
             }
 
             if (isPageClosed()) return this.handleError(new Error(`页面被软件关闭，极有可能是CPU占用率达到阈值`));
@@ -300,7 +302,7 @@ export class MediaParsing
     private async processMediaData(resourceUrls: ResourceUrls[], mediaType: 'music' | 'video' | null, cover: string | null, name: string, ctx: Context): Promise<MediaData>
     {
         let url: string;
-        let mimeType:string | null;
+        let mimeType: string | null;
         const signer: string = '无法获取';
         const bitRate: number = 720;
         let duration: number;
@@ -308,12 +310,12 @@ export class MediaParsing
         if (resourceUrls[0].url && resourceUrls.length > 0)
         {
             url = resourceUrls[0].url;
-            mimeType = resourceUrls[0].mimetype
+            mimeType = resourceUrls[0].mimetype;
 
             if (mediaType != null && cover)
             {
                 const getMediaLength = new GetMediaLength();
-                duration = await getMediaLength.GetMediaLengthByReadMetaData(url, mimeType, ctx)
+                duration = await getMediaLength.GetMediaLengthByReadMetaData(url, mimeType, ctx);
                 return this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
             } else
             {
@@ -343,21 +345,27 @@ export class MediaParsing
     private async getThumbNail(page: Page): Promise<string | null>
     {
         const videoElement = await page.$('video');
-        const iframeElement = await page.$('iframe');
-        if (iframeElement)
+        const iframeElements = await page.$$('iframe');
+
+        for (const iframeElement of iframeElements)
         {
-            // 在iframe中寻找video元素
             const frame = await iframeElement.contentFrame();
             const videoInsideIframe = frame ? await frame.$('body video') : null;
-            if (videoInsideIframe) return this.resizeThumbNail(videoInsideIframe) || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
-        }
-        if (videoElement)
-        {
-            return this.resizeThumbNail(videoElement) || 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+            if (videoInsideIframe)
+            {
+                const thumbnail = this.resizeThumbNail(videoInsideIframe);
+                if (thumbnail) return thumbnail;
+            }
         }
 
-        return 'https://cloud.ming295.com/f/zrTK/video-play-film-player-movie-solid-icon-illustration-logo-template-suitable-for-many-purposes-free-vector.jpg';
+        if (videoElement)
+        {
+            return this.resizeThumbNail(videoElement);
+        }
+
+        return null;
     }
+
 
 
     /**
@@ -370,10 +378,9 @@ export class MediaParsing
     {
         if (element)
         {
-            const buffer = await element.screenshot();
-            const image = await Jimp.read(buffer);
-            image.resize(160, 100);
-            const base64BlurredImage = `data:image/jpeg;base64,${(await image.getBufferAsync(Jimp.MIME_JPEG)).toString('base64')}`;
+            const buffer = await element.screenshot({ type: 'jpeg', quality: 5 });
+            const base64Image = buffer.toString('base64');
+            const base64BlurredImage = `data:image/jpeg;base64,${base64Image}`;
             return base64BlurredImage;
         }
         return null;
@@ -387,7 +394,6 @@ export class MediaParsing
     {
         for (const element of elements)
         {
-            // 判断是否是 <a> 标签，如果是就跳过
             const tagName = await element.evaluate(node => node.tagName.toLowerCase());
             if (tagName === 'a')
             {
@@ -408,7 +414,9 @@ export class MediaParsing
                     return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
                 });
 
-                if (isVisible)
+                const isInteractable = await element.isIntersectingViewport(); // 检查是否可交互
+
+                if (isVisible && isInteractable)
                 {
                     return element;
                 }
@@ -417,6 +425,7 @@ export class MediaParsing
 
         return null;
     }
+
 
 
     /**
@@ -490,6 +499,7 @@ export class MediaParsing
             const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
             if (dataSrc) return dataSrc;
         }
+        return null;
     }
 
     /**
