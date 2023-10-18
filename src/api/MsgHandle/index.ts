@@ -11,8 +11,8 @@ import { GetMediaLength } from '../GetVideoDuration';
  */
 export async function apply(ctx: Context, config: Config)
 {
-    const getMediaLength = new GetMediaLength()
-
+    // 测试用
+    // const getMediaLength = new GetMediaLength()
     // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
 
     const comm: string = 'a';

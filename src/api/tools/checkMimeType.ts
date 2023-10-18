@@ -23,7 +23,7 @@ export class CheckMimeType
     isMusic(mimeType: string)
     {
         if (mimeType === 'audio/mpeg' || mimeType === 'audio/wav' || mimeType === 'audio/x-ms-wma' || mimeType === 'audio/aac'
-            || mimeType === 'audio/ogg' || mimeType === 'audio/flac') return true;
+            || mimeType === 'audio/ogg' || mimeType === 'audio/flac' || mimeType === 'audio/mp3') return true;
         return false;
     }
 }

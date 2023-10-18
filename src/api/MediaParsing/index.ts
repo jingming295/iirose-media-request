@@ -224,8 +224,10 @@ export class MediaParsing
             urlCount = urlCount + 1;
             if (resourceUrls.length >= 1 && !isstopLoading)
             {
-                isstopLoading = 1;
-                client.send('Page.stopLoading');
+                if(!isPageClosed()){
+                    isstopLoading = 1;
+                    client.send('Page.stopLoading');
+                }
             }
         }
 
@@ -272,15 +274,19 @@ export class MediaParsing
             if (isPageClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`);
             await page.goto(originUrl, { timeout: timeOut });
             if (isPageClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`);
-            await page.waitForTimeout(waitTime);
             if (isPageClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`);
             await this.clickBtn(page);
             if (mediaType)
             {
                 if (isPageClosed()) return this.returnErrorMediaData(`页面被软件关闭，极有可能是CPU占用率达到阈值`);
-                cover = (mediaType === 'video') ? await this.getThumbNail(page) : await this.searchImg(page);
+                if (mediaType === 'video') {
+                    cover = await this.getThumbNail(page);
+                } else {
+                    cover = await this.searchImg(page);
+                    
+                }
             }
-
+            await page.waitForTimeout(waitTime);
             if (isPageClosed()) return this.handleError(new Error(`页面被软件关闭，极有可能是CPU占用率达到阈值`));
             name = await page.title() || '无法获取标题';
             return this.processMediaData(resourceUrls, mediaType, cover, name, ctx);
@@ -315,7 +321,7 @@ export class MediaParsing
             if (mediaType != null && cover)
             {
                 const getMediaLength = new GetMediaLength();
-                duration = await getMediaLength.GetMediaLengthByReadMetaData(url, mimeType, ctx);
+                duration = await getMediaLength.GetMediaLength(url, mimeType, ctx);
                 return this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
             } else
             {

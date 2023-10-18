@@ -83,8 +83,10 @@ export class BiliBili extends MediaParsing
         try
         {
             let bvid: string;
+            
             if (originUrl.includes('http') && originUrl.includes('video'))
             {
+                originUrl = originUrl.replace(/\?/g, '/');
                 bvid = originUrl.split('/video/')[1].split('/')[0];
             } else if (originUrl.includes('BV') || originUrl.includes('bv'))
             {

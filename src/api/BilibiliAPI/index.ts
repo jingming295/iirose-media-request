@@ -139,7 +139,6 @@ export class BiliBiliApi
             const response = await axios.get(url, { params, headers });
             if (response.data.code === 0)
             {
-                console.log(response.data.data)
                 return response.data.data;
             } else
             {
