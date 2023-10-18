@@ -142,29 +142,19 @@
 
 **步骤1：前往插件配置（在页面左侧的第二个按钮）**
 
-**步骤2：在分组：develop 选择 adapter-iirose （在页面左侧）**
+**步骤2：在分组：develop 选择 puppeteer（在页面左侧）**
 
-**步骤3：输入你的机器人 用户名， uid（唯一标识）， password（你的密码转换成32位md5），roomid（房间的地址）**
+**步骤3：点击启用插件（在页面顶部）**
 
-**附加：密码转md5可以去 [MD5在线加密/解密](https://www.sojson.com/md5/)**
+**步骤4：前往插件配置（在页面左侧的第二个按钮）**
 
-**步骤4：点击保存配置和启用插件（在页面顶部）**
+**步骤5：在分组：develop 选择 iirose-media-request（在页面左侧）**
 
-**步骤5：前往插件配置（在页面左侧的第二个按钮）**
-
-**步骤6：在分组：develop 选择 puppeteer（在页面左侧）**
-
-**步骤7：点击启用插件（在页面顶部）**
-
-**步骤8：前往插件配置（在页面左侧的第二个按钮）**
-
-**步骤9：在分组：develop 选择 iirose-media-request（在页面左侧）**
-
-**可选步骤：输入你的bilibili SESSDATA, 实在不会就问 [*铭铭.*] **
+**可选步骤：输入你的bilibili SESSDATA**
 
 **附加：SESSDATA的获得方式可以看 [爱发电：bilibili获取sessdata](https://afdian.net/album/b80ef61c626411ea93f352540025c377/b341d694d72c11ea96c952540025c377) [B站：【补充】关于如何获取SESSDATA的方法](https://www.bilibili.com/read/cv12349604/)**
 
-**步骤10：点击保存配置和启用插件（在页面顶部）**
+**步骤6：点击保存配置和启用插件（在页面顶部）**
 
 ***
 
