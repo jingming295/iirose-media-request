@@ -86,7 +86,7 @@ export class MediaHandler
      * @param originMediaArgument 可以是链接，也可以是bv号
      * @returns mediaData
      */
-    async processMediaArgument(originMediaArgument: string, session: Session, config: Config)
+    async processMediaArgument(originMediaArgument: string, session: Session, config: Config, options:Options)
     {
         const mediaParsing = new MediaParsing();
         const bilibili = new BiliBili();
@@ -135,7 +135,7 @@ export class MediaHandler
             inc: ["music.163.com", "album"],
             fn: async () =>
             {
-                return await netease.handleNeteaseAlbum(originMediaArgument, session, config['mediaCardColor'], config['queueRequest']);
+                return await netease.handleNeteaseAlbum(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
             }
         }, {
             inc: ["163cn.tv"],
@@ -182,7 +182,7 @@ export class MediaHandler
             const mediaArgument = this.parseMediaArgument(arg);
             if (!mediaArgument) return this.returnNoRespondMsgInfo([null], [null]); // mediaArgument为空
 
-            const mediaData = await this.processMediaArgument(mediaArgument, session, config);
+            const mediaData = await this.processMediaArgument(mediaArgument, session, config, options);
             const allErrors: string[] = [];
             let returnmsg: string[] = [];
             for (const data of mediaData)

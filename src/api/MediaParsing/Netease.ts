@@ -53,9 +53,6 @@ export class Netease extends MediaParsing
             url = await this.getRedirectUrl(songResource[0].url);
             type = 'music';
             name = songData.songs[0].name;
-
-            console.log(songResource);
-
             cover = songResource[0].pic;
 
             bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
@@ -71,7 +68,7 @@ export class Netease extends MediaParsing
 
     }
 
-    public async handleNeteaseAlbum(originUrl: string, session: Session, color: string, queueRequest: boolean)
+    public async handleNeteaseAlbum(originUrl: string, session: Session, color: string, queueRequest: boolean, options:Options)
     {
         async function delay(ms: number)
         {
@@ -82,7 +79,6 @@ export class Netease extends MediaParsing
             const songResource = await neteaseApi.getSongResource(songId[index].toString());
             url.push(await this.getRedirectUrl(songResource[0].url));
             cover.push(songResource[0].pic);
-            session.send(`<audio name="${songName[index]}" url="${url[index]}" author="${signer[index]}" cover="${cover[index]}" duration="${duration[index]}" bitRate="${bitRate[index]}" color="${color || 'FFFFFF'}"/>`);
         };
         const type: ('music' | 'video')[] = [];
         const songName: string[] = [];
@@ -153,19 +149,17 @@ export class Netease extends MediaParsing
             type.push('music');
         });
 
-
         for (let i = 0; i < songId.length; i++)
         {
-            if (queueRequest)
+            if (queueRequest && !options['link'] && !options['data'] && !options['param'])
             {
                 if (i > 0)
                 {
                     await delay((duration[i - 1] * 1000) - 4000);
                 }
                 await processSong(i);
-            }
-            else
-            {
+                session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
+            } else {
                 await processSong(i);
             }
         }

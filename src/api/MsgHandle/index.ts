@@ -63,11 +63,6 @@ export async function apply(ctx: Context, config: Config)
                         {
                             for (const info of msg)
                             {
-                                if (info.messageContent)
-                                {
-                                    session.send(info.messageContent);
-                                }
-
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
                                     if (info.mediaData.type === 'music')
@@ -80,6 +75,10 @@ export async function apply(ctx: Context, config: Config)
                                 }
                             }
                             return msg[0].hasRespond;
+                        }
+                        for (const info of msg)
+                        {
+                            if (info.messageContent) session.send(info.messageContent);
                         }
                         return false;
                     }));
