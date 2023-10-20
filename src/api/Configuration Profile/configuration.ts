@@ -30,6 +30,9 @@ export const Config: Schema<Config> = Schema.intersect([
     ]).default('pc').description('平台，你不太需要碰，系统会自己调整'),
   }).description('bilibili视频相关设置'),
   Schema.object({
+    queueRequest: Schema.boolean().default(false).description('针对专辑或者歌单是否排队点播，这是因为网易云的直链好像只能持续30分钟'),
+  }).description('网易云相关设置'),
+  Schema.object({
     mediaCardColor: Schema.string().default('FFFFFF').description('艾特媒体的时候的媒体卡片颜色，使用HEX，不需要#, 具体参考https://www.sojson.com/web/panel.html'),
     noHentai: Schema.boolean().default(true).description('是否禁止抓取涩涩网站'),
     trackUser: Schema.boolean().default(false).description('机器人是否说明是谁点播和cut的视频（以确保他人点播违规视频的时候有证据）'),

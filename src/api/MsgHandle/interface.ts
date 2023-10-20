@@ -16,4 +16,8 @@ interface Config
     trackUser: boolean;
     detectUpdate: boolean;
     maxCpuUsage: number;
+    queueRequest: boolean;
+}
+type Options = {
+    [key: string]: boolean | undefined;  // This is the index signature
 }

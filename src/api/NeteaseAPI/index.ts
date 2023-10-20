@@ -75,7 +75,6 @@ export class NeteaseApi
 
   async getAlbumSimpleDetail(id: string)
   {
-    console.log(id)
     const url = `https://music.163.com/eapi/rep/ugc/album/get`;
     
     const params: DataObject = {

@@ -1,4 +1,4 @@
-import { Context, Logger } from 'koishi';
+import { Context, Logger, Session } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 
@@ -58,27 +58,30 @@ export async function apply(ctx: Context, config: Config)
                             session?.send("禁止涩链接");
                             return false;
                         }
-                        const msg = await handler.handleMediaRequest(options, item, username, uid);
-
-                        for (const info of msg)
+                        const msg = await handler.handleMediaRequest(options, item, username, uid, session, config);
+                        if (msg.length === 1)
                         {
-                            if (info.messageContent)
+                            for (const info of msg)
                             {
-                                session.send(info.messageContent);
-                            }
+                                if (info.messageContent)
+                                {
+                                    session.send(info.messageContent);
+                                }
 
-                            if (info.mediaData !== null && info.mediaData.error === null)
-                            {
-                                if (info.mediaData.type === 'music')
+                                if (info.mediaData !== null && info.mediaData.error === null)
                                 {
-                                    session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
-                                } else
-                                {
-                                    session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                    if (info.mediaData.type === 'music')
+                                    {
+                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                    } else
+                                    {
+                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                    }
                                 }
                             }
+                            return msg[0].hasRespond;
                         }
-                        return msg[0].hasRespond;
+                        return false;
                     }));
 
                     if (config['detectUpdate'] && responseArray.some(Boolean))

@@ -1,5 +1,6 @@
 import { MediaParsing } from ".";
 import { NeteaseApi } from '../NeteaseAPI';
+import { Session } from "koishi";
 
 /**
  * 主要处理网易云的网站
@@ -70,8 +71,19 @@ export class Netease extends MediaParsing
 
     }
 
-    public async handleNeteaseAlbum(originUrl: string)
+    public async handleNeteaseAlbum(originUrl: string, session: Session, color: string, queueRequest: boolean)
     {
+        async function delay(ms: number)
+        {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        const processSong = async (index: number) =>
+        {
+            let songResource = await neteaseApi.getSongResource(songId[index].toString());
+            url.push(await this.getRedirectUrl(songResource[0].url));
+            cover.push(songResource[0].pic);
+            session.send(`<audio name="${songName[index]}" url="${url[index]}" author="${signer[index]}" cover="${cover[index]}" duration="${duration[index]}" bitRate="${bitRate[index]}" color="${color || 'FFFFFF'}"/>`);
+        };
         let type: ('music' | 'video')[] = [];
         let songName: string[] = [];
         let signer: string[] = [];
@@ -80,12 +92,10 @@ export class Netease extends MediaParsing
         let duration: number[] = [];
         let bitRate: number[] = [];
         let songId: number[] = [];
-        let albumName: string;
 
         let id: string | null;
 
         let musicDetail: MusicDetail[] = [];
-
 
         if (originUrl.includes('http') && originUrl.includes('album'))
         {
@@ -144,15 +154,25 @@ export class Netease extends MediaParsing
         });
 
 
-        for (const id of songId)
+        for (let i = 0; i < songId.length; i++)
         {
-            let songResource = await neteaseApi.getSongResource(id.toString());
-            url.push(await this.getRedirectUrl(songResource[0].url));
-            cover.push(songResource[0].pic);
+            if (queueRequest)
+            {
+                if (i > 0)
+                {
+                    await delay((duration[i - 1] * 1000) - 4000);
+                }
+                await processSong(i);
+            }
+            else
+            {
+                await processSong(i);
+            }
         }
 
         const mediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
         return mediaData;
 
     }
+
 }

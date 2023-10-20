@@ -37,8 +37,7 @@ export class MediaParsing
     )
     {
         const mediaDataArray: MediaData[] = [];
-
-        for (let i = 0; i < typeList.length; i++)
+        for (let i = 0; i < urlList.length; i++)
         {
             const mediaData: MediaData = {
                 type: typeList[i],
@@ -235,6 +234,7 @@ export class MediaParsing
                 url: url,
                 mimetype: mimeType
             };
+            console.log(type)
             mediaType.push(type);
             urlCount = urlCount + 1;
             if (resourceUrls.length >= 1 && !isstopLoading)
@@ -252,7 +252,7 @@ export class MediaParsing
             return page.isClosed();
         }
         let urlCount = 0;
-        let mediaType: ('music' | 'video')[];
+        let mediaType: ('music' | 'video')[] = [];
         let name: string[] = [];
         let cover: (string|null)[] = [];
         let isstopLoading = 0;
@@ -295,13 +295,13 @@ export class MediaParsing
             if (mediaType!)
             {
                 if (isPageClosed()) return this.returnErrorMediaData([`页面被软件关闭，极有可能是CPU占用率达到阈值`]);
+                console.log(mediaType)
                 if (mediaType[0] === 'video')
                 {
                     cover[0] = await this.getThumbNail(page);
                 } else
                 {
                     cover[0] = await this.searchImg(page);
-
                 }
             }
             await page.waitForTimeout(waitTime);

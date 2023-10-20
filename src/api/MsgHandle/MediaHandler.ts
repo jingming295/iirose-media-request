@@ -1,7 +1,7 @@
 import { MediaParsing } from '../MediaParsing';
 import { Netease } from '../MediaParsing/Netease';
 import { BiliBili } from '../MediaParsing/BiliBili';
-import { Context, Logger } from 'koishi';
+import { Context, Logger, Session } from 'koishi';
 /**
  * @description 处理媒体
  */
@@ -86,7 +86,7 @@ export class MediaHandler
      * @param originMediaArgument 可以是链接，也可以是bv号
      * @returns mediaData
      */
-    async processMediaArgument(originMediaArgument: string)
+    async processMediaArgument(originMediaArgument: string, session: Session, config: Config)
     {
         const mediaParsing = new MediaParsing();
         const bilibili = new BiliBili();
@@ -98,38 +98,70 @@ export class MediaHandler
         const waitTime = this.config['waitTime'];
         const maxCpuUsage = this.config['maxCpuUsage'];
 
-        switch (true)
-        {
-            case originMediaArgument.includes('bilibili') && originMediaArgument.includes('BV'):
-            case (originMediaArgument.includes('BV') && !originMediaArgument.includes('http')):
+        let conformPromise: Promise<MediaData[]> | null = null;
+        ([{
+            inc: ["bilibili", "BV"],
+            fn: async () =>
+            {
                 return await bilibili.handleBilibiliMedia(originMediaArgument, sessData, platform, qn);
-
-            case (originMediaArgument.includes('bilibili') || originMediaArgument.includes('b23.tv')) &&
-                originMediaArgument.includes('bangumi'):
+            }
+        }, {
+            inc: ["BV", "http"],
+            fn: async () =>
+            {
+                return await bilibili.handleBilibiliMedia(originMediaArgument, sessData, platform, qn);
+            }
+        }, {
+            inc: ["bilibili", "b23.tv"],
+            fn: async () =>
+            {
                 return await bilibili.handleBilibiliBangumi(originMediaArgument, sessData, qn);
-
-            case originMediaArgument.includes('b23.tv'):
+            }
+        }, {
+            inc: ["b23.tv"],
+            fn: async () =>
+            {
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
                 originMediaArgument = originMediaArgument.replace(/\?/g, '/');
                 return await bilibili.handleBilibiliMedia(originMediaArgument, sessData, platform, qn);
-
-            case (originMediaArgument.includes('music.163.com') && originMediaArgument.includes('song')):
+            }
+        }, {
+            inc: ["music.163.com", "song"],
+            fn: async () =>
+            {
                 return await netease.handleNeteaseMedia(originMediaArgument);
-
-            case (originMediaArgument.includes('music.163.com') && originMediaArgument.includes('album')):
-                return await netease.handleNeteaseAlbum(originMediaArgument)
-            case originMediaArgument.includes('163cn.tv'):
+            }
+        }, {
+            inc: ["music.163.com", "album"],
+            fn: async () =>
+            {
+                return await netease.handleNeteaseAlbum(originMediaArgument, session, config['mediaCardColor'], config['queueRequest']);
+            }
+        }, {
+            inc: ["163cn.tv"],
+            fn: async () =>
+            {
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
                 return await netease.handleNeteaseMedia(originMediaArgument);
+            }
+        }]).some(o =>
+        {
+            if (o.inc.every(k => originMediaArgument.includes(k)))
+            {
+                conformPromise = o.fn();
+                return true;
+            }
+            else
+                return false;
+        });
 
-            default:
-                if (await mediaParsing.isDownloadLink(originMediaArgument))
-                {
-                    return mediaParsing.returnErrorMediaData(['点播失败！']);
-                }
-                return await mediaParsing.openBrowser(this.ctx, originMediaArgument, timeOut, waitTime, maxCpuUsage);
+        if (!conformPromise)
+        {
+            if (await mediaParsing.isDownloadLink(originMediaArgument)) return mediaParsing.returnErrorMediaData(['点播失败！']);
+            return await mediaParsing.openBrowser(this.ctx, originMediaArgument, timeOut, waitTime, maxCpuUsage);
         }
-
+        else
+            return conformPromise;
     }
 
 
@@ -141,17 +173,18 @@ export class MediaHandler
      * @param userName 用户名
      * @returns string | null
      */
-    public async handleMediaRequest(options: { link?: boolean; data?: boolean; param?: boolean; }, arg: string, userName: string, uid: string)
+    public async handleMediaRequest(options: Options, arg: string, userName: string, uid: string, session: Session, config: Config)
     {
+        
         if (arg === undefined) return this.returnNoRespondMsgInfo([null], [null]);
         try
         {
-            let returnmsg: string | null = null;
             const mediaArgument = this.parseMediaArgument(arg);
             if (!mediaArgument) return this.returnNoRespondMsgInfo([null], [null]); // mediaArgument为空
 
-            let mediaData = await this.processMediaArgument(mediaArgument);
-            let allErrors: string[] = [];
+            const mediaData = await this.processMediaArgument(mediaArgument, session, config);
+            const allErrors: string[] = [];
+            let returnmsg: string[] = [];
             for (const data of mediaData)
             {
                 if (data.error)
@@ -164,47 +197,64 @@ export class MediaHandler
             {
                 return this.returnHasRespondMsgInfo(allErrors, mediaData);
             }
-            switch (true)
-            {
-                case options['link']:
+            let conformPromise: Promise<msgInfo[]> | null = null;
+            ([{
+                inc: ["link"],
+                fn: async () =>
+                {
                     const urlInfo = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${data.url}</>`);
                     return this.returnHasRespondMsgInfo(urlInfo, Array.from({ length: urlInfo.length }, () => null));
-
-                case options['data']:
+                }
+            }, {
+                inc: ["data"],
+                fn: async () =>
+                {
                     const jsonData = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(data, null, 2)}</>`);
                     return this.returnHasRespondMsgInfo(jsonData, Array.from({ length: jsonData.length }, () => null));
-
-                case options['param']:
-                    const paramInfo = mediaData.map(data => `&lt;${data.name} - ${data.signer} - ${data.cover}&gt; ${data.url}`);
+                }
+            }, {
+                inc: ["param"],
+                fn: async () =>
+                {
+                    const paramInfo = mediaData.map(data => `<${data.name} - ${data.signer} - ${data.cover}> ${data.url}`);
                     return this.returnHasRespondMsgInfo(paramInfo, Array.from({ length: paramInfo.length }, () => null));
+                }
+            }]).some(o =>
+            {
+                if (o.inc.every(k =>  options[k]))
+                {
+                    conformPromise = o.fn();
+                    return true;
+                }
+                else
+                    return false;
+            });
+            if (!conformPromise)
+            {
+                if (this.config.trackUser)
+                {
+                    const userActions = mediaData.map(data => `<><parent><at id="${userName}"/>点播了 ${data.name}<child/></parent></>`);
+                    returnmsg = returnmsg.concat(userActions);
 
-                default:
-                    let returnmsg: string[] = [];
+                    this.logger.info(`用户名：${userName} 唯一标识：${uid} 点播了 ${mediaData.map(data => `${data.name}: ${data.url}`).join(', ')}`);
+                }
 
-                    if (this.config['trackUser'])
-                    {
-                        const userActions = mediaData.map(data => `<><parent><at id="${userName}"/>点播了 ${data.name}<child/></parent></>`);
-                        returnmsg = returnmsg.concat(userActions);
+                if (mediaData.some(data => data.bitRate < 720 && data.type === 'video'))
+                {
+                    const lowBitrateMsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent>`;
+                    returnmsg = returnmsg.map(msg => msg + lowBitrateMsg);
+                }
 
-                        this.logger.info(`用户名：${userName} 唯一标识：${uid} 点播了 ${mediaData.map(data => `${data.name}: ${data.url}`).join(', ')}`);
-                    }
-
-                    if (mediaData.some(data => data.bitRate < 720 && data.type === 'video'))
-                    {
-                        const lowBitrateMsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent>`;
-                        returnmsg = returnmsg.map(msg => msg + lowBitrateMsg);
-                    }
-
-                    if (returnmsg.length > 0)
-                    {
-                        return this.returnHasRespondMsgInfo(returnmsg, mediaData);
-                    } else
-                    {
-                        return this.returnHasRespondMsgInfo(Array.from({ length: mediaData.length }, () => null), mediaData);
-                    }
+                if (returnmsg.length > 0)
+                {
+                    return this.returnHasRespondMsgInfo(returnmsg, mediaData);
+                } else
+                {
+                    return this.returnHasRespondMsgInfo(Array.from({ length: mediaData.length }, () => null), mediaData);
+                }
             }
-
-
+            else
+                return conformPromise;
         }
         catch (error)
         {
