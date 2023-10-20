@@ -42,14 +42,14 @@ export class Netease extends MediaParsing
                 const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
-            let songData = await neteaseApi.getNeteaseMusicDetail(id);
+            const songData = await neteaseApi.getNeteaseMusicDetail(id);
 
             if (!songData)
             {
                 const mediaData = this.returnErrorMediaData(['没有找到歌曲']);
                 return mediaData;
             }
-            let songResource = await neteaseApi.getSongResource(id);
+            const songResource = await neteaseApi.getSongResource(id);
             url = await this.getRedirectUrl(songResource[0].url);
             type = 'music';
             name = songData.songs[0].name;
@@ -79,23 +79,23 @@ export class Netease extends MediaParsing
         }
         const processSong = async (index: number) =>
         {
-            let songResource = await neteaseApi.getSongResource(songId[index].toString());
+            const songResource = await neteaseApi.getSongResource(songId[index].toString());
             url.push(await this.getRedirectUrl(songResource[0].url));
             cover.push(songResource[0].pic);
             session.send(`<audio name="${songName[index]}" url="${url[index]}" author="${signer[index]}" cover="${cover[index]}" duration="${duration[index]}" bitRate="${bitRate[index]}" color="${color || 'FFFFFF'}"/>`);
         };
-        let type: ('music' | 'video')[] = [];
-        let songName: string[] = [];
-        let signer: string[] = [];
-        let cover: string[] = [];
-        let url: string[] = [];
-        let duration: number[] = [];
-        let bitRate: number[] = [];
-        let songId: number[] = [];
+        const type: ('music' | 'video')[] = [];
+        const songName: string[] = [];
+        const signer: string[] = [];
+        const cover: string[] = [];
+        const url: string[] = [];
+        const duration: number[] = [];
+        const bitRate: number[] = [];
+        const songId: number[] = [];
 
         let id: string | null;
 
-        let musicDetail: MusicDetail[] = [];
+        const musicDetail: MusicDetail[] = [];
 
         if (originUrl.includes('http') && originUrl.includes('album'))
         {
