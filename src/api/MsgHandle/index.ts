@@ -92,7 +92,6 @@ export async function apply(ctx: Context, config: Config)
                             session.send(updateInfo.messageContent);
                         }
                     }
-
                     return;
                 } catch (error)
                 {

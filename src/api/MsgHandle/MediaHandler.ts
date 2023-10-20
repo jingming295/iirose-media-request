@@ -86,7 +86,7 @@ export class MediaHandler
      * @param originMediaArgument 可以是链接，也可以是bv号
      * @returns mediaData
      */
-    async processMediaArgument(originMediaArgument: string, session: Session, config: Config, options:Options)
+    async processMediaArgument(originMediaArgument: string, session: Session, config: Config, options: Options)
     {
         const mediaParsing = new MediaParsing();
         const bilibili = new BiliBili();
@@ -175,7 +175,6 @@ export class MediaHandler
      */
     public async handleMediaRequest(options: Options, arg: string, userName: string, uid: string, session: Session, config: Config)
     {
-        
         if (arg === undefined) return this.returnNoRespondMsgInfo([null], [null]);
         try
         {
@@ -221,7 +220,7 @@ export class MediaHandler
                 }
             }]).some(o =>
             {
-                if (o.inc.every(k =>  options[k]))
+                if (o.inc.every(k => options[k]))
                 {
                     conformPromise = o.fn();
                     return true;
@@ -241,7 +240,7 @@ export class MediaHandler
 
                 if (mediaData.some(data => data.bitRate < 720 && data.type === 'video'))
                 {
-                    const lowBitrateMsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent>`;
+                    const lowBitrateMsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
                     returnmsg = returnmsg.map(msg => msg + lowBitrateMsg);
                 }
 
@@ -260,7 +259,6 @@ export class MediaHandler
         {
             this.logger.error(error);
         }
-
         return this.returnNoRespondMsgInfo([null], [null]);
     }
 }
