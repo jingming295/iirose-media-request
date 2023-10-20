@@ -98,12 +98,12 @@ export class GetMediaLength
     {
         const parseMediaMetaData = new ParseMediaMetaData();
         // 测试用
-        if (!url) url = '';
+        if (!url) url = 'https://cloud.ming295.com/f/AoUo/file_example_WEBM_480_900KB.webm';
         // 测试用
-        if (!mimeType) mimeType = '';
+        if (!mimeType) mimeType = 'video/webm';
         const response = await axios.get(url, {
             headers: {
-                Range: 'bytes=0-50000'
+                // Range: 'bytes=0-50000'
             }
         });
         if (response.status !== 200 && response.status !== 206)

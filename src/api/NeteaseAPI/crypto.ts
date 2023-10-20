@@ -56,7 +56,7 @@ interface EapiResult {
   params: string;
 }
 
-const eapi = (url: string, object: ParamsObject): EapiResult => {
+const eapi = (url: string, object: SearchSimpleAlbumParamsObject) => {
   const text = typeof object === 'object' ? JSON.stringify(object) : object;
   const message = `nobody${url}use${text}md5forencrypt`;
   const digest = crypto.createHash('md5').update(message).digest('hex');

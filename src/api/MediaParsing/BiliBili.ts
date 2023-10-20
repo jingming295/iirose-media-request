@@ -31,7 +31,7 @@ export class BiliBili extends MediaParsing
             let bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn);
             if (!bangumiInfo && !bangumiStream)
             {
-                const mediaData = this.returnErrorMediaData('获取番剧信息失败，可能接口已经改变');
+                const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
                 return mediaData;
             }
             while (await this.checkResponseStatus(bangumiStream.durl[0].url) === false)
@@ -49,7 +49,7 @@ export class BiliBili extends MediaParsing
             type = 'video';
             signer = bangumiInfo.up_info.uname || '未定';
 
-            const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
+            const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
 
             // console.log(bangumiInfo.episodes)
             // console.log(bangumiStream)
@@ -57,7 +57,7 @@ export class BiliBili extends MediaParsing
 
 
         }
-        const mediaData = this.returnErrorMediaData('链接中没有发现ep号，请重新拿到链接');
+        const mediaData = this.returnErrorMediaData(['链接中没有发现ep号，请重新拿到链接']);
         return mediaData;
     }
 
@@ -93,13 +93,13 @@ export class BiliBili extends MediaParsing
                 bvid = originUrl;
             } else
             {
-                const mediaData = this.returnErrorMediaData('暂不支持');
+                const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
             const videoInfo = await biliBiliApi.getBilibiliVideoData(bvid, biliBiliSessData);
             if (!videoInfo)
             {
-                const mediaData = this.returnErrorMediaData('这个不是正确的bv号');
+                const mediaData = this.returnErrorMediaData(['这个不是正确的bv号']);
                 return mediaData;
             }
             const cid = videoInfo.pages[0].cid;
@@ -127,13 +127,13 @@ export class BiliBili extends MediaParsing
             type = 'video';
             signer = videoInfo.owner.name;
 
-            const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
+            const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
             // console.log(videoStream)
             // console.log(videoInfo)
             return mediaData;
         } catch (error)
         {
-            const mediaData = this.returnErrorMediaData((error as Error).message);
+            const mediaData = this.returnErrorMediaData([(error as Error).message]);
             return mediaData;
         }
 

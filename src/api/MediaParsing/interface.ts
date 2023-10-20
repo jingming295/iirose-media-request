@@ -10,7 +10,6 @@ interface MediaData
     duration: number;
     bitRate: number;
     error: string | null;
-
 }
 interface Attribute
 {

@@ -4,8 +4,14 @@ interface UpdateInfo {
     latest: boolean;
     messageContent: string;
 }
-
+/**
+ * 检测更新
+ */
 export class UpdateChecker {
+    /**
+     * 主要检查是不是最新版本
+     * @returns 
+     */
     public async checkForUpdates(): Promise<UpdateInfo> {
         const packageName = 'koishi-plugin-iirose-media-request';
         const currentVersion = require(`${packageName}/package.json`).version;
@@ -18,6 +24,11 @@ export class UpdateChecker {
         }
     }
 
+    /**
+     * 获取最新版
+     * @param packageName 包名
+     * @returns 
+     */
     private async getLatestVersion(packageName: string): Promise<string | null> {
         try {
             const response = await axios.get(`https://registry.npmjs.org/${packageName}`, { responseType: 'json' });
@@ -28,6 +39,12 @@ export class UpdateChecker {
         }
     }
 
+    /**
+     * 
+     * @param latest 版本号
+     * @param msg 信息
+     * @returns info
+     */
     private returnUpdateInfo(latest: boolean, msg: string): UpdateInfo {
         const info: UpdateInfo = {
             latest: latest,

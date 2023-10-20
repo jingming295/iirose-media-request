@@ -4,6 +4,10 @@ import { MediaHandler } from './MediaHandler';
 
 import { GetMediaLength } from '../GetVideoDuration';
 
+import { NeteaseApi } from '../NeteaseAPI';
+
+import { Netease } from '../MediaParsing/Netease';
+
 /**
  * @description apply
  * @param ctx ctx
@@ -14,6 +18,10 @@ export async function apply(ctx: Context, config: Config)
     // 测试用
     // const getMediaLength = new GetMediaLength()
     // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
+
+    // const netease = new Netease();
+
+    // await netease.handleNeteaseAlbum(`135680406`);
 
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
@@ -34,7 +42,8 @@ export async function apply(ctx: Context, config: Config)
                 {
                     session.send('cut');
                     if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut了视频<child/></parent></>`);
-                } else if (options['cutall'] && session.platform === 'iirose'){
+                } else if (options['cutall'] && session.platform === 'iirose')
+                {
                     session.send('cut all');
                     if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut all了视频<child/></parent></>`);
                 }
@@ -50,24 +59,29 @@ export async function apply(ctx: Context, config: Config)
                             return false;
                         }
                         const msg = await handler.handleMediaRequest(options, item, username, uid);
-                        if (msg.messageContent)
+
+                        for (const info of msg)
                         {
-                            session.send(msg.messageContent);
-                        }
-                        if (msg.mediaData !== null && msg.mediaData.error === null)
-                        {
-                            if (msg.mediaData.type === 'music')
+                            if (info.messageContent)
                             {
-                                session.send(`<audio name="${msg.mediaData.name}" url="${msg.mediaData.url}" author="${msg.mediaData.signer}" cover="${msg.mediaData.cover}" duration="${msg.mediaData.duration}" bitRate="${msg.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
-                            } else
+                                session.send(info.messageContent);
+                            }
+
+                            if (info.mediaData !== null && info.mediaData.error === null)
                             {
-                                session.send(`<video name="${msg.mediaData.name}" url="${msg.mediaData.url}" author="${msg.mediaData.signer}" cover="${msg.mediaData.cover}" duration="${msg.mediaData.duration}" bitRate="${msg.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                if (info.mediaData.type === 'music')
+                                {
+                                    session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                } else
+                                {
+                                    session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                }
                             }
                         }
-                        return msg.hasRespond;
+                        return msg[0].hasRespond;
                     }));
 
-                    if (responseArray.some(Boolean))
+                    if (config['detectUpdate'] && responseArray.some(Boolean))
                     {
                         const updateChecker = new UpdateChecker();
                         const updateInfo = await updateChecker.checkForUpdates();

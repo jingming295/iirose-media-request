@@ -8,6 +8,7 @@ export class Netease extends MediaParsing
 {
     /**
      * 处理网易云的媒体
+     * @param originUrl 原始url
      * @returns mediaData
      */
     public async handleNeteaseMedia(originUrl: string)
@@ -31,33 +32,127 @@ export class Netease extends MediaParsing
                 id = match1 ? match1[1] : (match2 ? match2[1] : null);
                 if (id === null)
                 {
-                    const mediaData = this.returnErrorMediaData('暂不支持');
+                    const mediaData = this.returnErrorMediaData(['暂不支持']);
                     return mediaData;
                 }
             }
             else
             {
-                const mediaData = this.returnErrorMediaData('暂不支持');
+                const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
             let songData = await neteaseApi.getNeteaseMusicDetail(id);
-            songData = songData.songs[0];
+
+            if (!songData)
+            {
+                const mediaData = this.returnErrorMediaData(['没有找到歌曲']);
+                return mediaData;
+            }
             let songResource = await neteaseApi.getSongResource(id);
-            songResource = songResource[0];
-            url = await this.getRedirectUrl(songResource.url);
+            url = await this.getRedirectUrl(songResource[0].url);
             type = 'music';
-            name = songData.name;
-            cover = songResource.pic;
-            bitRate = songData.hMusic ? (songData.hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
-            signer = songData.artists[0].name;
-            duration = songData.duration / 1000;
-            const mediaData = this.returnCompleteMediaData(type, name, signer, cover, url, duration, bitRate);
+            name = songData.songs[0].name;
+
+            console.log(songResource);
+
+            cover = songResource[0].pic;
+
+            bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
+            signer = songData.songs[0].artists[0].name;
+            duration = songData.songs[0].duration / 1000;
+            const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
             return mediaData;
         } catch (error)
         {
-            const mediaData = this.returnErrorMediaData((error as Error).message);
+            const mediaData = this.returnErrorMediaData([(error as Error).message]);
             return mediaData;
         }
+
+    }
+
+    public async handleNeteaseAlbum(originUrl: string)
+    {
+        let type: ('music' | 'video')[] = [];
+        let songName: string[] = [];
+        let signer: string[] = [];
+        let cover: string[] = [];
+        let url: string[] = [];
+        let duration: number[] = [];
+        let bitRate: number[] = [];
+        let songId: number[] = [];
+        let albumName: string;
+
+        let id: string | null;
+
+        let musicDetail: MusicDetail[] = [];
+
+
+        if (originUrl.includes('http') && originUrl.includes('album'))
+        {
+            const match1 = originUrl.match(/id=(\d+)/);
+            const match2 = originUrl.match(/\/album\/(\d+)/);
+
+            id = match1 ? match1[1] : (match2 ? match2[1] : null);
+            if (id === null)
+            {
+                const mediaData = this.returnErrorMediaData(['暂不支持']);
+                return mediaData;
+            }
+        } else
+        {
+            const mediaData = this.returnErrorMediaData(['暂不支持']);
+            return mediaData;
+        }
+
+        const neteaseApi = new NeteaseApi();
+        const album = await neteaseApi.getAlbumSimpleDetail(id);
+
+        const songList = album.data.songRepVos;
+        songList.forEach(song =>
+        {
+            songId.push(song.songId);
+            songName.push(song.songName);
+            signer.push(song.artistRepVos[0].artistName);
+        });
+        for (const song of songList)
+        {
+            const songId = song.songId;
+
+            // 使用 songId 调用 neteaseApi.getNeteaseMusicDetail()
+            const MusicDetail = await neteaseApi.getNeteaseMusicDetail(songId.toString());
+
+            // 处理返回的音乐详情
+            if (MusicDetail)
+            {
+                musicDetail.push(MusicDetail);
+            }
+        }
+
+        musicDetail.forEach(musicDetail =>
+        {
+            const song = musicDetail.songs[0]; // 假设你想获取第一首歌的信息
+
+            // 获取时长并将其添加到 duration 数组中
+            const songDuration = song.duration / 1000;
+            duration.push(songDuration);
+
+            // 获取比特率并将其添加到 bitRate 数组中
+            const songBitRate = song.hMusic ? song.hMusic.bitrate / 1000 : 128;
+            bitRate.push(songBitRate);
+
+            type.push('music');
+        });
+
+
+        for (const id of songId)
+        {
+            let songResource = await neteaseApi.getSongResource(id.toString());
+            url.push(await this.getRedirectUrl(songResource[0].url));
+            cover.push(songResource[0].pic);
+        }
+
+        const mediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
+        return mediaData;
 
     }
 }
