@@ -66,7 +66,7 @@ interface Artist {
 interface Song {
   songId: number;
   songName: string;
-  artistRepVos:ArtistRepVo[]
+  artistRepVos:Artist[]
   songSubTitle: string;
   company: string | null;
   publishTime: number;
@@ -84,19 +84,6 @@ interface Song {
   transLyricLock: boolean | null;
   lyricIsEdited: boolean | null;
   duration: number | null;
-}
-
-interface ArtistRepVo {
-  artistId: number;
-  artistName: string;
-  alias: string | null;
-  headPicUrl: string | null;
-  area: string | null;
-  type: string | null;
-  desc: string | null;
-  production: string | null;
-  avatarPicUrl: string | null;
-  transName: string | null;
 }
 
 
