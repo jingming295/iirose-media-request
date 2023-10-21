@@ -25,7 +25,7 @@ export class Netease extends MediaParsing
         const duration: number[] = [];
         const bitRate: number[] = [];
         const songId: number[] = [];
-        let album: Album;
+
         let id: number | null;
         const musicDetail: MusicDetail[] = [];
         if (originUrl.includes('http') && originUrl.includes('album'))
@@ -35,32 +35,12 @@ export class Netease extends MediaParsing
 
             id = match1 ? parseInt(match1[1], 10) : (match2 ? parseInt(match2[1], 10) : null);
 
-            if (id === null)
+            if (!id)
             {
                 const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
-            album = await this.neteaseApi.getAlbumSimpleDetail(id);
-            const songList = album.data.songRepVos;
-            songList.forEach(song =>
-            {
-                songId.push(song.songId);
-                songName.push(song.songName);
-                signer.push(song.artistRepVos[0].artistName);
-            });
-            for (const song of songList)
-            {
-                const songId = song.songId;
-
-                // 使用 songId 调用 neteaseApi.getNeteaseMusicDetail()
-                const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(songId);
-
-                // 处理返回的音乐详情
-                if (MusicDetail)
-                {
-                    musicDetail.push(MusicDetail);
-                }
-            }
+            await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
         } else if (originUrl.includes('http') && originUrl.includes('playlist'))
         {
             const match1 = originUrl.match(/id=(\d+)/);
@@ -72,44 +52,17 @@ export class Netease extends MediaParsing
                 const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
-
-            const playList = await this.neteaseApi.getSonglistDetail(id);
-
-            const songList = playList.playlist.tracks;
-            playList.playlist.tracks.forEach(song =>
-            {
-                songId.push(song.id);
-                songName.push(song.name);
-                signer.push(song.ar[0].name);
-            });
-            for (const song of songList)
-            {
-                const songId = song.id;
-
-                // 使用 songId 调用 neteaseApi.getNeteaseMusicDetail()
-                const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(songId);
-
-                // 处理返回的音乐详情
-                if (MusicDetail)
-                {
-                    musicDetail.push(MusicDetail);
-                }
-            }
-
-
+            await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
         } else
         {
             const mediaData = this.returnErrorMediaData(['暂不支持']);
             return mediaData;
         }
-
         // 在你的代码中调用它
         musicDetail.forEach(musicDetail =>
         {
             this.processMusicDetail(musicDetail, duration, bitRate, type);
         });
-
-
         for (let i = 0; i < songId.length; i++)
         {
             if (queueRequest && !options['link'] && !options['data'] && !options['param'])
@@ -132,6 +85,69 @@ export class Netease extends MediaParsing
 
     }
 
+    /**
+     * 处理AlbumDetails
+     * @param id 
+     * @param songId 
+     * @param songName 
+     * @param signer 
+     * @param musicDetail 
+     */
+    private async processAlbumDetails(id: number, songId: number[], songName: string[], signer: string[], musicDetail: MusicDetail[])
+    {
+        const album = await this.neteaseApi.getAlbumSimpleDetail(id);
+        const songList = album.data.songRepVos;
+
+        for (const song of songList)
+        {
+            songId.push(song.songId);
+            songName.push(song.songName);
+            signer.push(song.artistRepVos[0].artistName);
+
+            const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(song.songId);
+
+            if (MusicDetail)
+            {
+                musicDetail.push(MusicDetail);
+            }
+        }
+    }
+
+    /**
+     * 处理PlaylistDetails
+     * @param id 
+     * @param songId 
+     * @param songName 
+     * @param signer 
+     * @param musicDetail 
+     */
+    private async processPlaylistDetails(id: number, songId: number[], songName: string[], signer: string[], musicDetail: MusicDetail[])
+    {
+        const playList = await this.neteaseApi.getSonglistDetail(id);
+        const songList = playList.playlist.tracks;
+
+        for (const song of songList)
+        {
+            songId.push(song.id);
+            songName.push(song.name);
+            signer.push(song.ar[0].name);
+
+            const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(song.id);
+
+            if (MusicDetail)
+            {
+                musicDetail.push(MusicDetail);
+            }
+        }
+    }
+
+    /**
+     * 处理musicDetail
+     * @param musicDetail 
+     * @param duration 
+     * @param bitRate 
+     * @param type 
+     */
     private processMusicDetail(musicDetail: MusicDetail, duration: number[], bitRate: number[], type: string[])
     {
         const song = musicDetail.songs[0];
@@ -146,11 +162,23 @@ export class Netease extends MediaParsing
     }
 
 
+    /**
+     * 延迟
+     * @param ms 
+     * @returns 
+     */
     async delay(ms: number)
     {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    /**
+     * 处理歌曲url这些
+     * @param songId 
+     * @param url 
+     * @param cover 
+     * @param neteaseApi 
+     */
     async processSong(songId: number, url: string[], cover: string[], neteaseApi: NeteaseApi)
     {
         const songResource = await neteaseApi.getSongResource(songId);
