@@ -69,18 +69,8 @@ export class Netease extends MediaParsing
 
     }
 
-    public async handleNeteaseAlbum(originUrl: string, session: Session, color: string, queueRequest: boolean, options:Options)
+    public async handleNeteaseAlbum(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
-        async function delay(ms: number)
-        {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-        const processSong = async (index: number) =>
-        {
-            const songResource = await neteaseApi.getSongResource(songId[index]);
-            url.push(await this.getRedirectUrl(songResource[0].url));
-            cover.push(songResource[0].pic);
-        };
         const type: ('music' | 'video')[] = [];
         const songName: string[] = [];
         const signer: string[] = [];
@@ -155,12 +145,13 @@ export class Netease extends MediaParsing
             {
                 if (i > 0)
                 {
-                    await delay((duration[i - 1] * 1000) - 4000);
+                    await this.delay((duration[i - 1] * 1000) - 4000);
                 }
-                await processSong(i);
+                await this.processSong(songId[i], url, cover, neteaseApi);
                 session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
-            } else if (!options['link'] && !options['data'] && !options['param']){
-                await processSong(i);
+            } else if (!options['link'] && !options['data'] && !options['param'])
+            {
+                await this.processSong(songId[i], url, cover, neteaseApi);
                 session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
             }
         }
@@ -171,18 +162,8 @@ export class Netease extends MediaParsing
     }
 
 
-    public async handleNeteaseSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options:Options)
+    public async handleNeteaseSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
-        async function delay(ms: number)
-        {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-        const processSong = async (index: number) =>
-        {
-            const songResource = await neteaseApi.getSongResource(songId[index]);
-            url.push(await this.getRedirectUrl(songResource[0].url));
-            cover.push(songResource[0].pic);
-        };
         const type: ('music' | 'video')[] = [];
         const songName: string[] = [];
         const signer: string[] = [];
@@ -216,7 +197,7 @@ export class Netease extends MediaParsing
         const neteaseApi = new NeteaseApi();
         const playList = await neteaseApi.getSonglistDetail(id);
 
-        const songList = playList.playlist.tracks
+        const songList = playList.playlist.tracks;
         playList.playlist.tracks.forEach(song =>
         {
             songId.push(song.id);
@@ -258,12 +239,13 @@ export class Netease extends MediaParsing
             {
                 if (i > 0)
                 {
-                    await delay((duration[i - 1] * 1000) - 4000);
+                    await this.delay((duration[i - 1] * 1000) - 4000);
                 }
-                await processSong(i);
+                await this.processSong(songId[i], url, cover, neteaseApi);
                 session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
-            } else if (!options['link'] && !options['data'] && !options['param']){
-                await processSong(i);
+            } else if (!options['link'] && !options['data'] && !options['param'])
+            {
+                await this.processSong(songId[i], url, cover, neteaseApi);
                 session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
             }
         }
@@ -272,5 +254,19 @@ export class Netease extends MediaParsing
         return mediaData;
 
     }
+
+
+    async delay(ms: number)
+    {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async processSong(songId: number, url: string[], cover: string[], neteaseApi: NeteaseApi)
+    {
+        const songResource = await neteaseApi.getSongResource(songId);
+        url.push(await this.getRedirectUrl(songResource[0].url));
+        cover.push(songResource[0].pic);
+    }
+
 
 }
