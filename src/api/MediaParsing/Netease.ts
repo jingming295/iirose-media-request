@@ -18,7 +18,7 @@ export class Netease extends MediaParsing
     public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
         const id = await this.getIdFromOriginUrl(originUrl);
-        const { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail } = this.initializeArrays();
+        const { songName, signer, cover, url, duration, bitRate, songId, musicDetail } = this.initializeArrays();
         if (!id) return this.handleNullId();
 
         if (!this.isValidOriginUrl(originUrl)) return this.handleNullId();
@@ -30,7 +30,7 @@ export class Netease extends MediaParsing
 
         musicDetail.forEach(musicDetail =>
         {
-            this.processMusicDetail(musicDetail, duration, bitRate, type);
+            this.processMusicDetail(musicDetail, duration, bitRate, ["music"]);
         });
 
         for (let i = 0; i < songId.length; i++)
@@ -50,7 +50,7 @@ export class Netease extends MediaParsing
             }
         }
 
-        const completeMediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
+        const completeMediaData = this.returnCompleteMediaData(["music"], songName, signer, cover, url, duration, bitRate);
         return completeMediaData;
     }
 
@@ -149,7 +149,6 @@ export class Netease extends MediaParsing
 
     private initializeArrays()
     {
-        const type: ('music' | 'video')[] = [];
         const songName: string[] = [];
         const signer: string[] = [];
         const cover: string[] = [];
@@ -159,7 +158,7 @@ export class Netease extends MediaParsing
         const songId: number[] = [];
         const musicDetail: MusicDetail[] = [];
 
-        return { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail };
+        return { songName, signer, cover, url, duration, bitRate, songId, musicDetail };
     }
 
     private async getIdFromOriginUrl(originUrl: string)
