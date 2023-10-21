@@ -15,58 +15,58 @@ export class Netease extends MediaParsing
     }
 
 
-    public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
-{
-    const mediaData = this.returnErrorMediaData(['暂不支持']);
-
-    const id = await this.getIdFromOriginUrl(originUrl);
-    if (id === null)
-    {
-        return mediaData;
-    }
-
-    const { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail } = this.initializeArrays();
-
-    if (!originUrl.includes('http') || (!originUrl.includes('album') && !originUrl.includes('playlist')))
-    {
-        return mediaData;
-    }
-
-    if (originUrl.includes('album'))
-    {
-        await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
-    } else if (originUrl.includes('playlist'))
-    {
-        await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
-    }
-
-    musicDetail.forEach(musicDetail =>
-    {
-        this.processMusicDetail(musicDetail, duration, bitRate, type);
-    });
-
-    for (let i = 0; i < songId.length; i++)
-    {
-        if (queueRequest && !options['link'] && !options['data'] && !options['param'])
-        {
-            if (i > 0)
-            {
-                await this.delay((duration[i - 1] * 1000) - 4000);
-            }
-            await this.processSong(songId[i], url, cover, this.neteaseApi);
-            session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
-        } else if (!options['link'] && !options['data'] && !options['param'])
-        {
-            await this.processSong(songId[i], url, cover, this.neteaseApi);
-            session.send(`<audio name="${songName[i]}" url="${url[i]}" author="${signer[i]}" cover="${cover[i]}" duration="${duration[i]}" bitRate="${bitRate[i]}" color="${color || 'FFFFFF'}"/>`);
+    public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options) {
+        const id = await this.getIdFromOriginUrl(originUrl);
+        const { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail } = this.initializeArrays();
+        if (id === null) {
+            return this.handleNullId();
         }
+    
+        if (!this.isValidOriginUrl(originUrl)) {
+            return this.handleNullId();
+        }
+    
+        if (originUrl.includes('album')) {
+            await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
+        } else if (originUrl.includes('playlist')) {
+            await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
+        }
+    
+        musicDetail.forEach(musicDetail => {
+            this.processMusicDetail(musicDetail, duration, bitRate, type);
+        });
+    
+        for (let i = 0; i < songId.length; i++) {
+            if (queueRequest && !options['link'] && !options['data'] && !options['param']) {
+                if (i > 0) {
+                    await this.delay((duration[i - 1] * 1000) - 4000);
+                }
+                await this.processSong( songId[i], url, cover);
+                this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+            } else if (!options['link'] && !options['data'] && !options['param']) {
+                await this.processSong( songId[i], url, cover);
+                this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+            }
+        }
+    
+        const completeMediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
+        return completeMediaData;
     }
 
-    const completeMediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
-    return completeMediaData;
-}
+    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF') {
+        session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}"/>`);
+    }
 
 
+    private isValidOriginUrl(originUrl: string): boolean {
+        return originUrl.includes('http') && (originUrl.includes('album') || originUrl.includes('playlist'));
+    }
+    
+    private handleNullId(): MediaData[] {
+        return this.returnErrorMediaData(['暂不支持']);
+    }
+    
+    
     /**
      * 处理AlbumDetails
      * @param id 
@@ -184,9 +184,9 @@ export class Netease extends MediaParsing
      * @param cover 
      * @param neteaseApi 
      */
-    async processSong(songId: number, url: string[], cover: string[], neteaseApi: NeteaseApi)
+    async processSong(songId: number, url: string[], cover: string[])
     {
-        const songResource = await neteaseApi.getSongResource(songId);
+        const songResource = await this.neteaseApi.getSongResource(songId);
         url.push(await this.getRedirectUrl(songResource[0].url));
         cover.push(songResource[0].pic);
     }
