@@ -15,58 +15,62 @@ export class Netease extends MediaParsing
     }
 
 
-    public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options) {
+    public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
+    {
         const id = await this.getIdFromOriginUrl(originUrl);
         const { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail } = this.initializeArrays();
-        if (id === null) {
-            return this.handleNullId();
-        }
-    
-        if (!this.isValidOriginUrl(originUrl)) {
-            return this.handleNullId();
-        }
-    
-        if (originUrl.includes('album')) {
-            await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
-        } else if (originUrl.includes('playlist')) {
-            await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
-        }
-    
-        musicDetail.forEach(musicDetail => {
+        if (!id) return this.handleNullId();
+
+        if (!this.isValidOriginUrl(originUrl)) return this.handleNullId();
+
+        if (originUrl.includes('album')) await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
+
+        else if (originUrl.includes('playlist')) await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
+
+
+        musicDetail.forEach(musicDetail =>
+        {
             this.processMusicDetail(musicDetail, duration, bitRate, type);
         });
-    
-        for (let i = 0; i < songId.length; i++) {
-            if (queueRequest && !options['link'] && !options['data'] && !options['param']) {
-                if (i > 0) {
+
+        for (let i = 0; i < songId.length; i++)
+        {
+            if (queueRequest && !options['link'] && !options['data'] && !options['param'])
+            {
+                if (i > 0)
+                {
                     await this.delay((duration[i - 1] * 1000) - 4000);
                 }
-                await this.processSong( songId[i], url, cover);
+                await this.processSong(songId[i], url, cover);
                 this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
-            } else if (!options['link'] && !options['data'] && !options['param']) {
-                await this.processSong( songId[i], url, cover);
+            } else if (!options['link'] && !options['data'] && !options['param'])
+            {
+                await this.processSong(songId[i], url, cover);
                 this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
             }
         }
-    
+
         const completeMediaData = this.returnCompleteMediaData(type, songName, signer, cover, url, duration, bitRate);
         return completeMediaData;
     }
 
-    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF') {
+    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF')
+    {
         session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}"/>`);
     }
 
 
-    private isValidOriginUrl(originUrl: string): boolean {
+    private isValidOriginUrl(originUrl: string): boolean
+    {
         return originUrl.includes('http') && (originUrl.includes('album') || originUrl.includes('playlist'));
     }
-    
-    private handleNullId(): MediaData[] {
+
+    private handleNullId(): MediaData[]
+    {
         return this.returnErrorMediaData(['暂不支持']);
     }
-    
-    
+
+
     /**
      * 处理AlbumDetails
      * @param id 
