@@ -135,13 +135,13 @@ export class MediaHandler
             inc: ["music.163.com", "album"],
             fn: async () =>
             {
-                return await netease.handleNeteaseAlbum(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
+                return await netease.handleNeteaseAlbumAndSongList(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
             }
         }, {
             inc: ["music.163.com", "playlist"],
             fn: async () =>
             {
-                return await netease.handleNeteaseSongList(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
+                return await netease.handleNeteaseAlbumAndSongList(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
             }
         }, {
             inc: ["163cn.tv"],
