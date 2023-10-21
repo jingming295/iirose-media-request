@@ -103,21 +103,13 @@ export class Netease extends MediaParsing
             return mediaData;
         }
 
+        // 在你的代码中调用它
         musicDetail.forEach(musicDetail =>
         {
-            const song = musicDetail.songs[0]; // 假设你想获取第一首歌的信息
-
-            // 获取时长并将其添加到 duration 数组中
-            const songDuration = song.duration / 1000;
-            duration.push(songDuration);
-
-            // 获取比特率并将其添加到 bitRate 数组中
-            const songBitRate = song.hMusic ? song.hMusic.bitrate / 1000 : 128;
-            bitRate.push(songBitRate);
-
-            type.push('music');
+            this.processMusicDetail(musicDetail, duration, bitRate, type);
         });
-        
+
+
         for (let i = 0; i < songId.length; i++)
         {
             if (queueRequest && !options['link'] && !options['data'] && !options['param'])
@@ -139,6 +131,20 @@ export class Netease extends MediaParsing
         return mediaData;
 
     }
+
+    private processMusicDetail(musicDetail: MusicDetail, duration: number[], bitRate: number[], type: string[])
+    {
+        const song = musicDetail.songs[0];
+
+        const songDuration = song.duration / 1000;
+        duration.push(songDuration);
+
+        const songBitRate = song.hMusic ? song.hMusic.bitrate / 1000 : 128;
+        bitRate.push(songBitRate);
+
+        type.push('music');
+    }
+
 
     async delay(ms: number)
     {
