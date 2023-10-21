@@ -17,44 +17,32 @@ export class Netease extends MediaParsing
 
     public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
-        const type: ('music' | 'video')[] = [];
-        const songName: string[] = [];
-        const signer: string[] = [];
-        const cover: string[] = [];
-        const url: string[] = [];
-        const duration: number[] = [];
-        const bitRate: number[] = [];
-        const songId: number[] = [];
-
-        let id: number | null;
-        const musicDetail: MusicDetail[] = [];
-        if (originUrl.includes('http') && originUrl.includes('album'))
-        {
-            const match1 = originUrl.match(/id=(\d+)/);
-            const match2 = originUrl.match(/\/album\/(\d+)/);
-
-            id = match1 ? parseInt(match1[1], 10) : (match2 ? parseInt(match2[1], 10) : null);
-
-            if (!id)
-            {
-                const mediaData = this.returnErrorMediaData(['暂不支持']);
-                return mediaData;
+        const {
+            type,
+            songName,
+            signer,
+            cover,
+            url,
+            duration,
+            bitRate,
+            songId,
+            musicDetail
+        } = this.initializeArrays();
+    
+        const id = await this.getIdFromOriginUrl(originUrl);
+    
+        if (id === null) {
+            const mediaData = this.returnErrorMediaData(['暂不支持']);
+            return mediaData;
+        }
+    
+        if (originUrl.includes('http') && (originUrl.includes('album') || originUrl.includes('playlist'))) {
+            if (originUrl.includes('album')) {
+                await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
+            } else if (originUrl.includes('playlist')) {
+                await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
             }
-            await this.processAlbumDetails(id, songId, songName, signer, musicDetail);
-        } else if (originUrl.includes('http') && originUrl.includes('playlist'))
-        {
-            const match1 = originUrl.match(/id=(\d+)/);
-            const match2 = originUrl.match(/\/playlist\/(\d+)/);
-
-            id = match1 ? parseInt(match1[1]) : (match2 ? parseInt(match2[1]) : null);
-            if (id === null)
-            {
-                const mediaData = this.returnErrorMediaData(['暂不支持']);
-                return mediaData;
-            }
-            await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
-        } else
-        {
+        } else {
             const mediaData = this.returnErrorMediaData(['暂不支持']);
             return mediaData;
         }
@@ -160,6 +148,27 @@ export class Netease extends MediaParsing
 
         type.push('music');
     }
+
+    private initializeArrays() {
+        const type: ('music' | 'video')[] = [];
+        const songName: string[] = [];
+        const signer: string[] = [];
+        const cover: string[] = [];
+        const url: string[] = [];
+        const duration: number[] = [];
+        const bitRate: number[] = [];
+        const songId: number[] = [];
+        const musicDetail: MusicDetail[] = [];
+    
+        return { type, songName, signer, cover, url, duration, bitRate, songId, musicDetail };
+    }
+    
+    private async getIdFromOriginUrl(originUrl: string) {
+        const match1 = originUrl.match(/id=(\d+)/);
+        const match2 = originUrl.match(/\/(album|playlist)\/(\d+)/);
+        return match1 ? parseInt(match1[1], 10) : (match2 ? parseInt(match2[2], 10) : null);
+    }
+    
 
 
     /**
