@@ -17,6 +17,7 @@ declare const videojs: Player;
  */
 export class GetMediaLength
 {
+    // TODO 把axios全换成fetch
     /**
      * 获取视频的时长
      * @param url 链接

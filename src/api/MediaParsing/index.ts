@@ -13,6 +13,7 @@ import osUtils from 'os-utils';
 export class MediaParsing
 {
 
+    // TODO 把axios全换成fetch
     errorHandle = new ErrorHandle();
 
     /**
@@ -234,7 +235,6 @@ export class MediaParsing
                 url: url,
                 mimetype: mimeType
             };
-            console.log(type)
             mediaType.push(type);
             urlCount = urlCount + 1;
             if (resourceUrls.length >= 1 && !isstopLoading)
@@ -295,7 +295,6 @@ export class MediaParsing
             if (mediaType!)
             {
                 if (isPageClosed()) return this.returnErrorMediaData([`页面被软件关闭，极有可能是CPU占用率达到阈值`]);
-                console.log(mediaType)
                 if (mediaType[0] === 'video')
                 {
                     cover[0] = await this.getThumbNail(page);

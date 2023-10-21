@@ -1,9 +1,12 @@
 import axios from 'axios';
 export class BiliBiliApi
 {
+    // TODO 把axios全换成fetch
     /**
      * 主要获取Bangumi的url
      * @param ep bilibili ep
+     * @param biliBiliSessData BiliBili SessData
+     * @param biliBiliqn BiliBiliqn
      * @returns 
      */
     public async getBangumiStream(ep: number, biliBiliSessData: string, biliBiliqn: number)

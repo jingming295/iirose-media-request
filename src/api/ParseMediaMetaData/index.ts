@@ -1,12 +1,13 @@
 import axios from 'axios';
 export class ParseMediaMetaData
 {
+    // TODO 把axios全换成fetch
     /**
- * 解析m3u8
- * @param data 
- * @param url m3u8第一个链接
- * @returns 
- */
+     * 解析m3u8
+     * @param data 
+     * @param url m3u8第一个链接
+     * @returns 
+     */
     public async parseM3U8(data: Uint8Array, url: string)
     {
         const text = new TextDecoder().decode(data);

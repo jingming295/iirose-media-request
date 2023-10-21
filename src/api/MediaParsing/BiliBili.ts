@@ -1,6 +1,5 @@
 import { MediaParsing } from ".";
 import { BiliBiliApi } from "../BilibiliAPI";
-import axios from 'axios';
 
 /**
  * 主要处理bilibili的网站

@@ -138,6 +138,12 @@ export class MediaHandler
                 return await netease.handleNeteaseAlbum(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
             }
         }, {
+            inc: ["music.163.com", "playlist"],
+            fn: async () =>
+            {
+                return await netease.handleNeteaseSongList(originMediaArgument, session, config['mediaCardColor'], config['queueRequest'], options);
+            }
+        }, {
             inc: ["163cn.tv"],
             fn: async () =>
             {
@@ -198,21 +204,21 @@ export class MediaHandler
             }
             let conformPromise: Promise<msgInfo[]> | null = null;
             ([{
-                inc: ["link"],
+                opt: ["link"],
                 fn: async () =>
                 {
                     const urlInfo = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${data.url}</>`);
                     return this.returnHasRespondMsgInfo(urlInfo, Array.from({ length: urlInfo.length }, () => null));
                 }
             }, {
-                inc: ["data"],
+                opt: ["data"],
                 fn: async () =>
                 {
                     const jsonData = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(data, null, 2)}</>`);
                     return this.returnHasRespondMsgInfo(jsonData, Array.from({ length: jsonData.length }, () => null));
                 }
             }, {
-                inc: ["param"],
+                opt: ["param"],
                 fn: async () =>
                 {
                     const paramInfo = mediaData.map(data => `<${data.name} - ${data.signer} - ${data.cover}> ${data.url}`);
@@ -220,7 +226,7 @@ export class MediaHandler
                 }
             }]).some(o =>
             {
-                if (o.inc.every(k => options[k]))
+                if (o.opt.every(k => options[k]))
                 {
                     conformPromise = o.fn();
                     return true;
@@ -230,7 +236,7 @@ export class MediaHandler
             });
             if (!conformPromise)
             {
-                if (this.config.trackUser)
+                if (this.config.trackUser && mediaData.length === 1)
                 {
                     const userActions = mediaData.map(data => `<><parent><at id="${userName}"/>点播了 ${data.name}<child/></parent></>`);
                     returnmsg = returnmsg.concat(userActions);

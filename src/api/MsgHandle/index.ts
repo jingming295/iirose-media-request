@@ -20,8 +20,10 @@ export async function apply(ctx: Context, config: Config)
     // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
 
     // const netease = new Netease();
-
     // await netease.handleNeteaseAlbum(`135680406`);
+
+    const neteaseApi = new NeteaseApi()
+    await neteaseApi.getSongResource(1301861864);
 
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
@@ -63,6 +65,7 @@ export async function apply(ctx: Context, config: Config)
                         {
                             for (const info of msg)
                             {
+                                if (info.messageContent) session.send(info.messageContent);
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
                                     if (info.mediaData.type === 'music')

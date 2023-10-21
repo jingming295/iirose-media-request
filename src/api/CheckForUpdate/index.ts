@@ -8,6 +8,7 @@ interface UpdateInfo {
  * 检测更新
  */
 export class UpdateChecker {
+    // TODO 把axios全换成fetch
     /**
      * 主要检查是不是最新版本
      * @returns 
