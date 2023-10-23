@@ -12,7 +12,6 @@ export class ParseMediaMetaData
     {
         const text = new TextDecoder().decode(data);
         const m3u8Url = this.parseM3U8File(text);
-        console.log(text);
         if (m3u8Url)
         {
             const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
@@ -57,7 +56,6 @@ export class ParseMediaMetaData
                 }
             }
         }
-        console.log(duration);
         return duration;
     }
 

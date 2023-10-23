@@ -22,8 +22,8 @@ export async function apply(ctx: Context, config: Config)
     // const netease = new Netease();
     // await netease.handleNeteaseAlbum(`135680406`);
 
-    const neteaseApi = new NeteaseApi()
-    await neteaseApi.getSongResource(1301861864);
+    // const neteaseApi = new NeteaseApi()
+    // await neteaseApi.getSongResource(1301861864);
 
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);

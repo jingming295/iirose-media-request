@@ -14,7 +14,6 @@ export class Netease extends MediaParsing
         this.neteaseApi = new NeteaseApi();
     }
 
-
     public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
         const id = await this.getIdFromOriginUrl(originUrl);

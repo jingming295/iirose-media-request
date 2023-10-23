@@ -2,7 +2,7 @@
 
 export * from './api/MsgHandle'
 
-export * from './api/Configuration Profile/configuration'
+export * from './api/Configuration/configuration'
 
 export const name = 'iirose-media-request'
 
