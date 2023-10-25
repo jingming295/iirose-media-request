@@ -1,14 +1,12 @@
-import axios from 'axios';
-
 interface UpdateInfo {
     latest: boolean;
     messageContent: string;
 }
+
 /**
  * 检测更新
  */
 export class UpdateChecker {
-    // TODO 把axios全换成fetch
     /**
      * 主要检查是不是最新版本
      * @returns 
@@ -32,8 +30,9 @@ export class UpdateChecker {
      */
     private async getLatestVersion(packageName: string): Promise<string | null> {
         try {
-            const response = await axios.get(`https://registry.npmjs.org/${packageName}`, { responseType: 'json' });
-            return response.data['dist-tags'].latest;
+            const response = await fetch(`https://registry.npmjs.org/${packageName}`);
+            const data = await response.json();
+            return data['dist-tags'].latest;
         } catch (error) {
             console.error('无法获取最新版本信息', error);
             return null;

@@ -1,7 +1,5 @@
-import axios from 'axios';
 export class ParseMediaMetaData
 {
-    // TODO 把axios全换成fetch
     /**
      * 解析m3u8
      * @param data 
@@ -61,20 +59,26 @@ export class ParseMediaMetaData
 
     private async getM3U8NextFile(url: string)
     {
-        const response = await axios.get(url, {
-            headers: {
-                Range: 'bytes=0-100000'
-            }
-        });
-        if (response.status !== 200 && response.status !== 206)
+        try
         {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const response = await fetch(url, {
+                headers: {
+                    'Range': 'bytes=0-100000'
+                }
+            });
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.arrayBuffer();
+            const uint8Array = new Uint8Array(data);
+            return uint8Array;
+        } catch (error)
+        {
+            throw error; // 如果没有 response 对象，将错误重新抛出
         }
-        const data = await response.data;
-        const buffer = Buffer.from(data, 'binary');
-        const uint8Array = new Uint8Array(buffer);
-        return uint8Array;
     }
+    
 
     /**
      * 解析mp4找到moovbox, 这个方法套用在m4a上居然也行

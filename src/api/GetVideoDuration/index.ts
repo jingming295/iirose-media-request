@@ -1,5 +1,4 @@
 import { Context } from 'koishi';
-import axios from 'axios';
 import { ParseMediaMetaData } from '../ParseMediaMetaData';
 /**
  * 随便填的
@@ -17,7 +16,6 @@ declare const videojs: Player;
  */
 export class GetMediaLength
 {
-    // TODO 把axios全换成fetch
     /**
      * 获取视频的时长
      * @param url 链接
@@ -99,21 +97,21 @@ export class GetMediaLength
     {
         const parseMediaMetaData = new ParseMediaMetaData();
         // 测试用
-        if (!url) url = 'https://cloud.ming295.com/f/AoUo/file_example_WEBM_480_900KB.webm';
+        if (!url) url = '';
         // 测试用
         if (!mimeType) mimeType = 'video/webm';
-        const response = await axios.get(url, {
+        const response = await fetch(url, {
             headers: {
-                // Range: 'bytes=0-50000'
+                Range: 'bytes=0-50000'
             }
         });
-        if (response.status !== 200 && response.status !== 206)
+        if (!response.ok)
         {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.data;
+        const data = await response.arrayBuffer();
 
-        const buffer = Buffer.from(data, 'binary');
+        const buffer = Buffer.from(data);
 
         const uint8Array = new Uint8Array(buffer);
 
@@ -129,6 +127,7 @@ export class GetMediaLength
         }
         else throw new Error(`GetMediaLengthByReadMetaData: 没找到时长`);
     }
+
 
 
 

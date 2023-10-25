@@ -1,7 +1,6 @@
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../GetVideoDuration';
 import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
-import axios from 'axios';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
 import osUtils from 'os-utils';
@@ -144,82 +143,88 @@ export class MediaParsing
      * 检查看看链接是不是一个下载链接
      * @returns boolean
      */
-    async isDownloadLink(originUrl: string): Promise<boolean>
-    {
-        try
-        {
-            const response = await axios.head(originUrl);
-            const contentDisposition = response.headers['content-disposition'];
-
-            if (contentDisposition && contentDisposition.startsWith('attachment') || !response.headers['content-type'].includes('text/html'))
-            {
-                return true;
-            } else
-            {
-                return false;
-            }
-        } catch (error)
-        {
-            return false;
-        }
-    }
-
-
-
+     async isDownloadLink(originUrl: string): Promise<boolean>
+     {
+         try
+         {
+             const response = await fetch(originUrl, {
+                 method: 'HEAD'
+             });
+             const contentDisposition = response.headers.get('content-disposition');
+             const contentType = response.headers.get('content-type');
+     
+             if (contentDisposition && contentDisposition.startsWith('attachment') || contentType && !contentType.includes('text/html'))
+             {
+                 return true;
+             } else
+             {
+                
+                 return false;
+             }
+         } catch (error)
+         {
+             return false;
+         }
+     }
+     
     /**
      * 针对有重定向的链接，获取重定向后的链接
      * @param shortUrl 重定向前的链接
      * @returns 
      */
-    public async getRedirectUrl(shortUrl: string)
-    {
-        try
-        {
-            const response = await axios.get(shortUrl, {
-                maxRedirects: 0,
-                responseType: 'stream' // 将 responseType 设置为 'stream'
-            });
-            return response.headers.location;
-        } catch (error)
-        {
-            if (axios.isAxiosError(error) && error.response)
-            {
-                const redirectUrl = error.response.headers.location;
-                return redirectUrl;
-            } else
-            {
-                throw error; // 如果没有 response 对象，将错误重新抛出
-            }
-        }
-    }
+     public async getRedirectUrl(shortUrl: string)
+     {
+         try
+         {
+             const response = await fetch(shortUrl, {
+                 redirect: 'manual'  // 阻止自动重定向
+             });
+             if (response.status === 301 || response.status === 302) {
+                 const redirectUrl = response.headers.get('location');
+                 if (redirectUrl) {
+                     return redirectUrl;
+                 } else {
+                     throw new Error('getRedirectUrl: Location header is missing');
+                 }
+             } else {
+                 throw new Error(`getRedirectUrl: ${response.status}`);
+             }
+         } catch (error)
+         {
+             console.error('Error:', error);
+             throw error;
+         }
+     }
+     
 
     /**
-     * 检查看看一个url是否返回403，或者无法访问
+     * 检查看看一个url是否返回403，或者无法访问，主要用在通过bilibili官方api拿到的视频流
      * @param url  链接
      * @returns boolean
      */
-    public async checkResponseStatus(url: string)
-    {
-        try
-        {
-            const response = await axios.get(url, {
-                headers: {
-                    Referer: 'no-referrer',
-                    Range: 'bytes=0-10000'
-                }
-            });
-            if (response.status === 403 || response.status === 410)
-            {
-                return false;
-            } else
-            {
-                return true;
-            }
-        } catch (error)
-        {
-            return false;
-        }
-    }
+     public async checkResponseStatus(url: string)
+     {
+         try
+         {
+             const response = await fetch(url, {
+                 headers: {
+                     'Referer': 'no-referrer',
+                     'Range': 'bytes=0-10000'
+                 }
+             });
+             if (response.status === 403 || response.status === 410)
+             {
+                 return false;
+             } else
+             {
+                 return true;
+             }
+         } catch (error)
+         {
+             return false;
+         }
+     }
+     
 
 
     /**
