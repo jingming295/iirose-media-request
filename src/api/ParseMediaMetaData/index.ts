@@ -59,26 +59,20 @@ export class ParseMediaMetaData
 
     private async getM3U8NextFile(url: string)
     {
-        try
-        {
-            const response = await fetch(url, {
-                headers: {
-                    'Range': 'bytes=0-100000'
-                }
-            });
-            if (!response.ok)
-            {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch(url, {
+            headers: {
+                'Range': 'bytes=0-100000'
             }
-            const data = await response.arrayBuffer();
-            const uint8Array = new Uint8Array(data);
-            return uint8Array;
-        } catch (error)
+        });
+        if (!response.ok)
         {
-            throw error; // 如果没有 response 对象，将错误重新抛出
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(data);
+        return uint8Array;
     }
-    
+
 
     /**
      * 解析mp4找到moovbox, 这个方法套用在m4a上居然也行
@@ -142,5 +136,5 @@ export class ParseMediaMetaData
         return duration;
     }
 
-    
+
 }

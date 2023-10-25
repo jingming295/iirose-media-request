@@ -12,7 +12,6 @@ import osUtils from 'os-utils';
 export class MediaParsing
 {
 
-    // TODO 把axios全换成fetch
     errorHandle = new ErrorHandle();
 
     /**
