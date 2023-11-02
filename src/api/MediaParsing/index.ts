@@ -124,7 +124,6 @@ export class MediaParsing
                 }
                 osUtils.cpuUsage((v) =>
                 {
-                    console.log(v);
                     if (v > maxCpuUsage)
                     {
                         page.close();
