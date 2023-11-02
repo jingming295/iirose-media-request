@@ -1,5 +1,4 @@
 
-
 import { eapi, weapi } from './crypto';
 // import fs from 'fs'
 export class NeteaseApi

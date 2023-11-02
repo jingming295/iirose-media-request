@@ -92,7 +92,7 @@ export class MediaParsing
      */
     public async openBrowser(ctx: Context, originUrl: string, timeOut: number, waitTime: number, maxCpuUsage: number)
     {
-        let intervalId;
+        let intervalId: NodeJS.Timeout | null = null;
         if (!await ctx.puppeteer)
         {
             const mediaData = this.returnErrorMediaData(['puppeteer 未安装或没有正确配置，请在插件市场安装']);
@@ -116,8 +116,15 @@ export class MediaParsing
             // 如果检测到异常的cpu占用率（表示可能是挖矿页面），就关闭页面
             intervalId = setInterval(async () =>
             {
+                if (!ctx.iirose_media_request)
+                {
+                    if (intervalId !== null) clearInterval(intervalId);
+                    await this.closePage(page);
+                    return;
+                }
                 osUtils.cpuUsage((v) =>
                 {
+                    console.log(v);
                     if (v > maxCpuUsage)
                     {
                         page.close();
@@ -132,7 +139,7 @@ export class MediaParsing
         } catch (error)
         {
             await this.closePage(page);
-            clearInterval(intervalId);
+            if (intervalId !== null) clearInterval(intervalId);
             const mediaData = this.returnErrorMediaData([this.errorHandle.ErrorHandle((error as Error).message)]);
             return mediaData;
         }
@@ -142,88 +149,93 @@ export class MediaParsing
      * 检查看看链接是不是一个下载链接
      * @returns boolean
      */
-     async isDownloadLink(originUrl: string): Promise<boolean>
-     {
-         try
-         {
-             const response = await fetch(originUrl, {
-                 method: 'HEAD'
-             });
-             const contentDisposition = response.headers.get('content-disposition');
-             const contentType = response.headers.get('content-type');
-     
-             if (contentDisposition && contentDisposition.startsWith('attachment') || contentType && !contentType.includes('text/html'))
-             {
-                 return true;
-             } else
-             {
-                
-                 return false;
-             }
-         } catch (error)
-         {
-             return false;
-         }
-     }
-     
+    async isDownloadLink(originUrl: string): Promise<boolean>
+    {
+        try
+        {
+            const response = await fetch(originUrl, {
+                method: 'HEAD'
+            });
+            const contentDisposition = response.headers.get('content-disposition');
+            const contentType = response.headers.get('content-type');
+
+            if (contentDisposition && contentDisposition.startsWith('attachment') || contentType && !contentType.includes('text/html'))
+            {
+                return true;
+            } else
+            {
+
+                return false;
+            }
+        } catch (error)
+        {
+            return false;
+        }
+    }
+
     /**
      * 针对有重定向的链接，获取重定向后的链接
      * @param shortUrl 重定向前的链接
      * @returns 
      */
-     public async getRedirectUrl(shortUrl: string)
-     {
-         try
-         {
-             const response = await fetch(shortUrl, {
-                 redirect: 'manual'  // 阻止自动重定向
-             });
-             if (response.status === 301 || response.status === 302) {
-                 const redirectUrl = response.headers.get('location');
-                 if (redirectUrl) {
-                     return redirectUrl;
-                 } else {
-                     throw new Error('getRedirectUrl: Location header is missing');
-                 }
-             } else {
-                 throw new Error(`getRedirectUrl: ${response.status}`);
-             }
-         } catch (error)
-         {
-             console.error('Error:', error);
-             throw error;
-         }
-     }
-     
+    public async getRedirectUrl(shortUrl: string)
+    {
+        try
+        {
+            const response = await fetch(shortUrl, {
+                redirect: 'manual'  // 阻止自动重定向
+            });
+            if (response.status === 301 || response.status === 302)
+            {
+                const redirectUrl = response.headers.get('location');
+                if (redirectUrl)
+                {
+                    return redirectUrl;
+                } else
+                {
+                    throw new Error('getRedirectUrl: Location header is missing');
+                }
+            } else
+            {
+                throw new Error(`getRedirectUrl: ${response.status}`);
+            }
+        } catch (error)
+        {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+
 
     /**
      * 检查看看一个url是否返回403，或者无法访问，主要用在通过bilibili官方api拿到的视频流
      * @param url  链接
      * @returns boolean
      */
-     public async checkResponseStatus(url: string)
-     {
-         try
-         {
-             const response = await fetch(url, {
-                 headers: {
-                     'Referer': 'no-referrer',
-                     'Range': 'bytes=0-10000'
-                 }
-             });
-             if (response.status === 403 || response.status === 410)
-             {
-                 return false;
-             } else
-             {
-                 return true;
-             }
-         } catch (error)
-         {
-             return false;
-         }
-     }
-     
+    public async checkResponseStatus(url: string)
+    {
+        try
+        {
+            const response = await fetch(url, {
+                headers: {
+                    'Referer': 'no-referrer',
+                    'Range': 'bytes=0-10000'
+                }
+            });
+            //  console.log(`status: ${response.status}`)
+            if (response.status === 403 || response.status === 410)
+            {
+                return false;
+            } else
+            {
+                return true;
+            }
+        } catch (error)
+        {
+            return false;
+        }
+    }
+
 
 
     /**
@@ -258,7 +270,7 @@ export class MediaParsing
         let urlCount = 0;
         let mediaType: ('music' | 'video')[] = [];
         let name: string[] = [];
-        let cover: (string|null)[] = [];
+        let cover: (string | null)[] = [];
         let isstopLoading = 0;
         const resourceUrls: ResourceUrls[] = [
             { url: null, mimetype: null }
@@ -310,9 +322,11 @@ export class MediaParsing
             await page.waitForTimeout(waitTime);
             if (isPageClosed()) return this.handleError(new Error(`页面被软件关闭，极有可能是CPU占用率达到阈值`));
             name[0] = await page.title() || '无法获取标题';
-            if(mediaType!&& cover){
+            if (mediaType! && cover)
+            {
                 return this.processMediaData(resourceUrls, mediaType, cover, name, ctx);
-            } else {
+            } else
+            {
                 return this.returnErrorMediaData(['<>没有找到媒体，主要是无法获取type或者cover</>']);
             }
         } catch (error)
@@ -344,9 +358,9 @@ export class MediaParsing
             mimeType = resourceUrls[0].mimetype;
 
 
-                const getMediaLength = new GetMediaLength();
-                duration[0] = await getMediaLength.GetMediaLength(url[0], mimeType, ctx);
-                return this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
+            const getMediaLength = new GetMediaLength();
+            duration[0] = await getMediaLength.GetMediaLength(url[0], mimeType, ctx);
+            return this.returnCompleteMediaData(mediaType, name, signer, cover, url, duration, bitRate);
 
         } else
         {

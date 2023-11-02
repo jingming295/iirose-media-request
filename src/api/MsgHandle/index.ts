@@ -1,6 +1,9 @@
 import { Context, Logger, Session } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
+import { } from 'koishi-plugin-bilibili-login'
+import { } from 'koishi-plugin-puppeteer';
+import { iirose_media_request } from '../Services';
 
 import { GetMediaLength } from '../GetVideoDuration';
 
@@ -15,6 +18,10 @@ import { Netease } from '../MediaParsing/Netease';
  */
 export async function apply(ctx: Context, config: Config)
 {
+    ctx.plugin(iirose_media_request);
+    // console.log(ctx.puppeteer)
+    // console.log(ctx.bilibiliLogin)
+    
     // 测试用
     // const getMediaLength = new GetMediaLength()
     // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
@@ -24,7 +31,6 @@ export async function apply(ctx: Context, config: Config)
 
     // const neteaseApi = new NeteaseApi()
     // await neteaseApi.getSongResource(1301861864);
-
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
@@ -35,6 +41,7 @@ export async function apply(ctx: Context, config: Config)
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
+                
                 if (!session || !session.username || !options) return;
                 const logger = new Logger('iirose-media-request');
 

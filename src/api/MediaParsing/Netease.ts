@@ -1,6 +1,6 @@
 import { MediaParsing } from ".";
 import { NeteaseApi } from '../NeteaseAPI';
-import { Session } from "koishi";
+import { Logger, Session } from "koishi";
 
 /**
  * 主要处理网易云的网站
@@ -8,12 +8,24 @@ import { Session } from "koishi";
 export class Netease extends MediaParsing
 {
     private neteaseApi: NeteaseApi;
+    logger:Logger
     constructor()
     {
         super();
         this.neteaseApi = new NeteaseApi();
+        const logger = new Logger('iirose-media-request');
+        this.logger = logger
     }
 
+    /**
+     * 处理专辑和歌单
+     * @param originUrl 
+     * @param session 
+     * @param color 
+     * @param queueRequest 
+     * @param options 
+     * @returns 
+     */
     public async handleNeteaseAlbumAndSongList(originUrl: string, session: Session, color: string, queueRequest: boolean, options: Options)
     {
         const id = await this.getIdFromOriginUrl(originUrl);
@@ -31,7 +43,6 @@ export class Netease extends MediaParsing
         {
             this.processMusicDetail(musicDetail, duration, bitRate, ["music"]);
         });
-
         for (let i = 0; i < songId.length; i++)
         {
             if (queueRequest && !options['link'] && !options['data'] && !options['param'])
@@ -40,12 +51,13 @@ export class Netease extends MediaParsing
                 {
                     await this.delay((duration[i - 1] * 1000) - 4000);
                 }
-                await this.processSong(songId[i], url, cover);
-                this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+                const processSong = await this.processSong(songId[i], url, cover);
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+                else duration[i] = 0
             } else if (!options['link'] && !options['data'] && !options['param'])
             {
-                await this.processSong(songId[i], url, cover);
-                this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+                const processSong = await this.processSong(songId[i], url, cover);
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
             }
         }
 
@@ -188,9 +200,15 @@ export class Netease extends MediaParsing
      */
     async processSong(songId: number, url: string[], cover: string[])
     {
-        const songResource = await this.neteaseApi.getSongResource(songId);
-        url.push(await this.getRedirectUrl(songResource[0].url));
-        cover.push(songResource[0].pic);
+        try {
+            const songResource = await this.neteaseApi.getSongResource(songId);
+            url.push(await this.getRedirectUrl(songResource[0].url));
+            cover.push(songResource[0].pic);
+            return true;
+        } catch (error) {
+            this.logger.warn(`歌曲${songId}: ${(error as Error).message}`)
+        }
+
     }
 
     // TODO 把axios全换成fetch
