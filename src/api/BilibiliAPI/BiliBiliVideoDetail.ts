@@ -32,26 +32,7 @@ interface VideoData
   }[];
   state: number;
   duration: number;
-  rights: {
-    bp: number;
-    elec: number;
-    download: number;
-    movie: number;
-    pay: number;
-    hd5: number;
-    no_reprint: number;
-    autoplay: number;
-    ugc_pay: number;
-    is_cooperation: number;
-    ugc_pay_preview: number;
-    no_background: number;
-    clean_mode: number;
-    is_stein_gate: number;
-    is_360: number;
-    no_share: number;
-    arc_pay: number;
-    free_watch: number;
-  };
+  rights: rights;
   owner: {
     mid: number;
     name: string;
@@ -174,21 +155,7 @@ interface Arc
   desc: string;
   state: number;
   duration: number;
-  rights: {
-    bp: number;
-    elec: number;
-    download: number;
-    movie: number;
-    pay: number;
-    hd5: number;
-    no_reprint: number;
-    autoplay: number;
-    ugc_pay: number;
-    is_cooperation: number;
-    ugc_pay_preview: number;
-    arc_pay: number;
-    free_watch: number;
-  };
+  rights: rights;
   author: {
     mid: number;
     name: string;
@@ -223,6 +190,30 @@ interface Arc
   enable_vt: number;
   vt_display: string;
 }
+
+interface rights
+{
+  bp: number;
+  elec: number;
+  download: number;
+  movie: number;
+  pay: number;
+  hd5: number;
+  no_reprint: number;
+  autoplay: number;
+  ugc_pay: number;
+  is_cooperation: number;
+  ugc_pay_preview: number;
+  no_background: number;
+  clean_mode: number;
+  is_stein_gate: number;
+  is_360: number;
+  no_share: number;
+  arc_pay: number;
+  free_watch: number;
+}
+
+
 /**
  * 集？
  */
