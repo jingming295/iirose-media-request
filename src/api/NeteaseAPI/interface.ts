@@ -26,26 +26,28 @@ interface SearchSimpleAlbumParamsObject
 /**
  * 专辑
  */
- interface Album {
+interface Album
+{
   message: string;
   data: {
-      albumId: number;
-      albumName: string;
-      artistRepVos: Artist[];
-      albumPicUrl: string;
-      albumSubTitle: string;
-      company: string;
-      publishTime: number;
-      songRepVos: Song[];
-      production: string;
-      language: string;
-      type: string;
-      transName: string | null;
+    albumId: number;
+    albumName: string;
+    artistRepVos: Artist[];
+    albumPicUrl: string;
+    albumSubTitle: string;
+    company: string;
+    publishTime: number;
+    songRepVos: Song[];
+    production: string;
+    language: string;
+    type: string;
+    transName: string | null;
   };
   code: number;
 }
 
-interface Artist {
+interface Artist
+{
   artistId: number;
   artistName: string;
   alias: string | null;
@@ -58,10 +60,11 @@ interface Artist {
   transName: string | null;
 }
 
-interface Song {
+interface Song
+{
   songId: number;
   songName: string;
-  artistRepVos:Artist[]
+  artistRepVos: Artist[];
   songSubTitle: string;
   company: string | null;
   publishTime: number;
@@ -85,13 +88,15 @@ interface Song {
 /**
  * Music Detail
  */
-interface MusicDetail {
+interface MusicDetail
+{
   songs: MusicDetailSong[];
   equalizers: string; // 这里是一个键值对，值的类型未知，可以根据需要修改
   code: number;
 }
 
-interface MusicDetailSong {
+interface MusicDetailSong
+{
   name: string;
   id: number;
   position: number;
@@ -140,7 +145,8 @@ interface MusicDetailSong {
   transNames: string[];
 }
 
-interface MusicDetailArtists {
+interface MusicDetailArtists
+{
   name: string;
   id: number;
   picId: number;
@@ -155,7 +161,8 @@ interface MusicDetailArtists {
   topicPerson: number;
 }
 
-interface MusicDetailAlbum {
+interface MusicDetailAlbum
+{
   name: string;
   id: number;
   type: string;
@@ -181,7 +188,8 @@ interface MusicDetailAlbum {
   picId_str: string;
 }
 
-interface MusicFormat {
+interface MusicFormat
+{
   name: string | null;
   id: number;
   size: number;
@@ -196,7 +204,8 @@ interface MusicFormat {
 /**
  * 歌单
  */
-interface SongList {
+interface SongList
+{
   code: number;
   relatedVideos: string;
   playlist: Playlist;
@@ -249,7 +258,8 @@ interface SongList {
   fromUserCount: number;
   songFromUsers: unknown[] | null;
 }
-interface Playlist {
+interface Playlist
+{
   id: number;
   name: string;
   coverImgId: number;
@@ -303,7 +313,8 @@ interface Playlist {
   algTags: unknown | null;
   trialMode: number;
 }
-interface PlaylistTrack {
+interface PlaylistTrack
+{
   name: string;
   id: number;
   pst: number;
@@ -393,7 +404,8 @@ interface PlaylistTrack {
   tns: string[];
 }
 
-interface PlaylistCreator {
+interface PlaylistCreator
+{
   defaultAvatar: boolean;
   province: number;
   authStatus: number;
@@ -426,7 +438,8 @@ interface PlaylistCreator {
   anchor: boolean;
   avatarImgId_str: string;
 }
-interface PlaylistTrackId {
+interface PlaylistTrackId
+{
   id: number;
   v: number;
   t: number;
@@ -439,6 +452,11 @@ interface PlaylistTrackId {
   sr: unknown | null;
 }
 
-
-
-
+interface songResource
+{
+  name: string,
+  artist: string,
+  url: string,
+  pic: string,
+  lrc: string;
+}

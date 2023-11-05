@@ -4,6 +4,7 @@ import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
 import osUtils from 'os-utils';
+import fetch from 'node-fetch'
 
 
 /**
@@ -92,7 +93,7 @@ export class MediaParsing
      */
     public async openBrowser(ctx: Context, originUrl: string, timeOut: number, waitTime: number, maxCpuUsage: number)
     {
-        let intervalId: NodeJS.Timeout | null = null;
+        let intervalId: NodeJS.Timeout | undefined = undefined;
         if (!await ctx.puppeteer)
         {
             const mediaData = this.returnErrorMediaData(['puppeteer 未安装或没有正确配置，请在插件市场安装']);
@@ -130,6 +131,10 @@ export class MediaParsing
                     }
                 });
             }, 1000);
+
+            ctx.on('dispose', () =>  clearInterval(intervalId))
+            
+            
 
             const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime, ctx, client);
             await this.closePage(page);

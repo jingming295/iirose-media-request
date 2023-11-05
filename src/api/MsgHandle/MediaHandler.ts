@@ -112,7 +112,7 @@ export class MediaHandler
                 return await bilibili.handleBilibiliMedia(originMediaArgument, sessData, platform, qn);
             }
         }, {
-            inc: ["bilibili", "b23.tv"],
+            inc: ["bilibili", "bangumi"],
             fn: async () =>
             {
                 return await bilibili.handleBilibiliBangumi(originMediaArgument, sessData, qn);

@@ -1,3 +1,4 @@
+import fetch from 'node-fetch'
 export class ParseMediaMetaData
 {
     /**

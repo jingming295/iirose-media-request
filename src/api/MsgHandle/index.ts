@@ -68,6 +68,7 @@ export async function apply(ctx: Context, config: Config)
                             return false;
                         }
                         const msg = await handler.handleMediaRequest(options, item, username, uid, session, config);
+                        console.log(msg.length)
                         if (msg.length === 1)
                         {
                             for (const info of msg)
@@ -77,6 +78,7 @@ export async function apply(ctx: Context, config: Config)
                                 {
                                     if (info.mediaData.type === 'music')
                                     {
+                                        
                                         session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
                                     } else
                                     {

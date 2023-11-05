@@ -1,3 +1,4 @@
+import fetch from 'node-fetch'
 interface UpdateInfo {
     latest: boolean;
     messageContent: string;
@@ -31,8 +32,10 @@ export class UpdateChecker {
     private async getLatestVersion(packageName: string): Promise<string | null> {
         try {
             const response = await fetch(`https://registry.npmjs.org/${packageName}`);
-            const data = await response.json();
+            const data = await response.json() as NpmData;
             return data['dist-tags'].latest;
+
+
         } catch (error) {
             console.error('无法获取最新版本信息', error);
             return null;

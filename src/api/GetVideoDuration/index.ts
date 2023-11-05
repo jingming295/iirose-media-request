@@ -1,5 +1,6 @@
 import { Context } from 'koishi';
 import { ParseMediaMetaData } from '../ParseMediaMetaData';
+import fetch from 'node-fetch'
 /**
  * 随便填的
  */

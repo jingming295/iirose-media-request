@@ -1,3 +1,4 @@
+import fetch from 'node-fetch'
 export class BiliBiliApi
 {
     /**
@@ -20,10 +21,10 @@ export class BiliBiliApi
 
         const headers = this.returnBilibiliHeaders(biliBiliSessData);
 
-        const requestOptions: RequestInit = {
+        const requestOptions: Omit<RequestInit, 'body'> = {
             method: 'GET',
             headers: headers,
-            credentials: 'include'
+            credentials: 'include',
         };
 
         try
@@ -34,7 +35,7 @@ export class BiliBiliApi
                 throw new Error(`Network response was not ok: ${response.statusText}`);
             }
 
-            const responseData = await response.json();
+            const responseData = await response.json() as bangumiStream;
             if (responseData.code === 0)
             {
                 return responseData.result;
@@ -67,7 +68,7 @@ export class BiliBiliApi
             const response = await fetch(`${url}?${params}`, { headers });
             if (response.ok)
             {
-                const data = await response.json();
+                const data = await response.json() as BangumiVideoDetail;
                 if (data.code === 0)
                 {
                     return data.result;
@@ -106,7 +107,7 @@ export class BiliBiliApi
             const response = await fetch(`${url}?${params}`, { headers });
             if (response.ok)
             {
-                const data = await response.json();
+                const data = await response.json()as BVideoDetail;
                 if (data.code === 0)
                 {
                     return data.data;
@@ -154,21 +155,25 @@ export class BiliBiliApi
             const response = await fetch(`${url}?${params}`, { headers });
             if (response.ok)
             {
-                const data = await response.json();
+                const data:BVideoStream = await response.json() as BVideoStream;
+                console.log(data.data.support_formats)
                 if (data.code === 0)
                 {
-                    return data.data;
+                    return data;
                 } else
                 {
                     console.error('Error:', data.message);
+                    return null
                 }
             } else
             {
                 console.error('Error:', response.status);
+                return null
             }
         } catch (error)
         {
             console.error('Error:', (error as Error).message);
+            return null
         }
     }
 

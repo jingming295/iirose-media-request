@@ -121,6 +121,9 @@ export class Netease extends MediaParsing
     private async processPlaylistDetails(id: number, songId: number[], songName: string[], signer: string[], musicDetail: MusicDetail[])
     {
         const playList = await this.neteaseApi.getSonglistDetail(id);
+        if(!playList){
+            return null
+        }
         const songList = playList.playlist.tracks;
 
         for (const song of songList)
@@ -202,6 +205,9 @@ export class Netease extends MediaParsing
     {
         try {
             const songResource = await this.neteaseApi.getSongResource(songId);
+            if(!songResource){
+                return
+            }
             url.push(await this.getRedirectUrl(songResource[0].url));
             cover.push(songResource[0].pic);
             return true;
@@ -254,6 +260,10 @@ export class Netease extends MediaParsing
                 return mediaData;
             }
             const songResource = await this.neteaseApi.getSongResource(id);
+            if(!songResource){
+                const mediaData = this.returnErrorMediaData([`无法获取歌曲${id}`]);
+                return mediaData;
+            }
             url = await this.getRedirectUrl(songResource[0].url);
             type = 'music';
             name = songData.songs[0].name;

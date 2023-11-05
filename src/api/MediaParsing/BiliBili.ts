@@ -1,6 +1,7 @@
 import { MediaParsing } from ".";
 import { BiliBiliApi } from "../BilibiliAPI";
 
+
 /**
  * 主要处理bilibili的网站
  */
@@ -28,7 +29,7 @@ export class BiliBili extends MediaParsing
             const ep: number = parseInt(match[1], 10);
             const bangumiInfo = await biliBiliApi.getBangumiData(ep, biliBiliSessData);
             let bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn);
-            if (!bangumiInfo && !bangumiStream)
+            if (!bangumiInfo || !bangumiStream)
             {
                 const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
                 return mediaData;
@@ -40,19 +41,26 @@ export class BiliBili extends MediaParsing
                 if (biliBiliqn === 6) break;
             }
             const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
-            bitRate = this.getQuality(bangumiStream.quality);
-            cover = targetEpisodeInfo.cover;
-            duration = (targetEpisodeInfo.duration / 1000) + 1;
-            url = bangumiStream.durl[0].url;
-            name = targetEpisodeInfo.share_copy;
-            type = 'video';
-            signer = bangumiInfo.up_info.uname || '未定';
+            if (targetEpisodeInfo)
+            {
+                bitRate = this.getQuality(bangumiStream.quality);
+                cover = targetEpisodeInfo.cover;
+                duration = (targetEpisodeInfo.duration / 1000) + 1;
+                url = bangumiStream.durl[0].url;
+                name = targetEpisodeInfo.share_copy;
+                type = 'video';
+                signer = bangumiInfo.up_info.uname || '未定';
 
-            const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
+                const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
 
-            // console.log(bangumiInfo.episodes)
-            // console.log(bangumiStream)
-            return mediaData;
+                // console.log(bangumiInfo.episodes)
+                // console.log(bangumiStream)
+                return mediaData;
+            } else
+            {
+                const mediaData = this.returnErrorMediaData(['无法找到番剧']);
+                return mediaData;
+            }
 
 
         }
@@ -82,7 +90,7 @@ export class BiliBili extends MediaParsing
         try
         {
             let bvid: string;
-            
+
             if (originUrl.includes('http') && originUrl.includes('video'))
             {
                 originUrl = originUrl.replace(/\?/g, '/');
@@ -104,24 +112,34 @@ export class BiliBili extends MediaParsing
             const cid = videoInfo.pages[0].cid;
             const avid = videoInfo.aid;
 
-            let videoStream = await biliBiliApi.getBilibiliVideoStream(avid, bvid, cid, biliBiliSessData, biliBiliPlatform, biliBiliqn);
+            let videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, biliBiliPlatform, biliBiliqn);
 
-            while (await this.checkResponseStatus(videoStream.durl[0].url) === false)
+            if (!videoStream)
+            {
+                const mediaData = this.returnErrorMediaData(['无法获取流媒体']);
+                return mediaData;
+            }
+            while (await this.checkResponseStatus(videoStream.data.durl[0].url) === false)
             {
                 biliBiliPlatform = 'html5';
                 if (biliBiliPlatform === 'html5')
                 {
                     biliBiliqn = this.changeBilibiliQn(biliBiliqn);
                 }
-                videoStream = await biliBiliApi.getBilibiliVideoStream(avid, bvid, cid, biliBiliSessData, biliBiliPlatform, biliBiliqn);
+                videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, biliBiliPlatform, biliBiliqn);
+                if (!videoStream)
+                {
+                    const mediaData = this.returnErrorMediaData(['无法获取流媒体']);
+                    return mediaData;
+                }
                 if (biliBiliqn === 6) break;
             }
 
-            bitRate = this.getQuality(videoStream.quality);
+            bitRate = this.getQuality(videoStream.data.quality);
             if (videoInfo.pages) duration = getDurationByCid(videoInfo.pages, cid);
             else duration = videoInfo.duration + 1;
             cover = videoInfo.pic;
-            url = videoStream.durl[0].url;
+            url = videoStream.data.durl[0].url;
             name = videoInfo.title;
             type = 'video';
             signer = videoInfo.owner.name;
@@ -130,6 +148,8 @@ export class BiliBili extends MediaParsing
             // console.log(videoStream)
             // console.log(videoInfo)
             return mediaData;
+
+
         } catch (error)
         {
             const mediaData = this.returnErrorMediaData([(error as Error).message]);
