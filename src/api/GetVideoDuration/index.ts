@@ -1,6 +1,6 @@
 import { Context } from 'koishi';
 import { ParseMediaMetaData } from '../ParseMediaMetaData';
-import fetch from 'node-fetch'
+import axios from 'axios';
 /**
  * 随便填的
  */
@@ -94,39 +94,37 @@ export class GetMediaLength
      * @param ctx 
      * @returns 
      */
-    async GetMediaLengthByReadMetaData(url: string | null, mimeType: string | null)
-    {
+     async GetMediaLengthByReadMetaData(url: string | null, mimeType: string | null) {
         const parseMediaMetaData = new ParseMediaMetaData();
+        
         // 测试用
         if (!url) url = '';
         // 测试用
         if (!mimeType) mimeType = 'video/webm';
-        const response = await fetch(url, {
-            headers: {
-                Range: 'bytes=0-50000'
-            }
-        });
-        if (!response.ok)
-        {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    
+        try {
+            const response = await axios.get(url, {
+                headers: {
+                    Range: 'bytes=0-50000'
+                },
+                responseType: 'arraybuffer'
+            });
+    
+            const buffer = Buffer.from(response.data);
+            const uint8Array = new Uint8Array(buffer);
+    
+            if (mimeType === 'video/mp4') return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
+            else if (
+                mimeType === 'application/vnd.apple.mpegURL' ||
+                mimeType === 'application/vnd.apple.mpegurl'
+            ) return await parseMediaMetaData.parseM3U8(uint8Array, url);
+            else if (mimeType === 'audio/mpeg') {
+                // m4a 居然能用mp4的方法
+                return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
+            } else throw new Error(`GetMediaLengthByReadMetaData: 没找到时长`);
+        } catch (error) {
+            throw new Error(`HTTP error! status: ${error}`);
         }
-        const data = await response.arrayBuffer();
-
-        const buffer = Buffer.from(data);
-
-        const uint8Array = new Uint8Array(buffer);
-
-        if (mimeType === 'video/mp4') return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
-        else if (
-            mimeType === 'application/vnd.apple.mpegURL' ||
-            mimeType === 'application/vnd.apple.mpegurl'
-        ) return await parseMediaMetaData.parseM3U8(uint8Array, url);
-        else if (mimeType === 'audio/mpeg')
-        {
-            // m4a 居然能用mp4的方法
-            return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
-        }
-        else throw new Error(`GetMediaLengthByReadMetaData: 没找到时长`);
     }
 
 

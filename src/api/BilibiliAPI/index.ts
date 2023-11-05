@@ -1,4 +1,5 @@
-import fetch from 'node-fetch'
+import axios from 'axios';
+
 export class BiliBiliApi
 {
     /**
@@ -21,33 +22,33 @@ export class BiliBiliApi
 
         const headers = this.returnBilibiliHeaders(biliBiliSessData);
 
-        const requestOptions: Omit<RequestInit, 'body'> = {
-            method: 'GET',
-            headers: headers,
-            credentials: 'include',
-        };
-
         try
         {
-            const response = await fetch(`${url}?${params.toString()}`, requestOptions);
-            if (!response.ok)
-            {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
+            const response = await axios.get(`${url}?${params.toString()}`, {
+                headers: headers,
+                withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
+            });
 
-            const responseData = await response.json() as bangumiStream;
-            if (responseData.code === 0)
+            if (response.status === 200)
             {
-                return responseData.result;
+                const responseData = response.data as bangumiStream;
+                if (responseData.code === 0)
+                {
+                    return responseData.result;
+                } else
+                {
+                    throw new Error(responseData.message);
+                }
             } else
             {
-                throw new Error(responseData.message);
+                throw new Error(`Network response was not ok: ${response.statusText}`);
             }
         } catch (error)
         {
             throw new Error((error as Error).message);
         }
     }
+
 
 
     /**
@@ -65,10 +66,14 @@ export class BiliBiliApi
 
         try
         {
-            const response = await fetch(`${url}?${params}`, { headers });
-            if (response.ok)
+            const response = await axios.get(`${url}?${params.toString()}`, {
+                headers: headers,
+                withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
+            });
+
+            if (response.status === 200)
             {
-                const data = await response.json() as BangumiVideoDetail;
+                const data = response.data as BangumiVideoDetail;
                 if (data.code === 0)
                 {
                     return data.result;
@@ -89,6 +94,7 @@ export class BiliBiliApi
     }
 
 
+
     /**
     * 主要获取视频的各种信息
     * @param bvid bilibili bvid
@@ -104,10 +110,14 @@ export class BiliBiliApi
 
         try
         {
-            const response = await fetch(`${url}?${params}`, { headers });
-            if (response.ok)
+            const response = await axios.get(`${url}?${params.toString()}`, {
+                headers: headers,
+                withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
+            });
+
+            if (response.status === 200)
             {
-                const data = await response.json()as BVideoDetail;
+                const data = response.data as BVideoDetail;
                 if (data.code === 0)
                 {
                     return data.data;
@@ -126,6 +136,7 @@ export class BiliBiliApi
             return null;
         }
     }
+
 
 
     /**
@@ -152,30 +163,35 @@ export class BiliBiliApi
 
         try
         {
-            const response = await fetch(`${url}?${params}`, { headers });
-            if (response.ok)
+            const response = await axios.get(`${url}?${params.toString()}`, {
+                headers: headers,
+                withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
+            });
+
+            if (response.status === 200)
             {
-                const data:BVideoStream = await response.json() as BVideoStream;
-                console.log(data.data.support_formats)
+                const data: BVideoStream = response.data as BVideoStream;
+                console.log(data.data.support_formats);
                 if (data.code === 0)
                 {
                     return data;
                 } else
                 {
                     console.error('Error:', data.message);
-                    return null
+                    return null;
                 }
             } else
             {
                 console.error('Error:', response.status);
-                return null
+                return null;
             }
         } catch (error)
         {
             console.error('Error:', (error as Error).message);
-            return null
+            return null;
         }
     }
+
 
     private returnBilibiliHeaders(biliBiliSessData: string)
     {

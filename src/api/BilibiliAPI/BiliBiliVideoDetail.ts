@@ -158,23 +158,6 @@ interface HonorReply
   }[];
 }
 /**
- * 页面？
- */
-interface page
-{
-  cid: number;
-  page: number;
-  from: string;
-  part: string;
-  duration: number;
-  vid: string;
-  weblink: string;
-  dimension: {
-    width: number;
-    height: number;
-  };
-}
-/**
  * 不知道有什么用
  */
 interface Arc
@@ -253,7 +236,7 @@ interface Episode
   title: string;
   attribute: number;
   arc: Arc;
-  page: page;
+  page: Page;
   bvid: string;
 }
 /**

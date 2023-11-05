@@ -4,7 +4,7 @@ import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
 import osUtils from 'os-utils';
-import fetch from 'node-fetch'
+import axios from 'axios';
 
 
 /**
@@ -132,9 +132,9 @@ export class MediaParsing
                 });
             }, 1000);
 
-            ctx.on('dispose', () =>  clearInterval(intervalId))
-            
-            
+            ctx.on('dispose', () => clearInterval(intervalId));
+
+
 
             const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime, ctx, client);
             await this.closePage(page);
@@ -157,18 +157,18 @@ export class MediaParsing
     {
         try
         {
-            const response = await fetch(originUrl, {
-                method: 'HEAD'
-            });
-            const contentDisposition = response.headers.get('content-disposition');
-            const contentType = response.headers.get('content-type');
+            const response = await axios.head(originUrl);
+            const contentDisposition = response.headers['content-disposition'];
+            const contentType = response.headers['content-type'];
 
-            if (contentDisposition && contentDisposition.startsWith('attachment') || contentType && !contentType.includes('text/html'))
+            if (
+                (contentDisposition && contentDisposition.startsWith('attachment')) ||
+                (contentType && !contentType.includes('text/html'))
+            )
             {
                 return true;
             } else
             {
-
                 return false;
             }
         } catch (error)
@@ -186,29 +186,42 @@ export class MediaParsing
     {
         try
         {
-            const response = await fetch(shortUrl, {
-                redirect: 'manual'  // 阻止自动重定向
+            const response = await axios.head(shortUrl, {
+                maxRedirects: 0,  // 阻止自动重定向
             });
-            if (response.status === 301 || response.status === 302)
-            {
-                const redirectUrl = response.headers.get('location');
-                if (redirectUrl)
-                {
-                    return redirectUrl;
-                } else
-                {
-                    throw new Error('getRedirectUrl: Location header is missing');
-                }
-            } else
+            // 如果不是重定向状态码，则抛出错误
+            if (response.status !== 301 && response.status !== 302)
             {
                 throw new Error(`getRedirectUrl: ${response.status}`);
             }
+            const redirectUrl = response.headers['location'];
+            if (redirectUrl)
+            {
+                return redirectUrl;
+            } else
+            {
+                throw new Error('getRedirectUrl: Location header is missing');
+            }
         } catch (error)
         {
-            console.error('Error:', error);
+            if (axios.isAxiosError(error))
+            {
+                // 捕获重定向错误，并手动获取重定向的 URL
+                const redirectUrl = error.response?.headers['location'];
+                if (redirectUrl)
+                {
+                    return redirectUrl;
+                }
+            }
             throw error;
         }
     }
+
+
+
+
+
+
 
 
     /**
@@ -220,13 +233,13 @@ export class MediaParsing
     {
         try
         {
-            const response = await fetch(url, {
+            const response = await axios.head(url, {
                 headers: {
                     'Referer': 'no-referrer',
                     'Range': 'bytes=0-10000'
                 }
             });
-            //  console.log(`status: ${response.status}`)
+
             if (response.status === 403 || response.status === 410)
             {
                 return false;
@@ -239,7 +252,6 @@ export class MediaParsing
             return false;
         }
     }
-
 
 
     /**

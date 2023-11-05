@@ -216,8 +216,6 @@ export class Netease extends MediaParsing
         }
 
     }
-
-    // TODO 把axios全换成fetch
     /**
      * 处理网易云的媒体
      * @param originUrl 原始url
@@ -252,8 +250,9 @@ export class Netease extends MediaParsing
                 const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
+            
             const songData = await this.neteaseApi.getNeteaseMusicDetail(id);
-
+            
             if (!songData)
             {
                 const mediaData = this.returnErrorMediaData(['没有找到歌曲']);

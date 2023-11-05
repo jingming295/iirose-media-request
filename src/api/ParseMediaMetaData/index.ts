@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import axios from 'axios';
 export class ParseMediaMetaData
 {
     /**
@@ -58,20 +58,25 @@ export class ParseMediaMetaData
         return duration;
     }
 
-    private async getM3U8NextFile(url: string)
-    {
-        const response = await fetch(url, {
-            headers: {
-                'Range': 'bytes=0-100000'
+    private async getM3U8NextFile(url: string) {
+        try {
+            const response = await axios.get(url, {
+                headers: {
+                    'Range': 'bytes=0-100000'
+                },
+                responseType: 'arraybuffer'
+            });
+    
+            if (response.status !== 200) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        });
-        if (!response.ok)
-        {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    
+            const uint8Array = new Uint8Array(response.data);
+            return uint8Array;
+        } catch (error) {
+            console.error(error);
+            throw new Error(`getM3U8NextFile: 请求失败 - ${(error as Error).message}`);
         }
-        const data = await response.arrayBuffer();
-        const uint8Array = new Uint8Array(data);
-        return uint8Array;
     }
 
 

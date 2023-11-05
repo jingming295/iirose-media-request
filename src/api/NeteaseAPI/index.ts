@@ -1,13 +1,12 @@
 
 import { eapi, weapi } from './crypto';
-import fetch from 'node-fetch';
-// import fs from 'fs'
+import axios from 'axios';
 export class NeteaseApi
 {
     async getNeteaseMusicSearchData(keyWord: string)
     {
         const url = 'https://music.163.com/weapi/search/get';
-        const params: ParamsObject = {
+        const params = {
             s: keyWord, // 关键词
             type: 1,
             limit: 10, // 返回歌曲数量
@@ -15,24 +14,19 @@ export class NeteaseApi
         };
 
         const encryptParam = new URLSearchParams(weapi(params)).toString();
-        const headers = {
-        };
 
         try
         {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: encryptParam
+            const response = await axios.post(url, encryptParam, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
             });
-            if (!response.ok)
-            {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
+
+            return response.data;
         } catch (error)
         {
-            console.log(`error response: ${(error as Error)}`);
+            console.error(`Error: ${(error as Error).message}`);
             return null;
         }
     }
@@ -46,20 +40,20 @@ export class NeteaseApi
             ids: `[${id}]`
         };
         url.search = new URLSearchParams(params).toString();
-        const headers = {
-        };
+
         try
         {
-            const response = await fetch(url.toString(), { headers });
-            if (!response.ok)
-            {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const MusicDetail: MusicDetail = await response.json() as MusicDetail;
-            return MusicDetail;
+            const response = await axios.get(url.toString(), {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data;
         } catch (error)
         {
             console.error('获取音乐详情失败', error);
+            return null;
         }
     }
 
@@ -72,16 +66,16 @@ export class NeteaseApi
             id: id.toString()
         };
         url.search = new URLSearchParams(params).toString();
-        const headers = {
-        };
+
         try
         {
-            const response = await fetch(url.toString(), { headers });
-            if (!response.ok)
-            {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json() as songResource[];
+            const response = await axios.get(url.toString(), {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data as songResource[];
         } catch (error)
         {
             console.error('获取歌曲资源失败', error);
@@ -94,7 +88,7 @@ export class NeteaseApi
     {
         const url = `https://music.163.com/eapi/rep/ugc/album/get`;
 
-        const params: SearchSimpleAlbumParamsObject = {
+        const params = {
             albumId: id,
             header: {
                 appver: "8.9.70",
@@ -110,28 +104,20 @@ export class NeteaseApi
             }
         };
 
-        const encryptParam = new URLSearchParams(eapi(`/api/rep/ugc/album/get`, params)).toString();
-        const headers = {
-            "User-Agent": "Mozilla/5.0 (Linux; U; Android 8.1.0; zh-cn; BKK-AL10 Build/HONORBKK-AL10) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/10.6 Mobile Safari/537.36",
-            "Content-Type": "application/x-www-form-urlencoded",
-            Referer: "https://music.163.com",
-            "X-Real-IP": "::1",
-            "X-Forwarded-For": "::1",
-            Cookie: "osver=undefined; deviceId=undefined; appver=8.9.70; versioncode=140; mobilename=undefined; buildver=1697745346; resolution=1920x1080; __csrf=; os=android; channel=undefined; requestId=1697745346367_0886; MUSIC_A=1f5fa7b6a6a9f81a11886e5186fde7fb0b63372bce7ff361fa5cb1a86d5fbbbbadd2bc8204eeee5e04bf7bf7e7f4428eeb3a754c1a3a779110722d253c67f6e9fac900d7a89533ee3324751bcc9aaf44c3061cd18d77b7a0"
-        };
         try
         {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: encryptParam
+            const response = await axios.post(url, params, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Linux; U; Android 8.1.0; zh-cn; BKK-AL10 Build/HONORBKK-AL10) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/10.6 Mobile Safari/537.36",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Referer: "https://music.163.com",
+                    "X-Real-IP": "::1",
+                    "X-Forwarded-For": "::1",
+                    Cookie: "osver=undefined; deviceId=undefined; appver=8.9.70; versioncode=140; mobilename=undefined; buildver=1697745346; resolution=1920x1080; __csrf=; os=android; channel=undefined; requestId=1697745346367_0886; MUSIC_A=1f5fa7b6a6a9f81a11886e5186fde7fb0b63372bce7ff361fa5cb1a86d5fbbbbadd2bc8204eeee5e04bf7bf7e7f4428eeb3a754c1a3a779110722d253c67f6e9fac900d7a89533ee3324751bcc9aaf44c3061cd18d77b7a0"
+                }
             });
-            if (!response.ok)
-            {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const albumData: Album = await response.json() as Album;
-            return albumData;
+
+            return response.data as Album;
         } catch (error)
         {
             throw new Error('getAlbumSimpleDetail：获取专辑失败');
@@ -148,33 +134,29 @@ export class NeteaseApi
             s: '8'
         });
 
-        const headers = {
-            'User-Agent': 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-cn; BKK-AL10 Build/HONORBKK-AL10) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/10.6 Mobile Safari/537.36',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Referer: 'https://music.163.com',
-            'X-Real-IP': '::1',
-            'X-Forwarded-For': '::1',
-            Cookie: 'osver=undefined; deviceId=undefined; appver=8.9.70; versioncode=140; mobilename=undefined; buildver=1697745346; resolution=1920x1080; __csrf=; os=android; channel=undefined; requestId=1697745346367_0886; MUSIC_A=1f5fa7b6a6a9f81a11886e5186fde7fb0b63372bce7ff361fa5cb1a86d5fbbbbadd2bc8204eeee5e04bf7bf7e7f4428eeb3a754c1a3a779110722d253c67f6e9fac900d7a89533ee3324751bcc9aaf44c3061cd18d77b7a0'
-        };
-
         try
         {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: params,
-                headers: headers
+            const response = await axios.post(url, params, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-cn; BKK-AL10 Build/HONORBKK-AL10) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/10.6 Mobile Safari/537.36',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Referer: 'https://music.163.com',
+                    'X-Real-IP': '::1',
+                    'X-Forwarded-For': '::1',
+                    Cookie: 'osver=undefined; deviceId=undefined; appver=8.9.70; versioncode=140; mobilename=undefined; buildver=1697745346; resolution=1920x1080; __csrf=; os=android; channel=undefined; requestId=1697745346367_0886; MUSIC_A=1f5fa7b6a6a9f81a11886e5186fde7fb0b63372bce7ff361fa5cb1a86d5fbbbbadd2bc8204eeee5e04bf7bf7e7f4428eeb3a754c1a3a779110722d253c67f6e9fac900d7a89533ee3324751bcc9aaf44c3061cd18d77b7a0'
+                }
             });
 
-            if (!response.ok)
+            if (response.status !== 200)
             {
-                throw new Error('getSonglistSimpleDetail：歌单失败');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const songListData: SongList = await response.json() as SongList;
-            return songListData;
+            return response.data as SongList;
         } catch (error)
         {
             console.error(error);
+            throw new Error('getSonglistSimpleDetail：歌单失败');
         }
     }
 
