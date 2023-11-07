@@ -8,7 +8,6 @@ interface Config
 {
     timeOut: number;
     waitTime: number;
-    SESSDATA: string;
     qn: number;
     platform: string;
     mediaCardColor: string;

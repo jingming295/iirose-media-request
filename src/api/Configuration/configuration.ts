@@ -10,7 +10,6 @@ export const Config: Schema<Config> = Schema.intersect([
     waitTime: Schema.number().role('slider').min(100).max(50000).default(2000).description('页面加载完成后的等待时间'),
   }).description('游览器页面相关设置'),
   Schema.object({
-    SESSDATA: Schema.string().default('').description('bilibili的SESSDATA，在cookie获取，不填只能获取360p的视频，填了能获取1080p的视频'),
     qn: Schema.union([
       Schema.const(6),
       Schema.const(16),

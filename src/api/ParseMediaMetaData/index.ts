@@ -60,10 +60,8 @@ export class ParseMediaMetaData
 
     private async getM3U8NextFile(url: string) {
         try {
+            console.log(url)
             const response = await axios.get(url, {
-                headers: {
-                    'Range': 'bytes=0-100000'
-                },
                 responseType: 'arraybuffer'
             });
     

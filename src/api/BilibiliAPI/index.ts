@@ -171,7 +171,6 @@ export class BiliBiliApi
             if (response.status === 200)
             {
                 const data: BVideoStream = response.data as BVideoStream;
-                console.log(data.data.support_formats);
                 if (data.code === 0)
                 {
                     return data;

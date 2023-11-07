@@ -1,15 +1,7 @@
-import { Context, Logger, Session } from 'koishi';
+import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
-import { } from 'koishi-plugin-bilibili-login'
-import { } from 'koishi-plugin-puppeteer';
 import { iirose_media_request } from '../Services';
-
-import { GetMediaLength } from '../GetVideoDuration';
-
-import { NeteaseApi } from '../NeteaseAPI';
-
-import { Netease } from '../MediaParsing/Netease';
 
 /**
  * @description apply
@@ -21,7 +13,6 @@ export async function apply(ctx: Context, config: Config)
     ctx.plugin(iirose_media_request);
     // console.log(ctx.puppeteer)
     // console.log(ctx.bilibiliLogin)
-    
     // 测试用
     // const getMediaLength = new GetMediaLength()
     // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
@@ -44,7 +35,6 @@ export async function apply(ctx: Context, config: Config)
                 
                 if (!session || !session.username || !options) return;
                 const logger = new Logger('iirose-media-request');
-
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')
@@ -106,7 +96,7 @@ export async function apply(ctx: Context, config: Config)
                     return;
                 } catch (error)
                 {
-                    logger.error(error);
+                    logger.error((error as Error).message);
                 }
             }
         );
