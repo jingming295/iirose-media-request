@@ -74,7 +74,7 @@ export class BiliBili extends MediaParsing
      */
     public async handleBilibiliMedia(originUrl: string, biliBiliSessData: string, biliBiliPlatform: string, biliBiliqn: number)
     {
-        function getDurationByCid(pages: Page[], cid: number)
+        function getDurationByCid(pages: BVideoDetailDataPage[], cid: number)
         {
             const page = pages.find((page: { cid: number; }) => page.cid === cid);
             return page ? page.duration : 0;

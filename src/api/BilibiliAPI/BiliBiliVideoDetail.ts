@@ -71,7 +71,7 @@ interface VideoData
   enable_vt: number;
   vt_display: string;
   no_cache: boolean;
-  pages: Page[];
+  pages: BVideoDetailDataPage[];
   subtitle: {
     allow_submit: boolean;
     list: SubtitleList[];
@@ -109,7 +109,7 @@ interface VideoData
  * BVideoDetail下的data的page
  * 如果视频有分页
  */
-interface Page
+interface BVideoDetailDataPage
 {
   cid: number;
   page: number;
@@ -227,7 +227,7 @@ interface Episode
   title: string;
   attribute: number;
   arc: Arc;
-  page: Page;
+  page: BVideoDetailDataPage;
   bvid: string;
 }
 /**

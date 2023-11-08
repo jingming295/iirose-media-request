@@ -1,6 +1,7 @@
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../GetVideoDuration';
-import { CDPSession, ElementHandle, Page } from 'koishi-plugin-puppeteer';
+import { } from 'koishi-plugin-puppeteer';
+import { Page, CDPSession, ElementHandle} from 'puppeteer-core/lib/types';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context } from 'koishi';
 import osUtils from 'os-utils';
@@ -545,7 +546,7 @@ export class MediaParsing
             const imgsInFrame = await frame.$$('img');
             for (const img of imgsInFrame)
             {
-                const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
+                const dataSrc = await img.evaluate((element: { getAttribute: (arg0: string) => any; }) => element.getAttribute('data-src'));
                 if (dataSrc) return dataSrc;
             }
         }
@@ -553,7 +554,7 @@ export class MediaParsing
         const imgsInDocument = await page.$$('img');
         for (const img of imgsInDocument)
         {
-            const dataSrc = await img.evaluate(element => element.getAttribute('data-src'));
+            const dataSrc = await img.evaluate((element: { getAttribute: (arg0: string) => any; }) => element.getAttribute('data-src'));
             if (dataSrc) return dataSrc;
         }
         return null;
