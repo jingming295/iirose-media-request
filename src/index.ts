@@ -1,10 +1,10 @@
 
 
-export * from './api/MsgHandle'
+export * from './api/MsgHandle';
 
-export * from './api/Configuration/configuration'
+export * from './api/Configuration/configuration';
 
-export const name = 'iirose-media-request'
+export const name = 'iirose-media-request';
 
-export * from './api/Services'
-
+export * from './api/Services';
+export const inject = ['bilibiliLogin'];
