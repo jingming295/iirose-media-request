@@ -109,7 +109,7 @@ export class MediaHandler
                 return await bilibili.handleBilibiliMedia(originMediaArgument, BilibiliAccountData.SESSDATA, platform, qn);
             }
         }, {
-            inc: ["BV", "http"],
+            inc: ["BV"],
             fn: async () =>
             {
                 const BilibiliAccountData = await this.ctx.bilibiliLogin.getBilibiliAccountData()
