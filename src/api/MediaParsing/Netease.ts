@@ -38,10 +38,9 @@ export class Netease extends MediaParsing
 
         else if (originUrl.includes('playlist')) await this.processPlaylistDetails(id, songId, songName, signer, musicDetail);
 
-
         musicDetail.forEach(musicDetail =>
         {
-            this.processMusicDetail(musicDetail, duration, bitRate, ["music"]);
+            this.processMusicDetail(musicDetail,cover, duration, bitRate, ["music"]);
         });
         for (let i = 0; i < songId.length; i++)
         {
@@ -51,12 +50,12 @@ export class Netease extends MediaParsing
                 {
                     await this.delay((duration[i - 1] * 1000) - 4000);
                 }
-                const processSong = await this.processSong(songId[i], url, cover);
+                const processSong = await this.processSong(songId[i], url);
                 if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
                 else duration[i] = 0
             } else if (!options['link'] && !options['data'] && !options['param'])
             {
-                const processSong = await this.processSong(songId[i], url, cover);
+                const processSong = await this.processSong(songId[i], url);
                 if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
             }
         }
@@ -148,7 +147,7 @@ export class Netease extends MediaParsing
      * @param bitRate 
      * @param type 
      */
-    private processMusicDetail(musicDetail: MusicDetail, duration: number[], bitRate: number[], type: string[])
+    private processMusicDetail(musicDetail: MusicDetail, cover:string[], duration: number[], bitRate: number[], type: string[])
     {
         const song = musicDetail.songs[0];
 
@@ -157,6 +156,9 @@ export class Netease extends MediaParsing
 
         const songBitRate = song.hMusic ? song.hMusic.bitrate / 1000 : 128;
         bitRate.push(songBitRate);
+
+        const songCover = song.album.picUrl
+        cover.push(songCover)
 
         type.push('music');
     }
@@ -201,7 +203,7 @@ export class Netease extends MediaParsing
      * @param cover 
      * @param neteaseApi 
      */
-    async processSong(songId: number, url: string[], cover: string[])
+    async processSong(songId: number, url: string[])
     {
         try {
             const songResource = await this.neteaseApi.getSongResource(songId);
@@ -209,7 +211,6 @@ export class Netease extends MediaParsing
                 return
             }
             url.push(await this.getRedirectUrl(songResource[0].url));
-            cover.push(songResource[0].pic);
             return true;
         } catch (error) {
             this.logger.warn(`歌曲${songId}: ${(error as Error).message}`)
@@ -266,7 +267,7 @@ export class Netease extends MediaParsing
             url = await this.getRedirectUrl(songResource[0].url);
             type = 'music';
             name = songData.songs[0].name;
-            cover = songResource[0].pic;
+            cover = songData.songs[0].album.picUrl
 
             bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
             signer = songData.songs[0].artists[0].name;

@@ -2,7 +2,7 @@ import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { iirose_media_request } from '../Services';
-
+// import { NeteaseApi } from '../NeteaseAPI';
 /**
  * @description apply
  * @param ctx ctx
@@ -21,7 +21,8 @@ export async function apply(ctx: Context, config: Config)
     // await netease.handleNeteaseAlbum(`135680406`);
 
     // const neteaseApi = new NeteaseApi()
-    // await neteaseApi.getSongResource(1301861864);
+    // const musicDetail = await neteaseApi.getNeteaseMusicDetail(1408713223);
+    // console.log(musicDetail?.songs[0].album.picUrl)
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')

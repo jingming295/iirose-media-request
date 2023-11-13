@@ -49,7 +49,9 @@ export class NeteaseApi
                 }
             });
 
-            return response.data;
+            const musicDetail: MusicDetail = response.data
+
+            return musicDetail;
         } catch (error)
         {
             console.error('获取音乐详情失败', error);
