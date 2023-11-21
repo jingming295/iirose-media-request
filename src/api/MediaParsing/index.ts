@@ -1,11 +1,12 @@
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../GetVideoDuration';
 import { } from 'koishi-plugin-puppeteer';
-import { Page, CDPSession, ElementHandle} from 'puppeteer-core/lib/types';
+import { Page, CDPSession, ElementHandle } from 'puppeteer-core/lib/types';
 import { CheckMimeType } from '../tools/checkMimeType';
-import { Context } from 'koishi';
+import { Context, Dict } from 'koishi';
 import osUtils from 'os-utils';
 import axios from 'axios';
+import { load } from 'cheerio';
 
 
 /**
@@ -118,12 +119,6 @@ export class MediaParsing
             // 如果检测到异常的cpu占用率（表示可能是挖矿页面），就关闭页面
             intervalId = setInterval(async () =>
             {
-                if (!ctx.iirose_media_request)
-                {
-                    if (intervalId !== null) clearInterval(intervalId);
-                    await this.closePage(page);
-                    return;
-                }
                 osUtils.cpuUsage((v) =>
                 {
                     if (v > maxCpuUsage)
@@ -284,16 +279,26 @@ export class MediaParsing
         {
             return page.isClosed();
         }
+
+        const { data } = await axios.get(originUrl);
+        const $ = load(data);
+        const og: Dict<string> = $('meta[property^="og:"]').toArray().reduce((prev, meta) =>
+        {
+            const key = $(meta).attr('property')?.slice(3);
+            const value = $(meta).attr('content');
+            if (key && value) prev[key] = value;
+            return prev;
+        }, {} as Dict<string>);
         let urlCount = 0;
         let mediaType: ('music' | 'video')[] = [];
         let name: string[] = [];
         let cover: (string | null)[] = [];
+        const signer:string[] = [];
         let isstopLoading = 0;
         const resourceUrls: ResourceUrls[] = [
             { url: null, mimetype: null }
         ];
-
-
+        signer[0] = og.site || '无法获取';
         try
         {
             if (isPageClosed()) return this.returnErrorMediaData([`页面被软件关闭，极有可能是CPU占用率达到阈值`]);
@@ -327,21 +332,22 @@ export class MediaParsing
             await this.clickBtn(page);
             if (mediaType!)
             {
+                
                 if (isPageClosed()) return this.returnErrorMediaData([`页面被软件关闭，极有可能是CPU占用率达到阈值`]);
                 if (mediaType[0] === 'video')
                 {
-                    cover[0] = await this.getThumbNail(page);
+                    cover[0] = og.image || await this.getThumbNail(page);
                 } else
                 {
-                    cover[0] = await this.searchImg(page);
+                    cover[0] = og.image || await this.searchImg(page);
                 }
             }
             await page.waitForTimeout(waitTime);
             if (isPageClosed()) return this.handleError(new Error(`页面被软件关闭，极有可能是CPU占用率达到阈值`));
-            name[0] = await page.title() || '无法获取标题';
+            name[0] = og.title || await page.title() || '无法获取标题';
             if (mediaType! && cover)
             {
-                return this.processMediaData(resourceUrls, mediaType, cover, name, ctx);
+                return this.processMediaData(resourceUrls, mediaType, cover, name, signer, ctx);
             } else
             {
                 return this.returnErrorMediaData(['<>没有找到媒体，主要是无法获取type或者cover</>']);
@@ -361,11 +367,10 @@ export class MediaParsing
      * @param ctx 
      * @returns 
      */
-    private async processMediaData(resourceUrls: ResourceUrls[], mediaType: ('music' | 'video')[], cover: (string | null)[], name: string[], ctx: Context): Promise<MediaData[]>
+    private async processMediaData(resourceUrls: ResourceUrls[], mediaType: ('music' | 'video')[], cover: (string | null)[], name: string[],signer:string[], ctx: Context): Promise<MediaData[]>
     {
         let url: string[] = [];
         let mimeType: string | null;
-        const signer: string[] = ['无法获取'];
         const bitRate: number[] = [720];
         let duration: number[] = [];
 

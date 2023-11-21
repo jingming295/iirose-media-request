@@ -1,8 +1,6 @@
 import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
-import { iirose_media_request } from '../Services';
-// import { NeteaseApi } from '../NeteaseAPI';
 /**
  * @description apply
  * @param ctx ctx
@@ -10,19 +8,6 @@ import { iirose_media_request } from '../Services';
  */
 export async function apply(ctx: Context, config: Config)
 {
-    ctx.plugin(iirose_media_request);
-    // console.log(ctx.puppeteer)
-    // console.log(ctx.bilibiliLogin)
-    // 测试用
-    // const getMediaLength = new GetMediaLength()
-    // await getMediaLength.GetMediaLengthByReadMetaData(null, null)
-
-    // const netease = new Netease();
-    // await netease.handleNeteaseAlbum(`135680406`);
-
-    // const neteaseApi = new NeteaseApi()
-    // const musicDetail = await neteaseApi.getNeteaseMusicDetail(1408713223);
-    // console.log(musicDetail?.songs[0].album.picUrl)
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
