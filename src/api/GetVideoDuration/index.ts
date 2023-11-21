@@ -26,15 +26,15 @@ export class GetMediaLength
      */
     async GetMediaLength(url: string, mimeType: string | null, ctx: Context)
     {
-        if (url && ctx)
+        if (url && ctx){
             if (
                 mimeType !== 'video/mp4' &&
                 mimeType !== 'application/vnd.apple.mpegURL' &&
-                mimeType !== 'application/vnd.apple.mpegurl' &&
-                mimeType !== 'audio/mpeg'
+                mimeType !== 'application/vnd.apple.mpegurl'
             ) return await this.mediaLengthInSec(url, ctx);
-
+        }
         return await this.GetMediaLengthByReadMetaData(url, mimeType);
+
     }
     /**
      * 不用你说，我也知道这个方法很抽象
@@ -94,35 +94,39 @@ export class GetMediaLength
      * @param ctx 
      * @returns 
      */
-     async GetMediaLengthByReadMetaData(url: string | null, mimeType: string | null) {
+    async GetMediaLengthByReadMetaData(url: string | null, mimeType: string | null)
+    {
         const parseMediaMetaData = new ParseMediaMetaData();
-        
         // 测试用
         if (!url) url = '';
         // 测试用
         if (!mimeType) mimeType = 'video/webm';
-    
-        try {
+
+        try
+        {
             const response = await axios.get(url, {
                 headers: {
                     Range: 'bytes=0-50000'
                 },
                 responseType: 'arraybuffer'
             });
-    
+
             const buffer = Buffer.from(response.data);
             const uint8Array = new Uint8Array(buffer);
-    
+
             if (mimeType === 'video/mp4') return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
             else if (
                 mimeType === 'application/vnd.apple.mpegURL' ||
                 mimeType === 'application/vnd.apple.mpegurl'
             ) return await parseMediaMetaData.parseM3U8(uint8Array, url);
-            else if (mimeType === 'audio/mpeg') {
-                // m4a 居然能用mp4的方法
+            else if (mimeType === 'audio/mpeg')
+            {
+                // m4a 居然能用mp4的方法,但是mp3不行
+                console.log(parseMediaMetaData.parseMP4Duration(uint8Array) / 1000)
                 return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
             } else throw new Error(`GetMediaLengthByReadMetaData: 没找到时长`);
-        } catch (error) {
+        } catch (error)
+        {
             throw new Error(`HTTP error! status: ${error}`);
         }
     }
