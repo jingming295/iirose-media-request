@@ -222,14 +222,14 @@ export class MediaHandler
                 opt: ["link"],
                 fn: async () =>
                 {
-                    const urlInfo = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${data.url}</>`);
+                    const urlInfo = mediaData.map(data => `<><parent><at name="${userName}"/><child/></parent>${data.url}</>`);
                     return this.returnHasRespondMsgInfo(urlInfo, Array.from({ length: urlInfo.length }, () => null));
                 }
             }, {
                 opt: ["data"],
                 fn: async () =>
                 {
-                    const jsonData = mediaData.map(data => `<><parent><at id="${userName}"/><child/></parent>${JSON.stringify(data, null, 2)}</>`);
+                    const jsonData = mediaData.map(data => `<><parent><at name="${userName}"/><child/></parent>${JSON.stringify(data, null, 2)}</>`);
                     return this.returnHasRespondMsgInfo(jsonData, Array.from({ length: jsonData.length }, () => null));
                 }
             }, {
@@ -253,7 +253,7 @@ export class MediaHandler
             {
                 if (this.config.trackUser && mediaData.length === 1)
                 {
-                    const userActions = mediaData.map(data => `<><parent><at id="${userName}"/>点播了 ${data.name}<child/></parent></>`);
+                    const userActions = mediaData.map(data => `<><parent><at name="${userName}"/>点播了 ${data.name}<child/></parent></>`);
                     returnmsg = returnmsg.concat(userActions);
 
                     this.logger.info(`用户名：${userName} 唯一标识：${uid} 点播了 ${mediaData.map(data => `${data.name}: ${data.url}`).join(', ')}`);

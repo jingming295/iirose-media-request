@@ -18,7 +18,6 @@ export async function apply(ctx: Context, config: Config)
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
-                
                 if (!session || !session.username || !options) return;
                 const logger = new Logger('iirose-media-request');
                 const username = session.username;
