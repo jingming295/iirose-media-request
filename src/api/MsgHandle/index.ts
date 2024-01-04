@@ -6,8 +6,10 @@ import { MediaHandler } from './MediaHandler';
  * @param ctx ctx
  * @param config config
  */
+const logger = new Logger('iirose-media-request');
 export async function apply(ctx: Context, config: Config)
 {
+    
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
@@ -18,8 +20,8 @@ export async function apply(ctx: Context, config: Config)
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
+                logger.info('command');
                 if (!session || !session.username || !options) return;
-                const logger = new Logger('iirose-media-request');
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')

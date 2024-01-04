@@ -28,17 +28,29 @@ export class BiliBili extends MediaParsing
         {
             const ep: number = parseInt(match[1], 10);
             const bangumiInfo = await biliBiliApi.getBangumiData(ep, biliBiliSessData);
-            let bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn);
+            let bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn, 'pc');
             if (!bangumiInfo || !bangumiStream)
             {
                 const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
                 return mediaData;
             }
+            let platform = 'pc';
             while (await this.checkResponseStatus(bangumiStream.durl[0].url) === false)
             {
+
+                if (biliBiliqn === -1 && platform === 'pc')
+                {
+                    platform = 'html5';
+                    biliBiliqn = 80;
+                }
+                if (biliBiliqn === -1 && platform === 'html5')
+                {
+                    const mediaData = this.returnErrorMediaData(['在尝试了全部清晰度和平台后，无法获取流媒体']);
+                    return mediaData;
+                }
                 biliBiliqn = this.changeBilibiliQn(biliBiliqn);
-                bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn);
-                if (biliBiliqn === 6) break;
+                bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, biliBiliqn, platform);
+
             }
             const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
             if (targetEpisodeInfo)
@@ -195,7 +207,8 @@ export class BiliBili extends MediaParsing
             case 16: // 未登录的默认值
                 biliBiliqn = 6;
                 break;
-            case 6: //仅 MP4 格式支持, 仅platform=html5时有效
+            default:
+                biliBiliqn = -1;
                 break;
         }
         return biliBiliqn;

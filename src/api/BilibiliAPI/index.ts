@@ -9,7 +9,7 @@ export class BiliBiliApi
      * @param biliBiliqn BiliBiliqn
      * @returns 
      */
-    public async getBangumiStream(ep: number, biliBiliSessData: string, biliBiliqn: number)
+    public async getBangumiStream(ep: number, biliBiliSessData: string, biliBiliqn: number, platform:string)
     {
         const url = 'https://api.bilibili.com/pgc/player/web/playurl';
         const params = new URLSearchParams({
@@ -17,7 +17,8 @@ export class BiliBiliApi
             qn: biliBiliqn.toString(),
             fnval: '1',
             fourk: '1',
-            high_quality: '1'
+            high_quality: '1',
+            platform:platform
         });
 
         const headers = this.returnBilibiliHeaders(biliBiliSessData);
