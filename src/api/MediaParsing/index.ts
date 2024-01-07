@@ -3,9 +3,9 @@ import { GetMediaLength } from '../GetVideoDuration';
 import { } from 'koishi-plugin-puppeteer';
 import { Page, CDPSession, ElementHandle } from 'puppeteer-core/lib/types';
 import { CheckMimeType } from '../tools/checkMimeType';
-import { Context, Dict } from 'koishi';
+import { Context, Dict, Logger } from 'koishi';
 import osUtils from 'os-utils';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { load } from 'cheerio';
 
 
@@ -220,21 +220,25 @@ export class MediaParsing
      */
     public async checkResponseStatus(url: string)
     {
+        const logger = new Logger('iirose-media-request');
         try
         {
-            const response = await axios.head(url, {
+            const response = await axios.get(url, {
                 headers: {
                     'Referer': 'no-referrer',
                     'Range': 'bytes=0-10000'
                 }
             });
-
+            
             if (response.status === 403 || response.status === 410)
             {
                 return false;
-            } else
+            } else if (response.status === 200 || response.status === 206)
             {
+                logger.info(`response: ${response.status}, url: ${url}`)
                 return true;
+            } else {
+                return false;
             }
         } catch (error)
         {

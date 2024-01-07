@@ -30,3 +30,5 @@ interface ResourceUrls
     mimetype: string | null;
 
 }
+
+type CombinedQualityInfo = [string, number];

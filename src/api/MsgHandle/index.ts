@@ -1,6 +1,7 @@
 import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
+import { MediaParsing } from '../MediaParsing';
 /**
  * @description apply
  * @param ctx ctx
@@ -9,7 +10,9 @@ import { MediaHandler } from './MediaHandler';
 const logger = new Logger('iirose-media-request');
 export async function apply(ctx: Context, config: Config)
 {
-    
+    // const mediaParsing = new MediaParsing();
+    // const status = await mediaParsing.checkResponseStatus('https://cn-sxxa-cu-02-02.bilivideo.com/upgcxcode/45/13/1384191345/1384191345-1-192.mp4?e=ig8euxZM2rNcNbRB7WdVhwdlhWUBhwdVhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&amp;uipk=5&amp;nbs=1&amp;deadline=1704465101&amp;gen=playurlv2&amp;os=bcache&amp;oi=1909010974&amp;trid=0000d6a847dfe44649148d080adf2437c755T&amp;mid=10882090&amp;platform=html5&amp;upsig=5b91b739e11ed7ed94ddcd8ea818cb7c&amp;uparams=e,uipk,nbs,deadline,gen,os,oi,trid,mid,platform&amp;cdnid=86604&amp;bvc=vod&amp;nettype=0&amp;bw=155395&amp;orderid=0,1&amp;buvid=&amp;build=0&amp;mobi_app=&amp;f=T_0_0&amp;logo=80000000')
+    // console.log(status)
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
     ctx.command(comm, 'iirose艾特视频/音频')
@@ -20,7 +23,6 @@ export async function apply(ctx: Context, config: Config)
         .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
-                logger.info('command');
                 if (!session || !session.username || !options) return;
                 const username = session.username;
                 const uid = session.uid;

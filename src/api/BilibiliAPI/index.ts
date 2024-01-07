@@ -9,7 +9,7 @@ export class BiliBiliApi
      * @param biliBiliqn BiliBiliqn
      * @returns 
      */
-    public async getBangumiStream(ep: number, biliBiliSessData: string, biliBiliqn: number, platform:string)
+    public async getBangumiStream(ep: number, biliBiliSessData: string, biliBiliqn: number, platform: string)
     {
         const url = 'https://api.bilibili.com/pgc/player/web/playurl';
         const params = new URLSearchParams({
@@ -18,7 +18,7 @@ export class BiliBiliApi
             fnval: '1',
             fourk: '1',
             high_quality: '1',
-            platform:platform
+            platform: platform
         });
 
         const headers = this.returnBilibiliHeaders(biliBiliSessData);
@@ -161,34 +161,26 @@ export class BiliBiliApi
             high_quality: '1'
         });
         const headers = this.returnBilibiliHeaders(biliBiliSessData);
+        const response = await axios.get(`${url}?${params.toString()}`, {
+            headers: headers,
+            withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
+        });
 
-        try
+        if (response.status === 200)
         {
-            const response = await axios.get(`${url}?${params.toString()}`, {
-                headers: headers,
-                withCredentials: true // 这里模拟了 'credentials: 'include'' 的效果
-            });
-
-            if (response.status === 200)
+            const data: BVideoStream = response.data as BVideoStream;
+            if (data.code === 0)
             {
-                const data: BVideoStream = response.data as BVideoStream;
-                if (data.code === 0)
-                {
-                    return data;
-                } else
-                {
-                    console.error('Error:', data.message);
-                    return null;
-                }
+                return data;
             } else
             {
-                console.error('Error:', response.status);
-                return null;
+                console.error('Error:', data.message);
+                throw new Error(`Error: ${data.message}`);
             }
-        } catch (error)
+        } else
         {
-            console.error('Error:', (error as Error).message);
-            return null;
+            console.error('Error:', response.status);
+            throw new Error(`Error: ${response.status}`);
         }
     }
 
@@ -197,7 +189,7 @@ export class BiliBiliApi
     {
         const headers = {
             Cookie: `SESSDATA=${biliBiliSessData};`,  // 你的SESSDATA
-            Referer: 'https://www.bilibili.com',
+            referer: 'https://www.bilibili.com',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
         };
         return headers;

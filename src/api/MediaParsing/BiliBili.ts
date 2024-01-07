@@ -1,3 +1,4 @@
+import { Logger } from "koishi";
 import { MediaParsing } from ".";
 import { BiliBiliApi } from "../BilibiliAPI";
 
@@ -37,7 +38,6 @@ export class BiliBili extends MediaParsing
             let platform = 'pc';
             while (await this.checkResponseStatus(bangumiStream.durl[0].url) === false)
             {
-
                 if (biliBiliqn === -1 && platform === 'pc')
                 {
                     platform = 'html5';
@@ -84,7 +84,7 @@ export class BiliBili extends MediaParsing
      * 处理bilibili的媒体
      * @returns mediaData
      */
-    public async handleBilibiliMedia(originUrl: string, biliBiliSessData: string, biliBiliPlatform: string, biliBiliqn: number)
+    public async handleBilibiliMedia(originUrl: string, biliBiliSessData: string, biliBiliqn: number)
     {
         function getDurationByCid(pages: BVideoDetailDataPage[], cid: number)
         {
@@ -98,6 +98,7 @@ export class BiliBili extends MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
+        let platform = 'html5';
         const biliBiliApi = new BiliBiliApi();
         try
         {
@@ -123,29 +124,50 @@ export class BiliBili extends MediaParsing
             }
             const cid = videoInfo.pages[0].cid;
             const avid = videoInfo.aid;
+            let h5videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'html5', biliBiliqn);
+            let pcvideoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'pc', biliBiliqn);
 
-            let videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, biliBiliPlatform, biliBiliqn);
+            let videoStream = h5videoStream;
 
-            if (!videoStream)
+            const h5Quality = h5videoStream.data.accept_quality;
+            const pcQuality = pcvideoStream.data.accept_quality;
+
+            const CombinedQualityInfo = h5Quality
+                .filter((item, index) => !(h5videoStream.data.accept_format.includes('flv') && h5videoStream.data.accept_format.split(',')[index].includes('flv')))
+                .map(item => ['html5', item] as CombinedQualityInfo)
+                .concat(
+                    pcQuality
+                        .filter((item, index) => !(pcvideoStream.data.accept_format.includes('flv') && pcvideoStream.data.accept_format.split(',')[index].includes('flv')))
+                        .map(item => ['pc', item] as CombinedQualityInfo)
+                );
+
+            CombinedQualityInfo.sort((a, b) =>
             {
-                const mediaData = this.returnErrorMediaData(['无法获取流媒体']);
-                return mediaData;
-            }
-            while (await this.checkResponseStatus(videoStream.data.durl[0].url) === false)
-            {
-                biliBiliPlatform = 'html5';
-                if (biliBiliPlatform === 'html5')
+                if (b[1] === a[1])
                 {
-                    biliBiliqn = this.changeBilibiliQn(biliBiliqn);
+                    return a[0] === 'pc' ? -1 : 1;
                 }
-                videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, biliBiliPlatform, biliBiliqn);
-                if (!videoStream)
+                return b[1] - a[1];
+            });
+
+            for (const [index, item] of CombinedQualityInfo.entries())
+            {
+                videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, item[0], item[1]);
+                console.log(videoStream.data.durl[0].url)
+                // console.log(videoStream.data)
+                if (await this.checkResponseStatus(videoStream.data.durl[0].url) === true)
                 {
-                    const mediaData = this.returnErrorMediaData(['无法获取流媒体']);
+                    break;
+                }
+                const isLastItem = index === CombinedQualityInfo.length - 1;
+                if (isLastItem)
+                {
+                    const mediaData = this.returnErrorMediaData(['在尝试了全部清晰度和平台后，无法获取流媒体']);
                     return mediaData;
                 }
-                if (biliBiliqn === 6) break;
             }
+
+            
 
             bitRate = this.getQuality(videoStream.data.quality);
             if (videoInfo.pages) duration = getDurationByCid(videoInfo.pages, cid);
