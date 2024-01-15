@@ -102,8 +102,6 @@ export class GetMediaLength
         // 测试用
         if (!mimeType) mimeType = 'video/webm';
 
-        try
-        {
             const response = await axios.get(url, {
                 headers: {
                     Range: 'bytes=0-50000'
@@ -125,10 +123,7 @@ export class GetMediaLength
                 console.log(parseMediaMetaData.parseMP4Duration(uint8Array) / 1000)
                 return parseMediaMetaData.parseMP4Duration(uint8Array) / 1000;
             } else throw new Error(`GetMediaLengthByReadMetaData: 没找到时长`);
-        } catch (error)
-        {
-            throw new Error(`HTTP error! status: ${error}`);
-        }
+
     }
 
 

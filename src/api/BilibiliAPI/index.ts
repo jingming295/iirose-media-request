@@ -31,22 +31,18 @@ export class BiliBiliApi
             withCredentials: true, // 模拟 'credentials: 'include''
         };
 
-        try
-        {
-            const response = await axios(config);
-            const responseData = response.data as bangumiStream;
 
-            if (responseData.code === 0)
-            {
-                return responseData;
-            } else
-            {
-                throw new Error(responseData.message);
-            }
-        } catch (error)
+        const response = await axios(config);
+        const responseData = response.data as bangumiStream;
+
+        if (responseData.code === 0)
         {
-            throw new Error(`Network response was not ok: ${(error as Error).message}`);
+            return responseData;
+        } else
+        {
+            throw new Error(responseData.message);
         }
+
     }
 
     public async getBangumiStreamFromFunctionCompute(ep: number, biliBiliSessData: string, biliBiliqn: number, remoteUrl: string)
@@ -58,27 +54,23 @@ export class BiliBiliApi
             sessdata: biliBiliSessData
         };
 
-        try
-        {
-            const response = await axios.post(url, params, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
 
-            const responseData = response.data as bangumiStream;
+        const response = await axios.post(url, params, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-            if (responseData.code === 0)
-            {
-                return responseData;
-            } else
-            {
-                throw new Error(responseData.message);
-            }
-        } catch (error)
+        const responseData = response.data as bangumiStream;
+
+        if (responseData.code === 0)
         {
-            throw new Error(`Network response was not ok: ${(error as Error).message}`);
+            return responseData;
+        } else
+        {
+            throw new Error(responseData.message);
         }
+
     }
 
     /**
@@ -102,23 +94,18 @@ export class BiliBiliApi
             withCredentials: true, // 模拟 'credentials: 'include''
         };
 
-        try
-        {
-            const response = await axios(config);
-            const data = response.data as BangumiVideoDetail;
 
-            if (data.code === 0)
-            {
-                return data.result;
-            } else
-            {
-                return null;
-            }
-        } catch (error)
+        const response = await axios(config);
+        const data = response.data as BangumiVideoDetail;
+
+        if (data.code === 0)
         {
-            console.error('Error:', (error as Error).message);
+            return data.result;
+        } else
+        {
             return null;
         }
+
     }
 
     public async getBilibiliVideoData(bvid: string, biliBiliSessData: string)
@@ -137,23 +124,18 @@ export class BiliBiliApi
             withCredentials: true, // 模拟 'credentials: 'include''
         };
 
-        try
-        {
-            const response = await axios(config);
-            const data = response.data as BVideoDetail;
 
-            if (data.code === 0)
-            {
-                return data.data;
-            } else
-            {
-                return null;
-            }
-        } catch (error)
+        const response = await axios(config);
+        const data = response.data as BVideoDetail;
+
+        if (data.code === 0)
         {
-            console.error('Error:', (error as Error).message);
+            return data.data;
+        } else
+        {
             return null;
         }
+
     }
 
     /**
@@ -185,24 +167,18 @@ export class BiliBiliApi
             withCredentials: true, // 模拟 'credentials: 'include''
         };
 
-        try
-        {
-            const response = await axios.get(`${url}?${params.toString()}`, config);
-            const data: BVideoStream = response.data;
+        const response = await axios.get(`${url}?${params.toString()}`, config);
+        const data: BVideoStream = response.data;
 
-            if (data.code === 0)
-            {
-                return data;
-            } else
-            {
-                console.error('Error:', data.message);
-                throw new Error(`Error: ${data.message}`);
-            }
-        } catch (error)
+        if (data.code === 0)
         {
-            console.error('Error:', error);
-            throw new Error(`Error: ${(error as Error).message}`);
+            return data;
+        } else
+        {
+            console.error('Error:', data.message);
+            throw new Error(`Error: ${data.message}`);
         }
+
     }
 
 
@@ -227,24 +203,19 @@ export class BiliBiliApi
             data: params,
         };
 
-        try
-        {
-            const response = await axios(config);
-            const data: BVideoStream = response.data;
 
-            if (data.code === 0)
-            {
-                return data;
-            } else
-            {
-                console.error('Error:', data.message);
-                throw new Error(`Error: ${data.message}`);
-            }
-        } catch (error)
+        const response = await axios(config);
+        const data: BVideoStream = response.data;
+
+        if (data.code === 0)
         {
-            console.error('Error:', error);
-            throw new Error(`Error: ${(error as Error).message}`);
+            return data;
+        } else
+        {
+            console.error('Error:', data.message);
+            throw new Error(`Error: ${data.message}`);
         }
+
     }
 
     private returnBilibiliHeaders(biliBiliSessData: string)

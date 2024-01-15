@@ -2,6 +2,7 @@ import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { Config } from '../Configuration/configuration';
+import { NeteaseApi } from '../NeteaseAPI';
 /**
  * @description apply
  * @param ctx ctx
@@ -12,6 +13,7 @@ export async function apply(ctx: Context, config: Config)
 {
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
+
     ctx.command(comm, 'iirose艾特视频/音频')
         .option('link', '只发出链接')
         .option('data', '把整个music对象发出来')

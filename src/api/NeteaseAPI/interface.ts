@@ -1,4 +1,6 @@
-interface ParamsObject
+
+
+export interface ParamsObject
 {
   s: string;
   type: number;
@@ -18,77 +20,16 @@ interface Header
   MUSIC_A: string;
 }
 
-interface SearchSimpleAlbumParamsObject
+export interface SearchSimpleAlbumParamsObject
 {
   albumId: number;
   header: Header;
 }
-/**
- * 专辑
- */
-interface Album
-{
-  message: string;
-  data: {
-    albumId: number;
-    albumName: string;
-    artistRepVos: Artist[];
-    albumPicUrl: string;
-    albumSubTitle: string;
-    company: string;
-    publishTime: number;
-    songRepVos: Song[];
-    production: string;
-    language: string;
-    type: string;
-    transName: string | null;
-  };
-  code: number;
-}
-
-interface Artist
-{
-  artistId: number;
-  artistName: string;
-  alias: string | null;
-  headPicUrl: string | null;
-  area: string | null;
-  type: string | null;
-  desc: string | null;
-  production: string | null;
-  avatarPicUrl: string | null;
-  transName: string | null;
-}
-
-interface Song
-{
-  songId: number;
-  songName: string;
-  artistRepVos: Artist[];
-  songSubTitle: string;
-  company: string | null;
-  publishTime: number;
-  language: string;
-  no: number;
-  disc: string;
-  transName: string;
-  mvIds: number[] | null;
-  lyricContent: string | null;
-  transLyricContent: string | null;
-  playUrl: string | null;
-  forTransLyric: string | null;
-  noNeedLyric: boolean | null;
-  lyricLock: boolean | null;
-  transLyricLock: boolean | null;
-  lyricIsEdited: boolean | null;
-  duration: number | null;
-}
-
 
 /**
  * Music Detail
  */
-interface MusicDetail
+export interface MusicDetail
 {
   songs: MusicDetailSong[];
   equalizers: string; // 这里是一个键值对，值的类型未知，可以根据需要修改
@@ -188,6 +129,10 @@ interface MusicDetailAlbum
   picId_str: string;
 }
 
+interface Artist{
+
+}
+
 interface MusicFormat
 {
   name: string | null;
@@ -204,7 +149,7 @@ interface MusicFormat
 /**
  * 歌单
  */
-interface SongList
+export interface SongList
 {
   code: number;
   relatedVideos: string;
@@ -452,7 +397,7 @@ interface PlaylistTrackId
   sr: unknown | null;
 }
 
-interface songResource
+export interface songResource
 {
   name: string,
   artist: string,

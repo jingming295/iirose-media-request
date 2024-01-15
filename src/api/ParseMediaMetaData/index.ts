@@ -58,23 +58,19 @@ export class ParseMediaMetaData
         return duration;
     }
 
-    private async getM3U8NextFile(url: string) {
-        try {
-            console.log(url)
-            const response = await axios.get(url, {
-                responseType: 'arraybuffer'
-            });
-    
-            if (response.status !== 200) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-    
-            const uint8Array = new Uint8Array(response.data);
-            return uint8Array;
-        } catch (error) {
-            console.error(error);
-            throw new Error(`getM3U8NextFile: 请求失败 - ${(error as Error).message}`);
+    private async getM3U8NextFile(url: string)
+    {
+
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer'
+        });
+
+        if (response.status !== 200)
+        {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const uint8Array = new Uint8Array(response.data);
+        return uint8Array;
     }
 
 

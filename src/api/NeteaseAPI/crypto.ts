@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { ParamsObject, SearchSimpleAlbumParamsObject } from './interface';
 
 const iv = Buffer.from('0102030405060708');
 const presetKey = Buffer.from('0CoJUm6Qyw8W8jud');
@@ -22,7 +23,7 @@ const rsaEncrypt = (buffer: Buffer, key: string): Buffer => {
   return crypto.publicEncrypt({ key: key, padding: crypto.constants.RSA_NO_PADDING }, buffer);
 };
 
-const weapi = (object: ParamsObject) => {
+const weapi = (object: ParamsObject | {csrf_token:string}) => {
   const text = JSON.stringify(object);
   const secretKey = crypto.randomBytes(16).map((n) => base62.charAt(n % 62).charCodeAt(0));
 

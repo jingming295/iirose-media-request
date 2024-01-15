@@ -1,6 +1,7 @@
 import { MediaParsing } from ".";
 import { NeteaseApi } from '../NeteaseAPI';
 import { Logger, Session } from "koishi";
+import { MusicDetail } from "../NeteaseAPI/interface";
 
 /**
  * 主要处理网易云的网站
@@ -8,13 +9,13 @@ import { Logger, Session } from "koishi";
 export class Netease extends MediaParsing
 {
     private neteaseApi: NeteaseApi;
-    logger:Logger
+    logger: Logger;
     constructor()
     {
         super();
         this.neteaseApi = new NeteaseApi();
         const logger = new Logger('iirose-media-request');
-        this.logger = logger
+        this.logger = logger;
     }
 
     /**
@@ -40,7 +41,7 @@ export class Netease extends MediaParsing
 
         musicDetail.forEach(musicDetail =>
         {
-            this.processMusicDetail(musicDetail,cover, duration, bitRate, ["music"]);
+            this.processMusicDetail(musicDetail, cover, duration, bitRate, ["music"]);
         });
         for (let i = 0; i < songId.length; i++)
         {
@@ -52,7 +53,7 @@ export class Netease extends MediaParsing
                 }
                 const processSong = await this.processSong(songId[i], url);
                 if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
-                else duration[i] = 0
+                else duration[i] = 0;
             } else if (!options['link'] && !options['data'] && !options['param'])
             {
                 const processSong = await this.processSong(songId[i], url);
@@ -91,16 +92,16 @@ export class Netease extends MediaParsing
      */
     private async processAlbumDetails(id: number, songId: number[], songName: string[], signer: string[], musicDetail: MusicDetail[])
     {
-        const album = await this.neteaseApi.getAlbumSimpleDetail(id);
-        const songList = album.data.songRepVos;
+        const album = await this.neteaseApi.getAlbumData(id);
+        const songList = album.songs;
 
         for (const song of songList)
         {
-            songId.push(song.songId);
-            songName.push(song.songName);
-            signer.push(song.artistRepVos[0].artistName);
+            songId.push(song.id);
+            songName.push(`${song.name}`);
+            signer.push(album.album.artist.name);
 
-            const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(song.songId);
+            const MusicDetail = await this.neteaseApi.getNeteaseMusicDetail(song.id);
 
             if (MusicDetail)
             {
@@ -120,8 +121,9 @@ export class Netease extends MediaParsing
     private async processPlaylistDetails(id: number, songId: number[], songName: string[], signer: string[], musicDetail: MusicDetail[])
     {
         const playList = await this.neteaseApi.getSonglistDetail(id);
-        if(!playList){
-            return null
+        if (!playList)
+        {
+            return null;
         }
         const songList = playList.playlist.tracks;
 
@@ -147,7 +149,7 @@ export class Netease extends MediaParsing
      * @param bitRate 
      * @param type 
      */
-    private processMusicDetail(musicDetail: MusicDetail, cover:string[], duration: number[], bitRate: number[], type: string[])
+    private processMusicDetail(musicDetail: MusicDetail, cover: string[], duration: number[], bitRate: number[], type: string[])
     {
         const song = musicDetail.songs[0];
 
@@ -157,8 +159,8 @@ export class Netease extends MediaParsing
         const songBitRate = song.hMusic ? song.hMusic.bitrate / 1000 : 128;
         bitRate.push(songBitRate);
 
-        const songCover = song.album.picUrl
-        cover.push(songCover)
+        const songCover = song.album.picUrl;
+        cover.push(songCover);
 
         type.push('music');
     }
@@ -205,17 +207,13 @@ export class Netease extends MediaParsing
      */
     async processSong(songId: number, url: string[])
     {
-        try {
-            const songResource = await this.neteaseApi.getSongResource(songId);
-            if(!songResource){
-                return
-            }
-            url.push(await this.getRedirectUrl(songResource[0].url));
-            return true;
-        } catch (error) {
-            this.logger.warn(`歌曲${songId}: ${(error as Error).message}`)
+        const songResource = await this.neteaseApi.getSongResource(songId);
+        if (!songResource)
+        {
+            return;
         }
-
+        url.push(await this.getRedirectUrl(songResource[0].url));
+        return true;
     }
     /**
      * 处理网易云的媒体
@@ -231,55 +229,49 @@ export class Netease extends MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
-        try
-        {
-            let id: number | null;
-            if (originUrl.includes('http') && originUrl.includes('song'))
-            {
-                const match1 = originUrl.match(/id=(\d+)/);
-                const match2 = originUrl.match(/\/song\/(\d+)/);
 
-                id = match1 ? parseInt(match1[1]) : (match2 ? parseInt(match2[1]) : null);
-                if (id === null)
-                {
-                    const mediaData = this.returnErrorMediaData(['暂不支持']);
-                    return mediaData;
-                }
-            }
-            else
+        let id: number | null;
+        if (originUrl.includes('http') && originUrl.includes('song'))
+        {
+            const match1 = originUrl.match(/id=(\d+)/);
+            const match2 = originUrl.match(/\/song\/(\d+)/);
+
+            id = match1 ? parseInt(match1[1]) : (match2 ? parseInt(match2[1]) : null);
+            if (id === null)
             {
                 const mediaData = this.returnErrorMediaData(['暂不支持']);
                 return mediaData;
             }
-            
-            const songData = await this.neteaseApi.getNeteaseMusicDetail(id);
-            
-            if (!songData)
-            {
-                const mediaData = this.returnErrorMediaData(['没有找到歌曲']);
-                return mediaData;
-            }
-            const songResource = await this.neteaseApi.getSongResource(id);
-            if(!songResource){
-                const mediaData = this.returnErrorMediaData([`无法获取歌曲${id}`]);
-                return mediaData;
-            }
-            url = await this.getRedirectUrl(songResource[0].url);
-            type = 'music';
-            name = songData.songs[0].name;
-            cover = songData.songs[0].album.picUrl
-
-            bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
-            signer = songData.songs[0].artists[0].name;
-            duration = songData.songs[0].duration / 1000;
-            const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
-            return mediaData;
-        } catch (error)
+        }
+        else
         {
-            const mediaData = this.returnErrorMediaData([(error as Error).message]);
+            const mediaData = this.returnErrorMediaData(['暂不支持']);
             return mediaData;
         }
 
+        const songData = await this.neteaseApi.getNeteaseMusicDetail(id);
+
+        if (!songData)
+        {
+            const mediaData = this.returnErrorMediaData(['没有找到歌曲']);
+            return mediaData;
+        }
+        const songResource = await this.neteaseApi.getSongResource(id);
+        if (!songResource)
+        {
+            const mediaData = this.returnErrorMediaData([`无法获取歌曲${id}`]);
+            return mediaData;
+        }
+        url = await this.getRedirectUrl(songResource[0].url);
+        type = 'music';
+        name = songData.songs[0].name;
+        cover = songData.songs[0].album.picUrl;
+
+        bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
+        signer = songData.songs[0].artists[0].name;
+        duration = songData.songs[0].duration / 1000;
+        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
+        return mediaData;
     }
 }
 

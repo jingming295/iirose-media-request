@@ -130,9 +130,8 @@ export class MediaParsing
             ctx.on('dispose', () => clearInterval(checkCpuUsageIntervalId));
 
             const mediaData = await this.getMedia(page, originUrl, timeOut, waitTime, ctx, client);
-            
+
             await this.closePage(page);
-            console.log("finally")
             clearInterval(checkCpuUsageIntervalId);
             return mediaData;
         } catch (error)
@@ -220,7 +219,6 @@ export class MediaParsing
      */
     public async checkResponseStatus(url: string)
     {
-        const logger = new Logger('iirose-media-request');
         try
         {
             const response = await axios.get(url, {
@@ -229,14 +227,15 @@ export class MediaParsing
                     'Range': 'bytes=0-10000'
                 }
             });
-            
+
             if (response.status === 403 || response.status === 410)
             {
                 return false;
             } else if (response.status === 200 || response.status === 206)
             {
                 return true;
-            } else {
+            } else
+            {
                 return false;
             }
         } catch (error)
@@ -294,30 +293,24 @@ export class MediaParsing
          */
         async function extractOGAndKeywords(originUrl: string): Promise<{ og: Dict<string>, keyword: string | undefined; }>
         {
-            try
+
+            const { data } = await axios.get(originUrl);
+            const $ = load(data);
+
+            const og: Dict<string> = $('meta[property^="og:"]').toArray().reduce((prev, meta) =>
             {
-                const { data } = await axios.get(originUrl);
-                const $ = load(data);
+                const key = $(meta).attr('property')?.slice(3);
+                const value = $(meta).attr('content');
+                if (key && value) prev[key] = value;
+                return prev;
+            }, {} as Dict<string>);
 
-                const og: Dict<string> = $('meta[property^="og:"]').toArray().reduce((prev, meta) =>
-                {
-                    const key = $(meta).attr('property')?.slice(3);
-                    const value = $(meta).attr('content');
-                    if (key && value) prev[key] = value;
-                    return prev;
-                }, {} as Dict<string>);
+            const keywordsMeta = $('meta[name="keywords"]');
+            // Extract content of the keywords meta tag
+            const keyword = keywordsMeta.attr('content');
 
-                const keywordsMeta = $('meta[name="keywords"]');
-                // Extract content of the keywords meta tag
-                const keyword = keywordsMeta.attr('content');
+            return { og, keyword };
 
-                return { og, keyword };
-            } catch (error)
-            {
-                // Handle errors if necessary
-                console.error('Error extracting OG and keywords:', error);
-                return { og: {}, keyword };
-            }
         }
 
         const { og, keyword } = await extractOGAndKeywords(originUrl);
@@ -331,59 +324,55 @@ export class MediaParsing
         const resourceUrls: ResourceUrls[] = [
             { url: null, mimetype: null }
         ];
-        try
+
+        page.on('request', async request =>
         {
-            page.on('request', async request =>
+            const url = await request.url();
+            await new Promise(resolve => setTimeout(resolve, 1500)); // 为什么要等一秒？因为request.response()就是要等
+            const response = await request.response();
+            if (response)
             {
-                const url = await request.url();
-                await new Promise(resolve => setTimeout(resolve, 1500)); // 为什么要等一秒？因为request.response()就是要等
-                const response = await request.response();
-                if (response)
+                const checkMimeType = new CheckMimeType();
+                const mimeType = response.headers()['content-type'];
+                if (checkMimeType.isVideo(mimeType))
                 {
-                    const checkMimeType = new CheckMimeType();
-                    const mimeType = response.headers()['content-type'];
-                    if (checkMimeType.isVideo(mimeType))
-                    {
-                        await processMedia('video', url, mimeType);
-                    } else if (checkMimeType.isMusic(mimeType))
-                    {
-                        await processMedia('music', url, mimeType);
-                    }
-                } else if (url.includes('.m3u8') || url.includes('.m4a'))
+                    await processMedia('video', url, mimeType);
+                } else if (checkMimeType.isMusic(mimeType))
                 {
-                    const mediaType = url.includes('.m4a') ? 'music' : 'video';
-                    processMedia(mediaType, url, null);
+                    await processMedia('music', url, mimeType);
                 }
-            });
-
-            await page.goto(originUrl, { timeout: timeOut });
-            
-            await this.clickBtn(page);
-            if (mediaType)
+            } else if (url.includes('.m3u8') || url.includes('.m4a'))
             {
-                if (mediaType[0] === 'video')
-                {
-                    cover[0] = og.image || await this.getThumbNail(page) || base64Cover;
-                } else
-                {
-                    cover[0] = og.image || await this.searchImg(page) || base64Cover;
-                }
+                const mediaType = url.includes('.m4a') ? 'music' : 'video';
+                processMedia(mediaType, url, null);
             }
-            await waitForTimeout(waitTime);
+        });
 
-            name[0] = og.title || keyword || await page.title() || '无法获取标题';
-            signer[0] = og.site || '无法获取';
-            if (mediaType! && cover)
+        await page.goto(originUrl, { timeout: timeOut });
+
+        await this.clickBtn(page);
+        if (mediaType)
+        {
+            if (mediaType[0] === 'video')
             {
-                return this.processMediaData(resourceUrls, mediaType, cover, name, signer, ctx);
+                cover[0] = og.image || await this.getThumbNail(page) || base64Cover;
             } else
             {
-                return this.returnErrorMediaData(['<>没有找到媒体，主要是无法获取type或者cover</>']);
+                cover[0] = og.image || await this.searchImg(page) || base64Cover;
             }
-        } catch (error)
-        {
-            return this.handleError(error as Error);
         }
+        await waitForTimeout(waitTime);
+
+        name[0] = og.title || keyword || await page.title() || '无法获取标题';
+        signer[0] = og.site || '无法获取';
+        if (mediaType! && cover)
+        {
+            return this.processMediaData(resourceUrls, mediaType, cover, name, signer, ctx);
+        } else
+        {
+            return this.returnErrorMediaData(['<>没有找到媒体，主要是无法获取type或者cover</>']);
+        }
+
     }
 
     /**
@@ -555,14 +544,8 @@ export class MediaParsing
             // console.log('Element Attributes:', elementInfo.attributes);
             // console.log('Element ClassList:', elementInfo.classList);
 
-            try
-            {
-                await elementHandle.click();
-                console.log("点击了找到的按钮");
-            } catch (error)
-            {
-                console.error('Error clicking element:', error);
-            }
+            await elementHandle.click();
+
         }
     }
 
@@ -599,15 +582,11 @@ export class MediaParsing
      */
     private async closePage(page: Page)
     {
-        try
-        {
-            if (!page.isClosed())
-            {
-                await page.close();
-            }
-        } catch (error)
-        {
 
+        if (!page.isClosed())
+        {
+            await page.close();
         }
+
     }
 }
