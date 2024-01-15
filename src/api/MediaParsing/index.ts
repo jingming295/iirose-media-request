@@ -235,7 +235,6 @@ export class MediaParsing
                 return false;
             } else if (response.status === 200 || response.status === 206)
             {
-                logger.info(`response: ${response.status}, url: ${url}`)
                 return true;
             } else {
                 return false;

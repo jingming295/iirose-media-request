@@ -34,6 +34,9 @@ interface bangumiStream
         clip_info_list: string[]; // 根据实际情况填写具体的类型
         accept_description: string[];
         status: number;
+        video_info:{
+            durl:durl[];
+        }
     };
 }
 

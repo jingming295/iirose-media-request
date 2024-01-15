@@ -1,5 +1,17 @@
 import { Schema } from "koishi";
-export interface Config { }
+export interface Config
+{
+  timeOut: number;
+  waitTime: number;
+  functionCompute: boolean;
+  functionCompureAddress: { area: string; url: string; }[];
+  queueRequest: boolean;
+  mediaCardColor: string;
+  noHentai: boolean;
+  trackUser: boolean;
+  detectUpdate: boolean;
+  maxCpuUsage: number;
+}
 
 /**
  * @description 设置配置
@@ -10,23 +22,12 @@ export const Config: Schema<Config> = Schema.intersect([
     waitTime: Schema.number().role('slider').min(100).max(50000).default(2000).description('页面加载完成后的等待时间'),
   }).description('游览器页面相关设置'),
   Schema.object({
-    qn: Schema.union([
-      Schema.const(6),
-      Schema.const(16),
-      Schema.const(64),
-      Schema.const(74),
-      Schema.const(80),
-      Schema.const(112).experimental(),
-      Schema.const(116).experimental(),
-      Schema.const(120).experimental(),
-      Schema.const(125).experimental(),
-      Schema.const(126).experimental(),
-      Schema.const(127).experimental(),
-    ]).default(80).description('视频的清晰度，具体看https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/info.md'),
-    platform: Schema.union([
-      Schema.const('pc'),
-      Schema.const('html5'),
-    ]).default('pc').description('平台，你不太需要碰，系统会自己调整'),
+    functionCompute: Schema.boolean().default(false).description('是否使用阿里云函数计算来获取视频流媒体(仅在原版策略视频流无法播放的时候开启)'),
+    functionCompureAddress: Schema.array(Schema.object({
+      area: Schema.string().description('函数计算的地区'),
+      url: Schema.string().description('函数计算的网址')
+    })).default([{'area': '香港', 'url': 'https://bilibileostream-bilibilih-srrmdnstep.cn-hongkong.fcapp.run'}, {'area': '深圳', 'url': 'https://bilibileostream-guide-ihnotpwqoe.cn-shenzhen.fcapp.run'}])
+    .description('阿里云函数计算的地址，如果有多个，将会选择第一个(仅在functionCompute开启时有用，请选择最靠近你的地理位置，你也可以自己创建自己的云函数，详情: https://github.com/jingming295/BiliBiliStreamRequest)'),
   }).description('bilibili视频相关设置'),
   Schema.object({
     queueRequest: Schema.boolean().default(false).description('针对专辑或者歌单是否排队点播，这是因为网易云的直链好像只能持续30分钟'),
