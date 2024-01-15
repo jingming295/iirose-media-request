@@ -61,7 +61,7 @@ export class Netease extends MediaParsing
             }
         }
 
-        const completeMediaData = this.returnCompleteMediaData(["music"], songName, signer, cover, url, duration, bitRate);
+        const completeMediaData = this.returnCompleteMediaData(["music"], [], [], [], [], [], []);
         return completeMediaData;
     }
 

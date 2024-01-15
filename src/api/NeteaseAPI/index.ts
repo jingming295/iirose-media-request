@@ -1,6 +1,6 @@
 
 import { AlbumData } from './AlbumInterface';
-import { eapi, weapi } from './crypto';
+import { weapi } from './crypto';
 import axios from 'axios';
 import { MusicDetail, SongList, songResource } from './interface';
 export class NeteaseApi

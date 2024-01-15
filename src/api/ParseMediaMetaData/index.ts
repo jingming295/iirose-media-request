@@ -120,13 +120,13 @@ export class ParseMediaMetaData
      */
     private parseMvhd(data: Uint8Array)
     {
-        const version = data[0];
-        const creationTime = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-        const modificationTime = data[8] << 24 | data[9] << 16 | data[10] << 8 | data[11];
-        const timescale = data[12] << 24 | data[13] << 16 | data[14] << 8 | data[15];
+        // const version = data[0];
+        // const creationTime = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
+        // const modificationTime = data[8] << 24 | data[9] << 16 | data[10] << 8 | data[11];
+        // const timescale = data[12] << 24 | data[13] << 16 | data[14] << 8 | data[15];
         const duration = data[16] << 24 | data[17] << 16 | data[18] << 8 | data[19];
-        const rate = data[24] << 8 | data[25];
-        const volume = data[26] << 8 | data[27];
+        // const rate = data[24] << 8 | data[25];
+        // const volume = data[26] << 8 | data[27];
         // console.log(`creationTime: ${creationTime}`)
         // console.log(`modificationTime: ${modificationTime}`)
         // console.log(`timescale: ${timescale}`)

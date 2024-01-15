@@ -2,7 +2,6 @@ import { Context, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { Config } from '../Configuration/configuration';
-import { NeteaseApi } from '../NeteaseAPI';
 /**
  * @description apply
  * @param ctx ctx
