@@ -1,8 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
+
 export class BiliBiliApi
 {
-
-
     /**
      * 主要获取Bangumi的url
      * @param ep bilibili ep
@@ -169,7 +168,6 @@ export class BiliBiliApi
 
         const response = await axios.get(`${url}?${params.toString()}`, config);
         const data: BVideoStream = response.data;
-
         if (data.code === 0)
         {
             return data;
@@ -206,7 +204,6 @@ export class BiliBiliApi
 
         const response = await axios(config);
         const data: BVideoStream = response.data;
-
         if (data.code === 0)
         {
             return data;

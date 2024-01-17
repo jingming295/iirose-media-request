@@ -1,3 +1,4 @@
+import { Logger } from "koishi";
 import { MediaParsing } from ".";
 import { BiliBiliApi } from "../BilibiliAPI";
 import { Config } from "../Configuration/configuration";
@@ -7,7 +8,6 @@ import { Config } from "../Configuration/configuration";
  */
 export class BiliBili extends MediaParsing
 {
-
     /**
      * 处理Bangumi的媒体
      * @returns mediaData
