@@ -253,7 +253,6 @@ export class MediaHandler
             });
             if (!conformPromise)
             {
-                this.logger.info(`before send ${mediaData[0].url}`)
                 if (this.config.trackUser && mediaData.length === 1)
                 {
                     const userActions = mediaData.map(data => `<><parent><at name="${userName}"/>点播了 ${data.name}<child/></parent></>`);

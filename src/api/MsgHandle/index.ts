@@ -83,7 +83,7 @@ export async function apply(ctx: Context, config: Config)
                     return;
                 } catch (error)
                 {
-                    logger.error((error as Error).message);
+                    logger.error(error);
                 }
             }
         );

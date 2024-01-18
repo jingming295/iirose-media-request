@@ -74,7 +74,9 @@ export class ErrorHandle
             returnMsg === ErrorMsg;
             return ErrorMsg;
         }
-        else
+        else{
             return returnMsg;
+        }
+            
     }
 }

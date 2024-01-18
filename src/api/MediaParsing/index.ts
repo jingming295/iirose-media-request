@@ -14,7 +14,7 @@ import { load } from 'cheerio';
  */
 export class MediaParsing
 {
-
+    logger = new Logger('iirose-media-request');
     errorHandle = new ErrorHandle();
 
     /**
@@ -138,8 +138,7 @@ export class MediaParsing
         {
             await this.closePage(page);
             if (checkCpuUsageIntervalId !== null) clearInterval(checkCpuUsageIntervalId);
-            const mediaData = this.returnErrorMediaData([this.errorHandle.ErrorHandle((error as Error).message)]);
-            return mediaData;
+            throw error;
         }
     }
 
@@ -257,9 +256,9 @@ export class MediaParsing
          * @param url 
          * @param mimeType 
          */
-        function processMedia(type: 'music' | 'video', url: string, mimeType: string | null)
+        const processMedia = (type: 'music' | 'video', url: string, mimeType: string | null) =>
         {
-            console.log('>>', type, url, mimeType);
+            this.logger.info('>>', type, url, mimeType);
             resourceUrls[urlCount] = {
                 url: url,
                 mimetype: mimeType
