@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+import { BVideoStream, bangumiStream } from "./BilibiliStreamInterface";
 
 export class BiliBiliApi
 {

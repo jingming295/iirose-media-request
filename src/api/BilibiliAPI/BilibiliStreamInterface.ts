@@ -1,4 +1,4 @@
-interface bangumiStream
+export interface bangumiStream
 {
     code: number;
     message: string;
@@ -64,7 +64,7 @@ interface durl {
   
 
 
-interface BVideoStream
+export interface BVideoStream
 {
     code: number;
     message: string;

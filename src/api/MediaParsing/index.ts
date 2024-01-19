@@ -7,6 +7,7 @@ import { Context, Dict, Logger } from 'koishi';
 import osUtils from 'os-utils';
 import axios, { AxiosError } from 'axios';
 import { load } from 'cheerio';
+import { ElementAttributes, MediaData, ResourceUrls } from './interface';
 
 
 /**

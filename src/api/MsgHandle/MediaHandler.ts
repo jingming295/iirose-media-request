@@ -4,6 +4,8 @@ import { BiliBili } from '../MediaParsing/BiliBili';
 import { Context, Logger, Session } from 'koishi';
 import { } from 'koishi-plugin-bilibili-login';
 import { Config } from '../Configuration/configuration';
+import { MediaData } from '../MediaParsing/interface';
+import { Options, msgInfo } from './interface';
 /**
  * @description 处理媒体
  */

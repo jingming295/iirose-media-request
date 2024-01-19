@@ -2,6 +2,8 @@ import { MediaParsing } from ".";
 import { NeteaseApi } from '../NeteaseAPI';
 import { Logger, Session } from "koishi";
 import { MusicDetail } from "../NeteaseAPI/interface";
+import { MediaData } from "./interface";
+import { Options } from "../MsgHandle/interface";
 
 /**
  * 主要处理网易云的网站

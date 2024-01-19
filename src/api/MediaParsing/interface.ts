@@ -1,5 +1,5 @@
 
-interface MediaData
+export interface MediaData
 {
     type: 'music' | 'video';
     name: string;
@@ -17,18 +17,18 @@ interface Attribute
     value: string;
 }
 
-interface ElementAttributes
+export interface ElementAttributes
 {
     tagName: string;
     attrs: Attribute[];
     classList: string[];
 }
 
-interface ResourceUrls
+export interface ResourceUrls
 {
     url: string | null,
     mimetype: string | null;
 
 }
 
-type CombinedQualityInfo = [string, number];
+export type CombinedQualityInfo = [string, number];

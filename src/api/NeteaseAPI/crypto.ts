@@ -1,6 +1,14 @@
 import crypto from 'crypto';
 import { ParamsObject, SearchSimpleAlbumParamsObject } from './interface';
 
+interface LinuxapiResult {
+  eparams: string;
+}
+
+export interface EapiResult {
+  params: string;
+}
+
 const iv = Buffer.from('0102030405060708');
 const presetKey = Buffer.from('0CoJUm6Qyw8W8jud');
 const linuxapiKey = Buffer.from('rFgB&h#%2?^eDg:Q');
@@ -40,10 +48,6 @@ const weapi = (object: ParamsObject | {csrf_token:string}) => {
   };
 };
 
-interface LinuxapiResult {
-  eparams: string;
-}
-
 const linuxapi = (object: ParamsObject): LinuxapiResult => {
   const text = JSON.stringify(object);
   return {
@@ -53,9 +57,7 @@ const linuxapi = (object: ParamsObject): LinuxapiResult => {
   };
 };
 
-interface EapiResult {
-  params: string;
-}
+
 
 const eapi = (url: string, object: SearchSimpleAlbumParamsObject) => {
   const text = typeof object === 'object' ? JSON.stringify(object) : object;
