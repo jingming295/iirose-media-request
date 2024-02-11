@@ -4,7 +4,7 @@
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",
-  "version": "0.4.62",
+  "version": "0.4.64",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

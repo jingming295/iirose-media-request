@@ -236,13 +236,6 @@ export class MediaHandler
                     const jsonData = mediaData.map(data => `<><parent><at name="${userName}"/><child/></parent>${JSON.stringify(data, null, 2)}</>`);
                     return this.returnHasRespondMsgInfo(jsonData, Array.from({ length: jsonData.length }, () => null));
                 }
-            }, {
-                opt: ["param"],
-                fn: async () =>
-                {
-                    const paramInfo = mediaData.map(data => `<${data.name} - ${data.signer} - ${data.cover}> ${data.url}`);
-                    return this.returnHasRespondMsgInfo(paramInfo, Array.from({ length: paramInfo.length }, () => null));
-                }
             }]).some(o =>
             {
                 if (o.opt.every(k => options[k]))
@@ -253,7 +246,7 @@ export class MediaHandler
                 else
                     return false;
             });
-            if (!conformPromise)
+            if (!conformPromise && Object.keys(options).length === 0)
             {
                 if (this.config.trackUser && mediaData.length === 1)
                 {
@@ -277,8 +270,9 @@ export class MediaHandler
                     return this.returnHasRespondMsgInfo(Array.from({ length: mediaData.length }, () => null), mediaData);
                 }
             }
-            else
-                return conformPromise;
+            else {
+                return this.returnHasRespondMsgInfo([null], [null]);
+            }
         }
         catch (error)
         {

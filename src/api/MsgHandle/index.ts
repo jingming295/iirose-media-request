@@ -8,20 +8,24 @@ import { Config } from '../Configuration/configuration';
  * @param config config
  */
 const logger = new Logger('iirose-media-request');
+
 export async function apply(ctx: Context, config: Config)
 {
     const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
-
     ctx.command(comm, 'iirose艾特视频/音频')
         .option('link', '只发出链接')
         .option('data', '把整个music对象发出来')
         .option('cut', '如果是iirose平台就cut视频')
         .option('cutall', '如果是iirose平台就cut all视频')
-        .option('param', '返回类似<名词 – 作者 – 封面url> link 的东西，适用于iirose').action(
+        .action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
                 if (!session || !session.username || !options) return;
+                if (config['privateMsg'] === false && !session.event.guild && Object.keys(options).length === 0) {
+                    session.send('私聊不支持此功能');
+                    return;
+                }
                 const username = session.username;
                 const uid = session.uid;
                 if (options['cut'] && session.platform === 'iirose')
