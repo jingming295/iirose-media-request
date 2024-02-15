@@ -1,7 +1,7 @@
 
 import { AlbumData } from './AlbumInterface';
 import { weapi } from './crypto';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { MusicDetail, SongList, songResource } from './interface';
 export class NeteaseApi
 {
@@ -41,6 +41,7 @@ export class NeteaseApi
 
         const response = await axios.get(url.toString(), {
             headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
                 'Content-Type': 'application/json'
             }
         });
@@ -61,16 +62,57 @@ export class NeteaseApi
         };
         url.search = new URLSearchParams(params).toString();
 
+        try
+        {
+            const response = await axios.get(url.toString(), {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data as songResource[];
+        } catch (error)
+        {
+            const e: AxiosError = error as AxiosError;
+            if (e.response?.data)
+            {
+                const setCookieHeader = e.response?.headers['set-cookie'];
+                if (setCookieHeader)
+                {
+                    axios.defaults.headers.cookie = setCookieHeader.join('; ');
+                }
 
-        const response = await axios.get(url.toString(), {
-            headers: {
-                'Content-Type': 'application/json'
+                const html = e.response?.data.toString();
+                const match = html.match(/window\.location\.href\s*=\s*"([^"]+)"/);
+                if (match)
+                {
+                    const redirectUrl = match[1];
+                    const params = new URLSearchParams(redirectUrl.split('?')[1]);
+                    params.forEach((value, key) =>
+                    {
+                        url.searchParams.append(key, value);
+                    });
+
+                    console.log(url.toString());
+
+                    // 发送带有设置的 cookie 的请求
+
+                    const response = await axios.get(url.toString(), {
+                        headers: {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    return response.data as songResource[];
+
+                } else
+                {
+                    throw new Error(`获取音乐链接资源失败: ${e.response?.status}`);
+                }
             }
-        });
-
-        return response.data as songResource[];
-
+        }
     }
+
 
 
     async getAlbumData(id: number)

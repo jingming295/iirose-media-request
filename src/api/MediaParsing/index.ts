@@ -178,10 +178,14 @@ export class MediaParsing
      */
     public async getRedirectUrl(shortUrl: string)
     {
+        console.log(shortUrl)
         try
         {
             const response = await axios.head(shortUrl, {
                 maxRedirects: 0,  // 阻止自动重定向
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                }
             });
             // 如果不是重定向状态码，则抛出错误
             if (response.status !== 301 && response.status !== 302)
