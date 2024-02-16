@@ -21,6 +21,7 @@ export async function apply(ctx: Context, config: Config)
         .action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
+                console.log(options);
                 if (!session || !session.username || !options) return;
                 if (config['privateMsg'] === false && !session.event.guild && Object.keys(options).length === 0) {
                     session.send('私聊不支持此功能');
