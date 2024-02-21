@@ -36,7 +36,9 @@ export class MediaParsing
         coverList: string[],
         urlList: string[],
         durationList: number[],
-        bitRateList: number[]
+        bitRateList: number[],
+        lyricsList: string[] | null[] = [],
+        origin: string[] | null[] = []
     )
     {
         const mediaDataArray: MediaData[] = [];
@@ -51,6 +53,8 @@ export class MediaParsing
                 url: urlList[i],
                 duration: durationList[i],
                 bitRate: bitRateList[i],
+                lyrics: lyricsList[i],
+                origin: origin[i],
                 error: null,
             };
             mediaDataArray.push(mediaData);
@@ -79,6 +83,8 @@ export class MediaParsing
                 url: '0',
                 duration: 0,
                 bitRate: 0,
+                lyrics: null,
+                origin: null,
                 error: errorMsg,
             };
             errorMediaDataArray.push(mediaData);

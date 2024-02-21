@@ -9,6 +9,8 @@ export interface MediaData
     url: string;
     duration: number;
     bitRate: number;
+    lyrics: string | null;
+    origin: string | null;
     error: string | null;
 }
 interface Attribute
@@ -32,3 +34,9 @@ export interface ResourceUrls
 }
 
 export type CombinedQualityInfo = [string, number];
+
+export interface LyricLine {
+    time: string;
+    content: string;
+    translation: string;
+}

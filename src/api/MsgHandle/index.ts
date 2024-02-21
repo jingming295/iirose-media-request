@@ -60,7 +60,7 @@ export async function apply(ctx: Context, config: Config)
                                     if (info.mediaData.type === 'music')
                                     {
                                         
-                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${info.mediaData.lyrics}" origin="${info.mediaData.origin}"/>`);
                                     } else
                                     {
                                         session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);

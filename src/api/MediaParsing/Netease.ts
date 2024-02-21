@@ -2,7 +2,7 @@ import { MediaParsing } from ".";
 import { NeteaseApi } from '../NeteaseAPI';
 import { Logger, Session } from "koishi";
 import { MusicDetail } from "../NeteaseAPI/interface";
-import { MediaData } from "./interface";
+import { LyricLine, MediaData } from "./interface";
 import { Options } from "../MsgHandle/interface";
 
 /**
@@ -47,6 +47,8 @@ export class Netease extends MediaParsing
         });
         for (let i = 0; i < songId.length; i++)
         {
+            const lyricData = await this.neteaseApi.getLyric(songId[i]);
+            const lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
             if (queueRequest && !options['link'] && !options['data'] && !options['param'])
             {
                 if (i > 0)
@@ -54,12 +56,13 @@ export class Netease extends MediaParsing
                     await this.delay((duration[i - 1] * 1000) - 4000);
                 }
                 const processSong = await this.processSong(songId[i], url);
-                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric);
                 else duration[i] = 0;
             } else if (!options['link'] && !options['data'] && !options['param'])
             {
                 const processSong = await this.processSong(songId[i], url);
-                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF');
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric);
             }
         }
 
@@ -67,9 +70,9 @@ export class Netease extends MediaParsing
         return completeMediaData;
     }
 
-    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF')
+    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string)
     {
-        session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}"/>`);
+        session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyric="${lyric}" origin="netease"/>`);
     }
 
 
@@ -231,6 +234,7 @@ export class Netease extends MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
+        let lyric: string | null = null;
 
         let id: number | null;
         if (originUrl.includes('http') && originUrl.includes('song'))
@@ -264,16 +268,73 @@ export class Netease extends MediaParsing
             const mediaData = this.returnErrorMediaData([`无法获取歌曲${id}`]);
             return mediaData;
         }
+
+        const lyricData = await this.neteaseApi.getLyric(id);
+
         url = await this.getRedirectUrl(songResource[0].url);
         type = 'music';
         name = songData.songs[0].name;
         cover = songData.songs[0].album.picUrl;
-
         bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
         signer = songData.songs[0].artists[0].name;
         duration = songData.songs[0].duration / 1000;
-        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
+        lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
+
+
+        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease']);
         return mediaData;
     }
+
+    private mergeLyrics(jpLyrics: string, cnLyrics: string): string {
+        const jpLines = jpLyrics.split('\n');
+        const cnLines = cnLyrics.split('\n');
+    
+        const jpEntries: { [key: string]: string } = {};
+        const cnEntries: { [key: string]: string } = {};
+    
+        // Parse Japanese lyrics
+        for (const line of jpLines) {
+            const timeRegex = /\[(\d+:\d+\.\d+)\]/;
+            const timeMatch = line.match(timeRegex);
+            if (timeMatch) {
+                const time = timeMatch[1];
+                const content = line.replace(timeRegex, '').trim();
+                jpEntries[time] = content;
+            }
+        }
+    
+        // Parse Chinese lyrics
+        for (const line of cnLines) {
+            const timeRegex = /\[(\d+:\d+\.\d+)\]/;
+            const timeMatch = line.match(timeRegex);
+            if (timeMatch) {
+                const time = timeMatch[1];
+                const content = line.replace(timeRegex, '').trim();
+                cnEntries[time] = content;
+            }
+        }
+    
+        // Merge and format
+        const mergedLines: LyricLine[] = [];
+        for (const time in jpEntries) {
+            const jpContent = jpEntries[time];
+            const cnContent = cnEntries[time] || ''; // Use empty string if no translation
+    
+            mergedLines.push({ time, content: jpContent, translation: cnContent });
+        }
+    
+        // Format the merged lines
+        const mergedOutput = mergedLines.map(line => {
+            const { time, content, translation } = line;
+            if (translation) {
+                return `[${time}] ${content} | ${translation}`;
+            } else {
+                return `[${time}] ${content}`;
+            }
+        }).join('\n');
+    
+        return mergedOutput;
+    }
+
 }
 
