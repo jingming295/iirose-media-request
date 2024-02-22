@@ -4,10 +4,10 @@ export interface Lyric{
     qfy: boolean;
     transUser:transUser;
     lyricUser:transUser;
-    lrc: lrc;// 原版歌词
-    klyric: lrc; // 未知
-    tlyric: lrc;// 中文翻译歌词
-    romalrc: lrc;// 罗马音歌词
+    lrc: lrc | null;// 原版歌词
+    klyric: lrc | null; // 未知
+    tlyric: lrc | null;// 中文翻译歌词
+    romalrc: lrc | null;// 罗马音歌词
     code: number;
 }
 

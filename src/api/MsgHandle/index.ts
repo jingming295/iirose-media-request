@@ -57,6 +57,7 @@ export async function apply(ctx: Context, config: Config)
                                 if (info.messageContent) session.send(info.messageContent);
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
+                                    console.log(info.mediaData);
                                     if (info.mediaData.type === 'music')
                                     {
                                         

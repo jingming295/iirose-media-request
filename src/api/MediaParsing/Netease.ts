@@ -47,8 +47,14 @@ export class Netease extends MediaParsing
         });
         for (let i = 0; i < songId.length; i++)
         {
+            let lyric: string | null = null;
             const lyricData = await this.neteaseApi.getLyric(songId[i]);
-            const lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
+            if (lyricData.lrc && lyricData.tlyric){
+                lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
+            } else if (lyricData.lrc){
+                lyric = lyricData.lrc.lyric;
+            }
+            
             if (queueRequest && !options['link'] && !options['data'] && !options['param'])
             {
                 if (i > 0)
@@ -70,7 +76,7 @@ export class Netease extends MediaParsing
         return completeMediaData;
     }
 
-    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string)
+    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string|null)
     {
         session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyric="${lyric}" origin="netease"/>`);
     }
@@ -278,14 +284,19 @@ export class Netease extends MediaParsing
         bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
         signer = songData.songs[0].artists[0].name;
         duration = songData.songs[0].duration / 1000;
-        lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
+        if(lyricData.lrc && lyricData.tlyric){
+            lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
+        } else if (lyricData.lrc){
+            lyric = lyricData.lrc.lyric;
+        }
+        
 
 
         const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease']);
         return mediaData;
     }
 
-    private mergeLyrics(jpLyrics: string, cnLyrics: string): string {
+    mergeLyrics(jpLyrics: string, cnLyrics: string): string {
         const jpLines = jpLyrics.split('\n');
         const cnLines = cnLyrics.split('\n');
     
@@ -298,7 +309,7 @@ export class Netease extends MediaParsing
             const timeMatch = line.match(timeRegex);
             if (timeMatch) {
                 const time = timeMatch[1];
-                const content = line.replace(timeRegex, '').trim();
+                const content = line.replace(timeRegex, '').trim().replace(/"/g, "'");
                 jpEntries[time] = content;
             }
         }
@@ -309,7 +320,7 @@ export class Netease extends MediaParsing
             const timeMatch = line.match(timeRegex);
             if (timeMatch) {
                 const time = timeMatch[1];
-                const content = line.replace(timeRegex, '').trim();
+                const content = line.replace(timeRegex, '').trim().replace(/"/g, "'");
                 cnEntries[time] = content;
             }
         }
@@ -326,15 +337,16 @@ export class Netease extends MediaParsing
         // Format the merged lines
         const mergedOutput = mergedLines.map(line => {
             const { time, content, translation } = line;
+            let outputLine = `[${time}] ${content}`;
             if (translation) {
-                return `[${time}] ${content} | ${translation}`;
-            } else {
-                return `[${time}] ${content}`;
+                outputLine += ` | ${translation}`;
             }
+            return outputLine;
         }).join('\n');
     
         return mergedOutput;
     }
+    
 
 }
 

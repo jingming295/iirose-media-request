@@ -198,8 +198,6 @@ export class NeteaseApi
         }
 
         return response.data as Lyric;
-
-
     }
 
 }
