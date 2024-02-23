@@ -11,9 +11,8 @@ const logger = new Logger('iirose-media-request');
 
 export async function apply(ctx: Context, config: Config)
 {
-    const comm: string = 'a';
     const handler = new MediaHandler(ctx, config);
-    ctx.command(comm, 'iirose艾特视频/音频')
+    ctx.command('a', 'iirose艾特视频/音频')
         .option('link', '只发出链接')
         .option('data', '把整个music对象发出来')
         .option('cut', '如果是iirose平台就cut视频')
