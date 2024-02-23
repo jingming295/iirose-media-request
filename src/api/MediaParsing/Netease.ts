@@ -48,6 +48,7 @@ export class Netease extends MediaParsing
         for (let i = 0; i < songId.length; i++)
         {
             let lyric: string | null = null;
+            const link = `https://music.163.com/#/song?id=${songId[i]}`;
             const lyricData = await this.neteaseApi.getLyric(songId[i]);
             if (lyricData.lrc && lyricData.tlyric){
                 lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
@@ -63,12 +64,13 @@ export class Netease extends MediaParsing
                 }
                 const processSong = await this.processSong(songId[i], url);
 
-                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric);
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric, link);
                 else duration[i] = 0;
             } else if (!options['link'] && !options['data'] && !options['param'])
             {
                 const processSong = await this.processSong(songId[i], url);
-                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric);
+                
+                if (processSong) this.sendMessage(session, songName[i], url[i], signer[i], cover[i], duration[i], bitRate[i], color || 'FFFFFF', lyric, link);
             }
         }
 
@@ -76,9 +78,9 @@ export class Netease extends MediaParsing
         return completeMediaData;
     }
 
-    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string|null)
+    private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string|null, link: string)
     {
-        session.send(`<audio name="${songName}" url="${url}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyric="${lyric}" origin="netease"/>`);
+        session.send(`<audio name="${songName}" url="${url}" link="${link}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyric="${lyric}" origin="netease"/>`);
     }
 
 
@@ -240,6 +242,7 @@ export class Netease extends MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
+        let link: string;
         let lyric: string | null = null;
 
         let id: number | null;
@@ -283,6 +286,7 @@ export class Netease extends MediaParsing
         cover = songData.songs[0].album.picUrl;
         bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
         signer = songData.songs[0].artists[0].name;
+        link = `https://music.163.com/#/song?id=${id}`
         duration = songData.songs[0].duration / 1000;
         if(lyricData.lrc && lyricData.tlyric){
             lyric = this.mergeLyrics(lyricData.lrc.lyric, lyricData.tlyric.lyric);
@@ -292,11 +296,11 @@ export class Netease extends MediaParsing
         
 
 
-        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease']);
+        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease'], [link]);
         return mediaData;
     }
 
-    mergeLyrics(jpLyrics: string, cnLyrics: string): string {
+    private mergeLyrics(jpLyrics: string, cnLyrics: string): string {
         const jpLines = jpLyrics.split('\n');
         const cnLines = cnLyrics.split('\n');
     

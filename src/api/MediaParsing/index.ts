@@ -38,7 +38,8 @@ export class MediaParsing
         durationList: number[],
         bitRateList: number[],
         lyricsList: (string | null)[] = [],
-        origin: (string | null)[] = []
+        origin: (string | null)[] = [],
+        linkList: (string | null)[] = []
     )
     {
         const mediaDataArray: MediaData[] = [];
@@ -49,7 +50,7 @@ export class MediaParsing
                 name: nameList[i],
                 signer: signerList[i],
                 cover: coverList[i],
-                link: urlList[i],
+                link: linkList[i] || urlList[i],
                 url: urlList[i],
                 duration: durationList[i],
                 bitRate: bitRateList[i],

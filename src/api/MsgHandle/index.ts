@@ -57,14 +57,13 @@ export async function apply(ctx: Context, config: Config)
                                 if (info.messageContent) session.send(info.messageContent);
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
-                                    console.log(info.mediaData);
                                     if (info.mediaData.type === 'music')
                                     {
                                         
-                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${info.mediaData.lyrics}" origin="${info.mediaData.origin}"/>`);
+                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${info.mediaData.lyrics}" origin="${info.mediaData.origin}"/>`);
                                     } else
                                     {
-                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
                                     }
                                 }
                             }
