@@ -48,7 +48,7 @@ export async function apply(ctx: Context, config: Config)
                             return false;
                         }
                         const msg = await handler.handleMediaRequest(options, item, username, uid, session, config);
-                        if (msg.length === 1)
+                        if (msg.length >= 1)
                         {
                             for (const info of msg)
                             {

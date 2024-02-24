@@ -261,12 +261,6 @@ export class MediaHandler
                     this.logger.info(`用户名：${userName} 唯一标识：${uid} 点播了 ${mediaData.map(data => `${data.name}: ${data.url}`).join(', ')}`);
                 }
 
-                if (mediaData.some(data => data.bitRate < 720 && data.type === 'video'))
-                {
-                    const lowBitrateMsg = `<><parent>检测到视频的分辨率小于720p，可能是SESSDATA刷新啦，也可能是bilibili番剧不允许直接拿高画质<child/></parent></>`;
-                    returnmsg = returnmsg.map(msg => msg + lowBitrateMsg);
-                }
-
                 if (returnmsg.length > 0)
                 {
                     return this.returnHasRespondMsgInfo(returnmsg, mediaData);

@@ -21,7 +21,7 @@ export interface bangumiStream
             record_icon: string;
             record: string;
         };
-        durl: durl[]; 
+        durl: durl[];
         is_drm: boolean;
         no_rexcode: number;
         format: string;
@@ -34,13 +34,14 @@ export interface bangumiStream
         clip_info_list: string[]; // 根据实际情况填写具体的类型
         accept_description: string[];
         status: number;
-        video_info:{
-            durl:durl[];
-        }
+        video_info: {
+            durl: durl[];
+        };
     };
 }
 
-interface durl {
+interface durl
+{
     size: number;
     ahead: string;
     length: number;
@@ -49,9 +50,10 @@ interface durl {
     url: string;
     order: number;
     md5: string;
-  }
+}
 
-  interface SupportFormat {
+interface SupportFormat
+{
     display_desc: string;
     superscript: string;
     need_login: boolean;
@@ -60,8 +62,8 @@ interface durl {
     description: string;
     quality: number;
     new_description: string;
-  }
-  
+}
+
 
 
 export interface BVideoStream
@@ -70,22 +72,23 @@ export interface BVideoStream
     message: string;
     ttl: number;
     data: {
-        from: string;
-        result: string;
-        message: string;
-        quality: number;
-        format: string;
-        timelength: number;
-        accept_format: string;
-        accept_description: string[];
-        accept_quality: number[];
-        video_codecid: number;
-        seek_param: string;
-        seek_type: string;
-        durl: durl[];
-        support_formats: SupportFormat[];
-        high_format: string; // Define the structure if needed
-        last_play_time: number;
-        last_play_cid: number;
+        from: string | null;
+        result: string | null;
+        message: string | null;
+        quality: number | null;
+        format: string | null;
+        timelength: number | null;
+        accept_format: string | null;
+        accept_description: string[] | null;
+        accept_quality: number[] | null;
+        video_codecid: number | null;
+        seek_param: string | null;
+        seek_type: string | null;
+        durl: durl[] | null | null;
+        support_formats: SupportFormat[] | null;
+        high_format: string | null; // Define the structure if needed
+        last_play_time: number | null;
+        last_play_cid: number | null;
+        v_voucher: string | null | undefined;
     };
 }

@@ -118,18 +118,28 @@ export class BiliBili extends MediaParsing
             const page = pages.find((page: { cid: number; }) => page.cid === cid);
             return page ? page.duration : 0;
         }
-
-        const GetVideoStream = async (h5videoStream: BVideoStream, pcvideoStream: BVideoStream) =>
+        function delay(ms: number)
         {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        const GetVideoStream = async (h5videoStream: BVideoStream, pcvideoStream: BVideoStream, cid: string) =>
+        {
+            if (
+                !h5videoStream.data.accept_quality ||
+                !pcvideoStream.data.accept_quality ||
+                !h5videoStream.data.accept_format ||
+                !pcvideoStream.data.accept_format
+            ) throw new Error('无法获取清晰度信息, 可能被风控了！请稍后尝试！');
+
             const h5Quality = h5videoStream.data.accept_quality;
             const pcQuality = pcvideoStream.data.accept_quality;
-            let videoStream: BVideoStream = h5videoStream;
-            const CombinedQualityInfo = h5Quality
-                .filter((item, index) => !(h5videoStream.data.accept_format.includes('flv') && h5videoStream.data.accept_format.split(',')[index].includes('flv')))
+            const CombinedQualityInfo: CombinedQualityInfo[] = h5Quality
+                .filter((item, index) => !(h5videoStream.data.accept_format?.includes('flv') && h5videoStream.data.accept_format.split(',')[index].includes('flv')))
                 .map(item => ['html5', item] as CombinedQualityInfo)
                 .concat(
                     pcQuality
-                        .filter((item, index) => !(pcvideoStream.data.accept_format.includes('flv') && pcvideoStream.data.accept_format.split(',')[index].includes('flv')))
+                        .filter((item, index) => !(pcvideoStream.data.accept_format?.includes('flv') && pcvideoStream.data.accept_format.split(',')[index].includes('flv')))
                         .map(item => ['pc', item] as CombinedQualityInfo)
                 );
 
@@ -137,14 +147,39 @@ export class BiliBili extends MediaParsing
             {
                 if (b[1] === a[1])
                 {
-                    return a[0] === 'pc' ? -1 : 1;
+                    // 如果两者数字相等
+                    if (a[0] === 'html5')
+                    {
+                        // html5排在前面
+                        return -1;
+                    } else if (b[0] === 'html5')
+                    {
+                        // pc排在前面
+                        return 1;
+                    } else
+                    {
+                        // 如果都是相同类型，则按照原顺序
+                        return 0;
+                    }
+                } else
+                {
+                    // 按照数字大小降序排列
+                    return b[1] - a[1];
                 }
-                return b[1] - a[1];
             });
-
             outerLoop: for (const [index, item] of CombinedQualityInfo.entries())
             {
-                videoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, item[0], item[1], config.functionCompureAddress[0].url);
+                if (config.functionCompute)
+                {
+                    videoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, item[0], item[1], config.functionCompureAddress[0].url);
+                } else
+                {
+                    videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, item[0], item[1]);
+                }
+                if (!videoStream.data.durl)
+                {
+                    continue;
+                }
                 if (await this.checkResponseStatus(videoStream.data.durl[0].url) === true)
                 {
                     break outerLoop;
@@ -156,9 +191,18 @@ export class BiliBili extends MediaParsing
                 }
             }
             return videoStream;
-        }
+        };
 
-        let duration: number;
+        let duration: number[] = [];
+        let cids: number[] = [];
+        let cover: string[] = [];
+        let name: string[] = [];
+        let type: 'video'[] = [];
+        let singer: string[] = [];
+        let link: string[] = [];
+        let origin: string[] = [];
+        let bitRate: number[] = [];
+        let url: string[] = [];
         const biliBiliApi = new BiliBiliApi();
 
         let bvid: string;
@@ -181,31 +225,53 @@ export class BiliBili extends MediaParsing
             const mediaData = this.returnErrorMediaData(['这个不是正确的bv号']);
             return mediaData;
         }
-        const cid = videoInfo.pages[0].cid;
+        videoInfo.pages.forEach((page) =>
+        {
+            cids.push(page.cid);
+            cover.push(videoInfo.pic);
+            type.push('video');
+            singer.push(videoInfo.owner.name);
+            link.push(`https://www.bilibili.com/video/${bvid}`);
+            duration.push(page.duration + 1 || videoInfo.duration + 1);
+            origin.push('bilibili');
+            if (videoInfo.pages.length <= 1)
+            {
+                name.push(videoInfo.title);
+            } else
+            {
+                name.push(`${videoInfo.title} - P${page.part}`);
+            }
+        });
         const avid = videoInfo.aid;
         let videoStream: BVideoStream;
-        
+
         if (config.functionCompute)
         {
-            const h5videoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'html5', 112, config.functionCompureAddress[0].url);
-            const pcvideoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'pc', 112, config.functionCompureAddress[0].url);
-            videoStream = await GetVideoStream(h5videoStream, pcvideoStream);
+            for (const cid of cids)
+            {
+                const h5videoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'html5', 112, config.functionCompureAddress[0].url);
+                const pcvideoStream = await biliBiliApi.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'pc', 112, config.functionCompureAddress[0].url);
+                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid.toString());
+                if (!videoStream.data.quality || !videoStream.data.durl) return this.returnErrorMediaData(['无法获取videoStream信息']);
+                bitRate.push(videoStream.data.quality);
+                url.push(videoStream.data.durl[0].url);
+            }
+
         } else
         {
-            const h5videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'html5', 112);
-            const pcvideoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'pc', 112);
-            videoStream = await GetVideoStream(h5videoStream, pcvideoStream);
+            const h5videoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cids[0].toString(), biliBiliSessData, 'html5', 112);
+            const pcvideoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cids[0].toString(), biliBiliSessData, 'pc', 112);
+            for (const cid of cids)
+            {
+                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid.toString());
+                if (!videoStream.data.quality || !videoStream.data.durl) return this.returnErrorMediaData(['无法获取videoStream信息']);
+                bitRate.push(videoStream.data.quality);
+                url.push(videoStream.data.durl[0].url);
+            }
+
         }
-        const bitRate = videoStream.data.quality;
-        if (videoInfo.pages) duration = getDurationByCid(videoInfo.pages, cid);
-        else duration = videoInfo.duration + 1;
-        const cover = videoInfo.pic;
-        const url = videoStream.data.durl[0].url;
-        const name = videoInfo.title;
-        const type = 'video';
-        const signer = videoInfo.owner.name;
-        const link = `https://www.bilibili.com/video/${bvid}`;
-        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [], ['bilibili'], [link]);
+
+        const mediaData = this.returnCompleteMediaData(type, name, singer, cover, url, duration, bitRate, [], origin, link);
         return mediaData;
     }
 
