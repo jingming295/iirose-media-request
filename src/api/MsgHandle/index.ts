@@ -20,7 +20,6 @@ export async function apply(ctx: Context, config: Config)
         .action(
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
-                console.log(options);
                 if (!session || !session.username || !options) return;
                 if (config['privateMsg'] === false && !session.event.guild && Object.keys(options).length === 0) {
                     session.send('私聊不支持此功能');
@@ -62,7 +61,7 @@ export async function apply(ctx: Context, config: Config)
                                         session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${info.mediaData.lyrics}" origin="${info.mediaData.origin}"/>`);
                                     } else
                                     {
-                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}"/>`);
+                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" origin="${info.mediaData.origin}"/>`);
                                     }
                                 }
                             }

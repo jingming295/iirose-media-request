@@ -55,7 +55,7 @@ export class MediaParsing
                 duration: durationList[i],
                 bitRate: bitRateList[i],
                 lyrics: lyricsList[i],
-                origin: origin[i],
+                origin: origin[i] || null,
                 error: null,
             };
             mediaDataArray.push(mediaData);

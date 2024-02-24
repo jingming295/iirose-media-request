@@ -21,6 +21,7 @@ export class BiliBili extends MediaParsing
         let url: string;
         let duration: number;
         let bitRate: number;
+        let link: string;
         const biliBiliApi = new BiliBiliApi();
         const regex = /\/ep(\d+)/;
         const match = originUrl.match(regex);
@@ -82,15 +83,16 @@ export class BiliBili extends MediaParsing
             const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
             if (targetEpisodeInfo)
             {
-                bitRate = this.getQuality(bangumiStream.result.quality);
+                bitRate = bangumiStream.result.quality;
                 cover = targetEpisodeInfo.cover;
                 duration = (targetEpisodeInfo.duration / 1000) + 1;
                 url = bangumiStream.result.durl[0].url;
                 name = targetEpisodeInfo.share_copy;
                 type = 'video';
                 signer = bangumiInfo.up_info.uname || '未定';
+                link = `https://www.bilibili.com/bangumi/play/ep${ep}`;
 
-                const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
+                const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [], ['bilibili'], [link]);
 
                 return mediaData;
             } else
@@ -194,7 +196,7 @@ export class BiliBili extends MediaParsing
             const pcvideoStream = await biliBiliApi.getBilibiliVideoStream(avid.toString(), bvid, cid.toString(), biliBiliSessData, 'pc', 112);
             videoStream = await GetVideoStream(h5videoStream, pcvideoStream);
         }
-        const bitRate = this.getQuality(videoStream.data.quality);
+        const bitRate = videoStream.data.quality;
         if (videoInfo.pages) duration = getDurationByCid(videoInfo.pages, cid);
         else duration = videoInfo.duration + 1;
         const cover = videoInfo.pic;
@@ -202,8 +204,8 @@ export class BiliBili extends MediaParsing
         const name = videoInfo.title;
         const type = 'video';
         const signer = videoInfo.owner.name;
-
-        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate]);
+        const link = `https://www.bilibili.com/video/${bvid}`;
+        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [], ['bilibili'], [link]);
         return mediaData;
     }
 

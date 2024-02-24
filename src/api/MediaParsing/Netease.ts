@@ -80,7 +80,7 @@ export class Netease extends MediaParsing
 
     private async sendMessage(session: Session, songName: string, url: string, signer: string, cover: string, duration: number, bitRate: number, color: string = 'FFFFFF', lyric: string|null, link: string)
     {
-        session.send(`<audio name="${songName}" url="${url}" link="${link}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyric="${lyric}" origin="netease"/>`);
+        session.send(`<audio name="${songName}" url="${url}" link="${link}" author="${signer}" cover="${cover}" duration="${duration}" bitRate="${bitRate}" color="${color}" lyrics="${lyric}" origin="netease"/>`);
     }
 
 
