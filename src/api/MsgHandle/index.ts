@@ -1,4 +1,4 @@
-import { Context, Logger } from 'koishi';
+import { Context, Extend, Logger, Session } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { Config } from '../Configuration/configuration';
@@ -37,15 +37,14 @@ export async function apply(ctx: Context, config: Config)
                 const { username, uid, platform, event } = session;
 
                 const isPrivateMsg = config['privateMsg'] === false && !event?.guild && Object.keys(options).length === 0;
-                const isIirose = platform === 'iirose';
 
-                if (isPrivateMsg && isIirose)
+                if (isPrivateMsg &&  platform === 'iirose')
                 {
                     session.send('私聊不支持此功能');
                     return;
                 }
 
-                if ((options['cut'] || options['cutall']) && isIirose)
+                if ((options['cut'] || options['cutall']) && platform === 'iirose')
                 {
                     const action = options['cut'] ? 'cut' : 'cut all';
                     session.send(action);
@@ -114,3 +113,25 @@ export async function apply(ctx: Context, config: Config)
         );
 }
 
+function shouldHandleMessage(session:Session, options: Extend<Extend<Extend<Extend<{}, "link", boolean>, "data", boolean>, "cut", boolean>, "cutall", boolean> | undefined, config: Config) {
+    const { username, platform, event } = session;
+
+    if (!username || !platform || !options) return false;
+
+    const isPrivateMsg = config['privateMsg'] === false && !event?.guild && Object.keys(options).length === 0;
+    const isIirose = platform === 'iirose';
+
+    return isIirose && !isPrivateMsg;
+}
+
+function handleCutAction(session:Session, options: Extend<Extend<Extend<Extend<{}, "link", boolean>, "data", boolean>, "cut", boolean>, "cutall", boolean> | undefined, config: Config) {
+    const { username } = session;
+    if (!options || !options['cut']) return;
+    const action = options['cut'] ? 'cut' : 'cut all';
+
+    session.send(action);
+
+    if (config['trackUser']) {
+        session.send(`<><parent><at id="${username}"/>${action}了视频<child/></parent></>`);
+    }
+}
