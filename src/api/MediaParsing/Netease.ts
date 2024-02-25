@@ -313,7 +313,7 @@ export class Netease extends MediaParsing
             const timeMatch = line.match(timeRegex);
             if (timeMatch) {
                 const time = timeMatch[1];
-                const content = line.replace(timeRegex, '').trim().replace(/"/g, "'");
+                const content = line.replace(timeRegex, '').trim();
                 jpEntries[time] = content;
             }
         }
@@ -324,13 +324,13 @@ export class Netease extends MediaParsing
             const timeMatch = line.match(timeRegex);
             if (timeMatch) {
                 const time = timeMatch[1];
-                const content = line.replace(timeRegex, '').trim().replace(/"/g, "'");
+                const content = line.replace(timeRegex, '').trim();
                 cnEntries[time] = content;
             }
         }
     
         // Merge and format
-        const mergedLines: LyricLine[] = [];
+        const mergedLines: { time: string; content: string; translation: string }[] = [];
         for (const time in jpEntries) {
             const jpContent = jpEntries[time];
             const cnContent = cnEntries[time] || ''; // Use empty string if no translation
@@ -350,6 +350,7 @@ export class Netease extends MediaParsing
     
         return mergedOutput;
     }
+    
     
 
 }

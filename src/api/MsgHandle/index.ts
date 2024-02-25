@@ -11,6 +11,16 @@ const logger = new Logger('iirose-media-request');
 
 export async function apply(ctx: Context, config: Config)
 {
+    function escapeSpecialCharacters(text: string|null): string | null {
+        if (text === null) {
+          return text;
+        }
+        return text
+          .replace(/"/g, '&quot;')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
     const handler = new MediaHandler(ctx, config);
     ctx.command('a', 'iirose艾特视频/音频')
         .option('link', '只发出链接')
@@ -52,16 +62,21 @@ export async function apply(ctx: Context, config: Config)
                         {
                             for (const info of msg)
                             {
+                                
                                 if (info.messageContent) session.send(info.messageContent);
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
+                                    const name = escapeSpecialCharacters(info.mediaData.name);
+                                    const signer = escapeSpecialCharacters(info.mediaData.signer);
+                                    const cover = escapeSpecialCharacters(info.mediaData.cover);
+                                    const lyrics = escapeSpecialCharacters(info.mediaData.lyrics);
+                                    const origin = escapeSpecialCharacters(info.mediaData.origin);
                                     if (info.mediaData.type === 'music')
                                     {
-                                        
-                                        session.send(`<audio name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${info.mediaData.lyrics}" origin="${info.mediaData.origin}"/>`);
+                                        session.send(`<audio name="${name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${signer}" cover="${cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${lyrics}" origin="${origin}"/>`);
                                     } else
                                     {
-                                        session.send(`<video name="${info.mediaData.name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${info.mediaData.signer}" cover="${info.mediaData.cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" origin="${info.mediaData.origin}"/>`);
+                                        session.send(`<video name="${name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${signer}" cover="${cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" origin="${origin}"/>`);
                                     }
                                 }
                             }
@@ -91,3 +106,4 @@ export async function apply(ctx: Context, config: Config)
             }
         );
 }
+
