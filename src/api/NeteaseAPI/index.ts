@@ -41,10 +41,7 @@ export class NeteaseApi
 
 
         const response = await axios.get(url.toString(), {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-                'Content-Type': 'application/json'
-            }
+            headers: this.returnHeader()
         });
 
         const musicDetail: MusicDetail = response.data;
@@ -68,10 +65,7 @@ export class NeteaseApi
         url.search = new URLSearchParams(params).toString();
 
         const response = await axios.get(url.toString(), {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-                'Content-Type': 'application/json'
-            }
+            headers: this.returnHeader()
         });
         return response.data as xcSongResource;
 
@@ -164,6 +158,14 @@ export class NeteaseApi
         }
 
         return response.data as Lyric;
+    }
+
+    private returnHeader()
+    {
+        return {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            'Content-Type': 'application/json'
+        };
     }
 
 }

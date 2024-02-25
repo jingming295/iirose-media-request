@@ -11,16 +11,18 @@ const logger = new Logger('iirose-media-request');
 
 export async function apply(ctx: Context, config: Config)
 {
-    function escapeSpecialCharacters(text: string|null): string | null {
-        if (text === null) {
-          return text;
+    function escapeSpecialCharacters(text: string | null): string | null
+    {
+        if (text === null)
+        {
+            return text;
         }
         return text
-          .replace(/"/g, '&quot;')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
+            .replace(/"/g, '&quot;')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
     const handler = new MediaHandler(ctx, config);
     ctx.command('a', 'iirose艾特视频/音频')
         .option('link', '只发出链接')
@@ -31,25 +33,30 @@ export async function apply(ctx: Context, config: Config)
             async ({ session, options }, ...rest: string[]): Promise<void> =>
             {
                 if (!session || !session.username || !options) return;
-                if (config['privateMsg'] === false && !session.event.guild && Object.keys(options).length === 0) {
+
+                const { username, uid, platform, event } = session;
+
+                const isPrivateMsg = config['privateMsg'] === false && !event?.guild && Object.keys(options).length === 0;
+                const isIirose = platform === 'iirose';
+
+                if (isPrivateMsg && isIirose)
+                {
                     session.send('私聊不支持此功能');
                     return;
                 }
-                const username = session.username;
-                const uid = session.uid;
-                if (options['cut'] && session.platform === 'iirose')
+
+                if ((options['cut'] || options['cutall']) && isIirose)
                 {
-                    session.send('cut');
-                    if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut了视频<child/></parent></>`);
-                } else if (options['cutall'] && session.platform === 'iirose')
-                {
-                    session.send('cut all');
-                    if (config['trackUser']) session.send(`<><parent><at id="${username}"/>cut all了视频<child/></parent></>`);
+                    const action = options['cut'] ? 'cut' : 'cut all';
+                    session.send(action);
+                    if (config['trackUser'])
+                    {
+                        session.send(`<><parent><at id="${username}"/>${action}了视频<child/></parent></>`);
+                    }
                 }
                 try
                 {
                     const forbiddenKeywords: string[] = ['porn', 'hanime', 'xvideo', 'dlsite', 'hentai'];
-
                     const responseArray: boolean[] = await Promise.all(rest.map(async item =>
                     {
                         if (config['noHentai'] && forbiddenKeywords.some(keyword => item.includes(keyword)))
@@ -62,7 +69,7 @@ export async function apply(ctx: Context, config: Config)
                         {
                             for (const info of msg)
                             {
-                                
+
                                 if (info.messageContent) session.send(info.messageContent);
                                 if (info.mediaData !== null && info.mediaData.error === null)
                                 {
