@@ -193,16 +193,16 @@ export class BiliBili extends MediaParsing
             return videoStream;
         };
 
-        let duration: number[] = [];
-        let cids: number[] = [];
-        let cover: string[] = [];
-        let name: string[] = [];
-        let type: 'video'[] = [];
-        let singer: string[] = [];
-        let link: string[] = [];
-        let origin: string[] = [];
-        let bitRate: number[] = [];
-        let url: string[] = [];
+        const duration: number[] = [];
+        const cids: number[] = [];
+        const cover: string[] = [];
+        const name: string[] = [];
+        const type: 'video'[] = [];
+        const singer: string[] = [];
+        const link: string[] = [];
+        const origin: string[] = [];
+        const bitRate: number[] = [];
+        const url: string[] = [];
         const biliBiliApi = new BiliBiliApi();
 
         let bvid: string;
