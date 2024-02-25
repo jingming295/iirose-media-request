@@ -1,8 +1,8 @@
 
 import { AlbumData } from './AlbumInterface';
 import { weapi } from './crypto';
-import axios, { AxiosError } from 'axios';
-import { MusicDetail, SongList, songResource } from './interface';
+import axios from 'axios';
+import { MusicDetail, SongList, xcSongResource } from './interface';
 import { Lyric } from './LyricInterface';
 export class NeteaseApi
 {
@@ -56,60 +56,25 @@ export class NeteaseApi
 
     async getSongResource(id: number)
     {
-        const url = new URL(`https://v.iarc.top/`);
+        // const url = new URL(`https://v.iarc.top/`);
+        // const params = {
+        //     type: 'song',
+        //     id: id.toString()
+        // };
+        const url = new URL(`https://xc.null.red:8043/meting-api/`);
         const params = {
-            type: 'song',
-            id: id.toString()
+            id: id.toString(),
         };
         url.search = new URLSearchParams(params).toString();
 
-        try
-        {
-            const response = await axios.get(url.toString(), {
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-                    'Content-Type': 'application/json'
-                }
-            });
-            return response.data as songResource[];
-        } catch (error)
-        {
-            const e: AxiosError = error as AxiosError;
-            if (e.response?.data)
-            {
-                const setCookieHeader = e.response?.headers['set-cookie'];
-                if (setCookieHeader)
-                {
-                    axios.defaults.headers.cookie = setCookieHeader.join('; ');
-                }
-
-                const html = e.response?.data.toString();
-                const match = html.match(/window\.location\.href\s*=\s*"([^"]+)"/);
-                if (match)
-                {
-                    const redirectUrl = match[1];
-                    const params = new URLSearchParams(redirectUrl.split('?')[1]);
-                    params.forEach((value, key) =>
-                    {
-                        url.searchParams.append(key, value);
-                    });
-
-                    // 发送带有设置的 cookie 的请求
-
-                    const response = await axios.get(url.toString(), {
-                        headers: {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    return response.data as songResource[];
-
-                } else
-                {
-                    throw new Error(`获取音乐链接资源失败: ${e.response?.status}`);
-                }
+        const response = await axios.get(url.toString(), {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                'Content-Type': 'application/json'
             }
-        }
+        });
+        return response.data as xcSongResource;
+
     }
 
 
@@ -171,7 +136,8 @@ export class NeteaseApi
 
     }
 
-    async getLyric(id: number){
+    async getLyric(id: number)
+    {
         const url = 'https://music.163.com/api/song/lyric';
         const params = new URLSearchParams({
             id: id.toString(),

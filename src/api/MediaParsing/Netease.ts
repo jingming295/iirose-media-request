@@ -225,7 +225,7 @@ export class Netease extends MediaParsing
         {
             return;
         }
-        url.push(await this.getRedirectUrl(songResource[0].url));
+        url.push(songResource.url);
         return true;
     }
     /**
@@ -280,7 +280,7 @@ export class Netease extends MediaParsing
 
         const lyricData = await this.neteaseApi.getLyric(id);
 
-        url = await this.getRedirectUrl(songResource[0].url);
+        url = songResource.url;
         type = 'music';
         name = songData.songs[0].name;
         cover = songData.songs[0].album.picUrl;

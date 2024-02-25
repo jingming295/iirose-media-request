@@ -397,11 +397,30 @@ interface PlaylistTrackId
   sr: unknown | null;
 }
 
-export interface songResource
+export interface iarcSongResource
 {
   name: string,
   artist: string,
   url: string,
   pic: string,
   lrc: string;
+}
+
+export interface xcSongResource
+{
+  author: string;
+  br: number;
+  code: number;
+  file_type: string;
+  id: number;
+  level: string;
+  level_en: string;
+  lrc: string;
+  lrc_control: string;
+  lrc_translation: string;
+  md5: string;
+  name: string;
+  pic: string;
+  time: number;
+  url: string;
 }
