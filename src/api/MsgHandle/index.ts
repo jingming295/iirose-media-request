@@ -36,7 +36,7 @@ export async function apply(ctx: Context, config: Config)
 
                 const { username, uid, platform, event } = session;
 
-                const isPrivateMsg = config['privateMsg'] === false && !event?.guild && Object.keys(options).length === 0;
+                const isPrivateMsg = config['privateMsg'] === false && !event?.guild;
 
                 if (isPrivateMsg &&  platform === 'iirose')
                 {
@@ -111,27 +111,4 @@ export async function apply(ctx: Context, config: Config)
                 }
             }
         );
-}
-
-function shouldHandleMessage(session:Session, options: Extend<Extend<Extend<Extend<{}, "link", boolean>, "data", boolean>, "cut", boolean>, "cutall", boolean> | undefined, config: Config) {
-    const { username, platform, event } = session;
-
-    if (!username || !platform || !options) return false;
-
-    const isPrivateMsg = config['privateMsg'] === false && !event?.guild && Object.keys(options).length === 0;
-    const isIirose = platform === 'iirose';
-
-    return isIirose && !isPrivateMsg;
-}
-
-function handleCutAction(session:Session, options: Extend<Extend<Extend<Extend<{}, "link", boolean>, "data", boolean>, "cut", boolean>, "cutall", boolean> | undefined, config: Config) {
-    const { username } = session;
-    if (!options || !options['cut']) return;
-    const action = options['cut'] ? 'cut' : 'cut all';
-
-    session.send(action);
-
-    if (config['trackUser']) {
-        session.send(`<><parent><at id="${username}"/>${action}了视频<child/></parent></>`);
-    }
 }
