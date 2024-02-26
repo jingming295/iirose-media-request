@@ -38,7 +38,7 @@ export async function apply(ctx: Context, config: Config)
 
                 const isPrivateMsg = config['privateMsg'] === false && !event?.guild;
 
-                if (isPrivateMsg &&  platform === 'iirose')
+                if (isPrivateMsg && platform === 'iirose')
                 {
                     session.send('私聊不支持此功能');
                     return;
