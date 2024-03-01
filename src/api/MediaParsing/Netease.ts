@@ -263,9 +263,7 @@ export class Netease extends MediaParsing
             const mediaData = this.returnErrorMediaData(['暂不支持']);
             return mediaData;
         }
-
         const songData = await this.neteaseApi.getNeteaseMusicDetail(id);
-
         if (!songData)
         {
             const mediaData = this.returnErrorMediaData(['没有找到歌曲']);
@@ -277,7 +275,6 @@ export class Netease extends MediaParsing
             const mediaData = this.returnErrorMediaData([`无法获取歌曲${id}`]);
             return mediaData;
         }
-
         const lyricData = await this.neteaseApi.getLyric(id);
 
         url = songResource.url;

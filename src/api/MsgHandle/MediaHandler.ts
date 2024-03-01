@@ -246,12 +246,10 @@ export class MediaHandler
                 else
                     return false;
             });
-
             if(conformPromise){
                 return conformPromise;
             }
-
-            if (!conformPromise && Object.keys(options).length === 0)
+            if (!conformPromise)
             {
                 if (this.config.trackUser && mediaData.length === 1)
                 {

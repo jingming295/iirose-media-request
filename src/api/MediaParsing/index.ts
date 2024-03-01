@@ -54,7 +54,7 @@ export class MediaParsing
                 url: urlList[i],
                 duration: durationList[i],
                 bitRate: bitRateList[i],
-                lyrics: lyricsList[i],
+                lyrics: lyricsList[i] || null,
                 origin: origin[i] || null,
                 error: null,
             };
