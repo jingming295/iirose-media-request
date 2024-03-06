@@ -103,22 +103,24 @@ export class MediaHandler
             fn: async () =>
             {
                 const BilibiliAccountData = await this.ctx.bilibiliLogin.getBilibiliAccountData();
+                const bilibiliVideo = this.ctx.bilibiliVideo;
                 if (!BilibiliAccountData)
                 {
                     return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
                 }
-                return await bilibili.handleBilibiliMedia(originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
             }
         }, {
             inc: ["BV"],
             fn: async () =>
             {
                 const BilibiliAccountData = await this.ctx.bilibiliLogin.getBilibiliAccountData();
+                const bilibiliVideo = this.ctx.bilibiliVideo;
                 if (!BilibiliAccountData)
                 {
                     return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
                 }
-                return await bilibili.handleBilibiliMedia(originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
             }
         }, {
             inc: ["bilibili", "bangumi"],
@@ -142,7 +144,8 @@ export class MediaHandler
                 }
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
                 originMediaArgument = originMediaArgument.replace(/\?/g, '/');
-                return await bilibili.handleBilibiliMedia(originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                const bilibiliVideo = this.ctx.bilibiliVideo;
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
             }
         }, {
             inc: ["music.163.com", "song"],

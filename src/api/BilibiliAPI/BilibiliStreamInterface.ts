@@ -90,5 +90,5 @@ export interface BVideoStream
         last_play_time: number | null;
         last_play_cid: number | null;
         v_voucher: string | null | undefined;
-    };
+    } | null;
 }

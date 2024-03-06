@@ -33,7 +33,7 @@ export interface ResourceUrls
 
 }
 
-export type CombinedQualityInfo = [string, number];
+export type CombinedQualityInfo = ['html5'|'pc', number];
 
 export interface LyricLine {
     time: string;
