@@ -2,7 +2,7 @@ import { MediaParsing } from ".";
 import { BiliBiliApi } from "../BilibiliAPI";
 import { Config } from "../Configuration/configuration";
 import { CombinedQualityInfo } from "./interface";
-import { bilibiliVideo, bangumiStream, BVideoStream } from "koishi-plugin-bilibili-login";
+import { BiliBiliVideo, AnimeStreamFormat, BVideoStream, BiliBiliAnime } from "koishi-plugin-bilibili-login";
 /**
  * 主要处理bilibili的网站
  */
@@ -12,7 +12,7 @@ export class BiliBili extends MediaParsing
      * 处理Bangumi的媒体
      * @returns mediaData
      */
-    public async handleBilibiliBangumi(originUrl: string, biliBiliSessData: string, config: Config)
+    public async handleBilibiliBangumi(bilibiliAnime: BiliBiliAnime, originUrl: string, biliBiliSessData: string, config: Config)
     {
         let type: 'music' | 'video';
         let name: string;
@@ -27,12 +27,12 @@ export class BiliBili extends MediaParsing
         const match = originUrl.match(regex);
         if (match)
         {
-            let bangumiStream: bangumiStream;
+            let bangumiStream: AnimeStreamFormat | null;
             const ep: number = parseInt(match[1], 10);
             const bangumiInfo = await biliBiliApi.getBangumiData(ep, biliBiliSessData);
             if (config.functionCompute)
             {
-                bangumiStream = await biliBiliApi.getBangumiStreamFromFunctionCompute(ep, biliBiliSessData, 112, config.functionCompureAddress[0].url);
+                bangumiStream = await bilibiliAnime.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, 112, config.functionCompureAddress[0].url);
                 if (!bangumiInfo || !bangumiStream)
                 {
                     const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
@@ -41,7 +41,8 @@ export class BiliBili extends MediaParsing
                 const qn = bangumiStream.result.accept_quality;
                 outerLoop: for (const item of qn)
                 {
-                    bangumiStream = await biliBiliApi.getBangumiStreamFromFunctionCompute(ep, biliBiliSessData, item, config.functionCompureAddress[0].url);
+                    bangumiStream = await bilibiliAnime.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, item, config.functionCompureAddress[0].url);
+                    if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
                     if (await this.checkResponseStatus(bangumiStream.result.durl[0].url) === true)
                     {
                         break outerLoop;
@@ -55,7 +56,7 @@ export class BiliBili extends MediaParsing
                 }
             } else
             {
-                bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, 112);
+                bangumiStream = await bilibiliAnime.getAnimeStream(null, null, ep, null, 112, 1);
                 if (!bangumiInfo || !bangumiStream)
                 {
                     const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
@@ -64,7 +65,8 @@ export class BiliBili extends MediaParsing
                 const qn = bangumiStream.result.accept_quality;
                 outerLoop: for (const item of qn)
                 {
-                    bangumiStream = await biliBiliApi.getBangumiStream(ep, biliBiliSessData, item);
+                    bangumiStream = await bilibiliAnime.getAnimeStream(null, null, ep, null, item, 1);
+                    if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
                     if (await this.checkResponseStatus(bangumiStream.result.durl[0].url) === true)
                     {
                         break outerLoop;
@@ -79,7 +81,7 @@ export class BiliBili extends MediaParsing
             }
 
 
-
+            if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
             const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
             if (targetEpisodeInfo)
             {
@@ -111,7 +113,7 @@ export class BiliBili extends MediaParsing
      * 处理bilibili的媒体
      * @returns mediaData
      */
-    public async handleBilibiliMedia(bilibiliVideo: bilibiliVideo, originUrl: string, biliBiliSessData: string, config: Config)
+    public async handleBilibiliMedia(bilibiliVideo: BiliBiliVideo, originUrl: string, biliBiliSessData: string, config: Config)
     {
         function getDurationByCid(pages: BVideoDetailDataPage[], cid: number)
         {
@@ -123,7 +125,7 @@ export class BiliBili extends MediaParsing
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        const GetVideoStream = async (h5videoStream: BVideoStream, pcvideoStream: BVideoStream, cid: string) =>
+        const GetVideoStream = async (h5videoStream: BVideoStream, pcvideoStream: BVideoStream, cid: number) =>
         {
             if (
                 !h5videoStream.data ||
@@ -176,7 +178,7 @@ export class BiliBili extends MediaParsing
                     videoStream = await bilibiliVideo.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), item[0], item[1], config.functionCompureAddress[0].url);
                 } else
                 {
-                    videoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cid.toString(), item[0], item[1]);
+                    videoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cid, item[1], item[0], 1);
                 }
                 if (!videoStream || !videoStream.data || !videoStream.data.durl)
                 {
@@ -220,7 +222,7 @@ export class BiliBili extends MediaParsing
             const mediaData = this.returnErrorMediaData(['暂不支持']);
             return mediaData;
         }
-        const videoInfo = await bilibiliVideo.getBilibiliVideoDetail(bvid);
+        const videoInfo = await bilibiliVideo.getBilibiliVideoDetail(null, bvid);
         if (!videoInfo || !videoInfo.data)
         {
             const mediaData = this.returnErrorMediaData(['这个不是正确的bv号']);
@@ -228,7 +230,7 @@ export class BiliBili extends MediaParsing
         }
         videoInfo.data.pages.forEach((page) =>
         {
-            if(!videoInfo.data) return;
+            if (!videoInfo.data) return;
             cids.push(page.cid);
             cover.push(videoInfo.data.pic);
             type.push('video');
@@ -254,7 +256,7 @@ export class BiliBili extends MediaParsing
                 const h5videoStream = await bilibiliVideo.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), 'html5', 112, config.functionCompureAddress[0].url);
                 const pcvideoStream = await bilibiliVideo.getBilibiliVideoStreamFromFunctionCompute(avid.toString(), bvid, cid.toString(), 'pc', 112, config.functionCompureAddress[0].url);
                 if (!h5videoStream || !pcvideoStream) return this.returnErrorMediaData(['无法获取B站视频流']);
-                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid.toString());
+                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid);
                 if (!videoStream || !videoStream.data || !videoStream.data.quality || !videoStream.data.durl) return this.returnErrorMediaData(['无法获取videoStream信息']);
                 bitRate.push(videoStream.data.quality);
                 url.push(videoStream.data.durl[0].url);
@@ -262,13 +264,13 @@ export class BiliBili extends MediaParsing
 
         } else
         {
-            const h5videoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cids[0].toString(), 'html5', 112);
-            const pcvideoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cids[0].toString(), 'pc', 112);
-            if(!h5videoStream || !pcvideoStream) return this.returnErrorMediaData(['无法获取B站视频流']);
+            const h5videoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cids[0], 112, 'html5', 1);
+            const pcvideoStream = await bilibiliVideo.getBilibiliVideoStream(avid, bvid, cids[0], 112, 'pc', 1);
+            if (!h5videoStream || !pcvideoStream) return this.returnErrorMediaData(['无法获取B站视频流']);
             for (const cid of cids)
             {
-                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid.toString());
-                if (!videoStream|| !videoStream.data || !videoStream.data.quality || !videoStream.data.durl) return this.returnErrorMediaData(['无法获取videoStream信息']);
+                videoStream = await GetVideoStream(h5videoStream, pcvideoStream, cid);
+                if (!videoStream || !videoStream.data || !videoStream.data.quality || !videoStream.data.durl) return this.returnErrorMediaData(['无法获取videoStream信息']);
                 bitRate.push(videoStream.data.quality);
                 url.push(videoStream.data.durl[0].url);
             }
