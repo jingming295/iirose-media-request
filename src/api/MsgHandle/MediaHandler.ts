@@ -98,7 +98,7 @@ export class MediaHandler
         let conformPromise: Promise<MediaData[]> | null = null;
         const bilibiliVideo = this.ctx.BiliBiliVideo;
         const bilibiliLogin = this.ctx.BiliBiliLogin;
-        const bilibiliAnime = this.ctx.BiliBiliAnime;
+        const bilibiliAnime = this.ctx.BiliBiliMovie;
         ([{
             inc: ["bilibili", "BV"],
             fn: async () =>

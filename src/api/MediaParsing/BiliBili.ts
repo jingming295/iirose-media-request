@@ -1,8 +1,7 @@
 import { MediaParsing } from ".";
-import { BiliBiliApi } from "../BilibiliAPI";
 import { Config } from "../Configuration/configuration";
 import { CombinedQualityInfo } from "./interface";
-import { BiliBiliVideo, AnimeStreamFormat, BVideoStream, BiliBiliAnime } from "koishi-plugin-bilibili-login";
+import { BiliBiliVideo, AnimeStreamFormat, BVideoStream, BiliBiliMovie, BVideoDetailDataPage } from "koishi-plugin-bilibili-login";
 /**
  * 主要处理bilibili的网站
  */
@@ -12,7 +11,7 @@ export class BiliBili extends MediaParsing
      * 处理Bangumi的媒体
      * @returns mediaData
      */
-    public async handleBilibiliBangumi(bilibiliAnime: BiliBiliAnime, originUrl: string, biliBiliSessData: string, config: Config)
+    public async handleBilibiliBangumi(BiliBiliMovie: BiliBiliMovie, originUrl: string, biliBiliSessData: string, config: Config)
     {
         let type: 'music' | 'video';
         let name: string;
@@ -22,27 +21,29 @@ export class BiliBili extends MediaParsing
         let duration: number;
         let bitRate: number;
         let link: string;
-        const biliBiliApi = new BiliBiliApi();
         const regex = /\/ep(\d+)/;
         const match = originUrl.match(regex);
         if (match)
         {
             let bangumiStream: AnimeStreamFormat | null;
             const ep: number = parseInt(match[1], 10);
-            const bangumiInfo = await biliBiliApi.getBangumiData(ep, biliBiliSessData);
+            const bangumiInfo = await BiliBiliMovie.getAnimeDetailEPSS(ep);
             if (config.functionCompute)
             {
-                bangumiStream = await bilibiliAnime.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, 112, config.functionCompureAddress[0].url);
+                bangumiStream = await BiliBiliMovie.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, 112, config.functionCompureAddress[0].url);
                 if (!bangumiInfo || !bangumiStream)
                 {
                     const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
                     return mediaData;
                 }
+                if(!bangumiStream.result) return this.returnErrorMediaData([bangumiStream.message])
                 const qn = bangumiStream.result.accept_quality;
                 outerLoop: for (const item of qn)
                 {
-                    bangumiStream = await bilibiliAnime.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, item, config.functionCompureAddress[0].url);
-                    if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
+                    bangumiStream = await BiliBiliMovie.getAnimeStreamFromFunctionCompute(ep, biliBiliSessData, item, config.functionCompureAddress[0].url);
+                    if (!bangumiStream) return this.returnErrorMediaData(['无法获取番剧流媒体']);
+                    if(!bangumiStream.result) return this.returnErrorMediaData([bangumiStream.message])
+                    if(!bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体'])
                     if (await this.checkResponseStatus(bangumiStream.result.durl[0].url) === true)
                     {
                         break outerLoop;
@@ -56,17 +57,21 @@ export class BiliBili extends MediaParsing
                 }
             } else
             {
-                bangumiStream = await bilibiliAnime.getAnimeStream(null, null, ep, null, 112, 1);
+                bangumiStream = await BiliBiliMovie.getAnimeStream(null, null, ep, null, 112, 1);
                 if (!bangumiInfo || !bangumiStream)
                 {
                     const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
                     return mediaData;
                 }
+                if(!bangumiStream.result) return this.returnErrorMediaData([bangumiStream.message])
                 const qn = bangumiStream.result.accept_quality;
                 outerLoop: for (const item of qn)
                 {
-                    bangumiStream = await bilibiliAnime.getAnimeStream(null, null, ep, null, item, 1);
-                    if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
+                    bangumiStream = await BiliBiliMovie.getAnimeStream(null, null, ep, null, item, 1);
+                    
+                    if (!bangumiStream) return this.returnErrorMediaData(['无法获取番剧流媒体']);
+                    if(!bangumiStream.result) return this.returnErrorMediaData([bangumiStream.message])
+                    if(!bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体'])
                     if (await this.checkResponseStatus(bangumiStream.result.durl[0].url) === true)
                     {
                         break outerLoop;
@@ -82,7 +87,8 @@ export class BiliBili extends MediaParsing
 
 
             if (!bangumiStream || !bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体']);
-            const targetEpisodeInfo = bangumiInfo.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
+            if(!bangumiInfo.result) return this.returnErrorMediaData(['无法获取番剧信息'])
+            const targetEpisodeInfo = bangumiInfo.result.episodes.find((episodes: { ep_id: number; }) => episodes.ep_id === ep);
             if (targetEpisodeInfo)
             {
                 bitRate = bangumiStream.result.quality;
@@ -91,7 +97,7 @@ export class BiliBili extends MediaParsing
                 url = bangumiStream.result.durl[0].url;
                 name = targetEpisodeInfo.share_copy;
                 type = 'video';
-                signer = bangumiInfo.up_info.uname || '未定';
+                signer = bangumiInfo.result.up_info.uname || '未定';
                 link = `https://www.bilibili.com/bangumi/play/ep${ep}`;
 
                 const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [], ['bilibili'], [link]);
