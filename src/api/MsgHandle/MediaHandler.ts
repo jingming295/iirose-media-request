@@ -97,54 +97,33 @@ export class MediaHandler
         const maxCpuUsage = this.config['maxCpuUsage'];
         let conformPromise: Promise<MediaData[]> | null = null;
         const bilibiliVideo = this.ctx.BiliBiliVideo;
-        const bilibiliLogin = this.ctx.BiliBiliLogin;
         const bilibiliAnime = this.ctx.BiliBiliMovie;
+        const bilibiliLive = this.ctx.BiliBiliLive;
         ([{
             inc: ["bilibili", "BV"],
             fn: async () =>
             {
-                const BilibiliAccountData = await bilibiliLogin.getBilibiliAccountData();
-                
-                if (!BilibiliAccountData)
-                {
-                    return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
-                }
-                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, config);
             }
         }, {
             inc: ["BV"],
             fn: async () =>
             {
-                const BilibiliAccountData = await bilibiliLogin.getBilibiliAccountData();
-                if (!BilibiliAccountData)
-                {
-                    return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
-                }
-                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, config);
             }
         }, {
             inc: ["bilibili", "bangumi"],
             fn: async () =>
             {
-                const BilibiliAccountData = await bilibiliLogin.getBilibiliAccountData();
-                if (!BilibiliAccountData)
-                {
-                    return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
-                }
-                return await bilibili.handleBilibiliBangumi(bilibiliAnime,originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliBangumi(bilibiliAnime,originMediaArgument, config);
             }
         }, {
             inc: ["b23.tv"],
             fn: async () =>
             {
-                const BilibiliAccountData = await bilibiliLogin.getBilibiliAccountData();
-                if (!BilibiliAccountData)
-                {
-                    return mediaParsing.returnErrorMediaData([`sessdata为空，请填写bilibili-login插件的设置，或者清空数据库下的BilibiliAccount并且重启bilibili-login插件`]);
-                }
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
                 originMediaArgument = originMediaArgument.replace(/\?/g, '/');
-                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, BilibiliAccountData.SESSDATA, config);
+                return await bilibili.handleBilibiliMedia(bilibiliVideo,originMediaArgument, config);
             }
         }, {
             inc: ["music.163.com", "song"],
@@ -170,6 +149,12 @@ export class MediaHandler
             {
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
                 return await netease.handleNeteaseMedia(originMediaArgument);
+            }
+        },{
+            inc: ['live.bilibili.com'],
+            fn: async () =>
+            {
+                return await bilibili.handleBilibiliLive(bilibiliLive, originMediaArgument);
             }
         }]).some(o =>
         {

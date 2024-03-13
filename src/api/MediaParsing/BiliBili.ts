@@ -1,7 +1,7 @@
 import { MediaParsing } from ".";
 import { Config } from "../Configuration/configuration";
 import { CombinedQualityInfo } from "./interface";
-import { BiliBiliVideo, MovieStreamFormat, BVideoStream, BiliBiliMovie, BVideoDetailDataPage } from "koishi-plugin-bilibili-login";
+import { BiliBiliVideo, MovieStreamFormat, BVideoStream, BiliBiliMovie, BiliBiliLive } from "koishi-plugin-bilibili-login";
 /**
  * 主要处理bilibili的网站
  */
@@ -11,7 +11,7 @@ export class BiliBili extends MediaParsing
      * 处理Bangumi的媒体
      * @returns mediaData
      */
-    public async handleBilibiliBangumi(BiliBiliMovie: BiliBiliMovie, originUrl: string, biliBiliSessData: string, config: Config)
+    public async handleBilibiliBangumi(BiliBiliMovie: BiliBiliMovie, originUrl: string, config: Config)
     {
         let type: 'music' | 'video';
         let name: string;
@@ -30,7 +30,7 @@ export class BiliBili extends MediaParsing
             const bangumiInfo = await BiliBiliMovie.getMovieDetailEPSS(ep);
             if (config.functionCompute)
             {
-                bangumiStream = await BiliBiliMovie.getMovieStreamFromFunctionCompute(ep, biliBiliSessData, 112, config.functionCompureAddress[0].url);
+                bangumiStream = await BiliBiliMovie.getMovieStreamFromFunctionCompute(ep, 112, config.functionCompureAddress[0].url);
                 if (!bangumiInfo || !bangumiStream)
                 {
                     const mediaData = this.returnErrorMediaData(['获取番剧信息失败，可能接口已经改变']);
@@ -40,7 +40,7 @@ export class BiliBili extends MediaParsing
                 const qn = bangumiStream.result.accept_quality;
                 outerLoop: for (const item of qn)
                 {
-                    bangumiStream = await BiliBiliMovie.getMovieStreamFromFunctionCompute(ep, biliBiliSessData, item, config.functionCompureAddress[0].url);
+                    bangumiStream = await BiliBiliMovie.getMovieStreamFromFunctionCompute(ep, item, config.functionCompureAddress[0].url);
                     if (!bangumiStream) return this.returnErrorMediaData(['无法获取番剧流媒体']);
                     if(!bangumiStream.result) return this.returnErrorMediaData([bangumiStream.message])
                     if(!bangumiStream.result.durl) return this.returnErrorMediaData(['无法获取番剧流媒体'])
@@ -119,18 +119,8 @@ export class BiliBili extends MediaParsing
      * 处理bilibili的媒体
      * @returns mediaData
      */
-    public async handleBilibiliMedia(bilibiliVideo: BiliBiliVideo, originUrl: string, biliBiliSessData: string, config: Config)
+    public async handleBilibiliMedia(bilibiliVideo: BiliBiliVideo, originUrl: string, config: Config)
     {
-        function getDurationByCid(pages: BVideoDetailDataPage[], cid: number)
-        {
-            const page = pages.find((page: { cid: number; }) => page.cid === cid);
-            return page ? page.duration : 0;
-        }
-        function delay(ms: number)
-        {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
         const GetVideoStream = async (h5videoStream: BVideoStream, pcvideoStream: BVideoStream, cid: number) =>
         {
             if (
@@ -287,39 +277,56 @@ export class BiliBili extends MediaParsing
         return mediaData;
     }
 
-    /**
-     * 根据qn获取quality
-     * @param qn bilibili qn 
-     * @returns 
-     */
-    private getQuality(qn: number)
-    {
-        switch (qn)
-        {
-            case 127://8k
-                return 8000;
-            case 126://杜比视界
-                return 1080; //不确定，乱填
-            case 125://HDR 真彩色
-                return 1080; //不确定，乱填
-            case 120://4k
-                return 4000;
-            case 116://1080p60帧
-                return 1080;
-            case 112://1080p高码率
-                return 1080;
-            case 80:
-                return 1080;
-            case 74: //720p60帧
-                return 720;
-            case 64:
-                return 720;
-            case 16:// 未登录的默认值
-                return 360;
-            case 6://仅 MP4 格式支持, 仅platform=html5时有效
-                return 240;
-            default:
-                return 720;
+    public async handleBilibiliLive(bilibiliLive: BiliBiliLive, originUrl:string){
+        function extractRoomIdFromUrl(url: string): string | null {
+            const regex = /.*live\.bilibili\.com\/(\d+)\?.*/;
+            const match = url.match(regex);
+            
+            if (match && match[1]) {
+                return match[1];
+            } else {
+                return null;
+            }
         }
+
+        const duration: number[] = [];
+        const cover: string[] = [];
+        const name: string[] = [];
+        const type: 'video'[] = [];
+        const singer: string[] = [];
+        const link: string[] = [];
+        const origin: string[] = [];
+        const bitRate: number[] = [];
+        const url: string[] = [];
+
+        const roomId = extractRoomIdFromUrl(originUrl);
+
+        if(!roomId) return this.returnErrorMediaData(['无法获取直播房间号']);
+
+        const liveDetail = await bilibiliLive.getLiveRoomDetail(parseInt(roomId))
+
+        if(!liveDetail || !liveDetail.data) return this.returnErrorMediaData(['无法获取直播房间信息']);
+
+        const liveUserData = await bilibiliLive.getLiveUserDetail(liveDetail.data.uid)
+
+        if(!liveUserData || !liveUserData.data) return this.returnErrorMediaData(['无法获取直播用户信息']);
+
+        const actualID = liveDetail.data.room_id
+
+        const liveStream = await bilibiliLive.getLiveStream(actualID, 'web', null, 30000)
+        
+        if(!liveStream || !liveStream.data || !liveStream.data.durl) return this.returnErrorMediaData(['无法获取直播流媒体']);
+
+        duration[0] = 7200
+        cover[0] = liveDetail.data.user_cover
+        name[0] = liveDetail.data.title
+        type[0] = 'video'
+        singer[0] = liveUserData.data.info.uname
+        link[0] = `https://live.bilibili.com/${actualID}`
+        origin[0] = 'bilibililive'
+        bitRate[0] = liveStream.data.current_qn
+        url[0] = liveStream.data.durl[0].url
+        
+        return this.returnCompleteMediaData(type, name, singer, cover, url, duration, bitRate, [], origin, link);
     }
 }
