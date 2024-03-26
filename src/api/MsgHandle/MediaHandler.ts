@@ -154,7 +154,7 @@ export class MediaHandler
             inc: ['live.bilibili.com'],
             fn: async () =>
             {
-                return await bilibili.handleBilibiliLive(bilibiliLive, originMediaArgument);
+                return await bilibili.handleBilibiliLive(bilibiliLive, originMediaArgument,config.LiveDuration);
             }
         }]).some(o =>
         {

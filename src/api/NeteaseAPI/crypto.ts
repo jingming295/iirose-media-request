@@ -34,7 +34,6 @@ const rsaEncrypt = (buffer: Buffer, key: string): Buffer => {
 const weapi = (object: ParamsObject | {csrf_token:string}) => {
   const text = JSON.stringify(object);
   const secretKey = crypto.randomBytes(16).map((n) => base62.charAt(n % 62).charCodeAt(0));
-
   return {
     params: aesEncrypt(
       Buffer.from(

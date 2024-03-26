@@ -12,6 +12,7 @@ export interface Config
   detectUpdate: boolean;
   maxCpuUsage: number;
   privateMsg: boolean;
+  LiveDuration:number
 }
 
 /**
@@ -23,6 +24,7 @@ export const Config: Schema<Config> = Schema.intersect([
     waitTime: Schema.number().role('slider').min(100).max(50000).default(2000).description('页面加载完成后的等待时间'),
   }).description('游览器页面相关设置'),
   Schema.object({
+    LiveDuration: Schema.number().min(1).max(Number.MAX_SAFE_INTEGER).default(18000).description('直播视频的时长(秒), 直接拉满就是**2亿8千万多年**'),
     functionCompute: Schema.boolean().default(false).description('是否使用阿里云函数计算来获取视频流媒体(仅在原版策略视频流无法播放的时候开启)'),
     functionCompureAddress: Schema.array(Schema.object({
       area: Schema.string().description('函数计算的地区'),

@@ -2,6 +2,7 @@ import { Context, Extend, Logger, Session } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { Config } from '../Configuration/configuration';
+// import { NeteaseApi } from '../NeteaseAPI';
 /**
  * @description apply
  * @param ctx ctx
@@ -11,6 +12,9 @@ const logger = new Logger('iirose-media-request');
 
 export async function apply(ctx: Context, config: Config)
 {
+    // const nNeteaseApi = new NeteaseApi();
+    // const x = await nNeteaseApi.getNeteaseMusicDetail(2013290415);
+    // console.log(x.songs[0]);
     function escapeSpecialCharacters(text: string | null): string | null
     {
         if (text === null)

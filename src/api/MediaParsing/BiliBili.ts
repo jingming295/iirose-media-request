@@ -277,7 +277,7 @@ export class BiliBili extends MediaParsing
         return mediaData;
     }
 
-    public async handleBilibiliLive(bilibiliLive: BiliBiliLive, originUrl:string){
+    public async handleBilibiliLive(bilibiliLive: BiliBiliLive, originUrl:string, configDuration: number){
         function extractRoomIdFromUrl(url: string): string | null {
             const regex = /.*live\.bilibili\.com\/(\d+)\?.*/;
             const match = url.match(regex);
@@ -317,7 +317,7 @@ export class BiliBili extends MediaParsing
         
         if(!liveStream || !liveStream.data || !liveStream.data.durl) return this.returnErrorMediaData(['无法获取直播流媒体']);
 
-        duration[0] = 7200
+        duration[0] = configDuration
         cover[0] = liveDetail.data.user_cover
         name[0] = liveDetail.data.title
         type[0] = 'video'

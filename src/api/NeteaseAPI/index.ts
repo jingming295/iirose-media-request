@@ -15,11 +15,15 @@ export class NeteaseApi
             limit: 10, // 返回歌曲数量
             offset: 0, // 偏移量
         };
-
-        const encryptParam = new URLSearchParams(weapi(params)).toString();
-
-
-        const response = await axios.post(url, encryptParam, {
+        const we = weapi(params);
+        const a = {
+            params: we.params,
+            encSecKey: we.encSecKey
+        }
+        // const encryptParam = new URLSearchParams(weapi(params)).toString();
+        const encryptParam = new URLSearchParams(we);
+        // console.log(encryptParam);
+        const response = await axios.post(url, we, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
@@ -28,7 +32,6 @@ export class NeteaseApi
         return response.data;
 
     }
-
 
     async getNeteaseMusicDetail(id: number)
     {

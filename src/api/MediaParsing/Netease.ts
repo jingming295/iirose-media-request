@@ -281,7 +281,7 @@ export class Netease extends MediaParsing
         type = 'music';
         name = songData.songs[0].name;
         cover = songData.songs[0].album.picUrl;
-        bitRate = songData.songs[0].hMusic ? (songData.songs[0].hMusic.bitrate / 1000) : 128; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
+        bitRate = songResource.br/1000; // 如果 songData.hMusic 存在则使用其比特率，否则使用默认值 128
         signer = songData.songs[0].artists[0].name;
         link = `https://music.163.com/#/song?id=${id}`
         duration = songData.songs[0].duration / 1000;
