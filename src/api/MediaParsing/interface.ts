@@ -11,6 +11,7 @@ export interface MediaData
     bitRate: number;
     lyrics: string | null;
     origin: string | null;
+    comment?: string
     error: string | null;
 }
 interface Attribute

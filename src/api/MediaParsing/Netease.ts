@@ -276,6 +276,21 @@ export class Netease extends MediaParsing
             return mediaData;
         }
         const lyricData = await this.neteaseApi.getLyric(id);
+        const commentData = await this.neteaseApi.getComment(id);
+        const hotComments = commentData?.hotComments;
+        let comment: string | undefined;
+        if (hotComments && hotComments.length > 0) {
+            // 生成一个 0 到 hotComments.length - 1 之间的随机整数
+            const randomIndex = Math.floor(Math.random() * hotComments.length);
+            const selectedComment = hotComments[randomIndex].content;
+            
+            // 现在你可以使用selectedComment做你想要的事情
+            comment = selectedComment;
+          } else {
+            comment = undefined
+          }
+          
+
 
         url = songResource.url;
         type = 'music';
@@ -291,9 +306,7 @@ export class Netease extends MediaParsing
             lyric = lyricData.lrc.lyric;
         }
         
-
-
-        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease'], [link]);
+        const mediaData = this.returnCompleteMediaData([type], [name], [signer], [cover], [url], [duration], [bitRate], [lyric], ['netease'], [link], [comment]);
         return mediaData;
     }
 

@@ -39,7 +39,8 @@ export class MediaParsing
         bitRateList: number[],
         lyricsList: (string | null)[] = [],
         origin: (string | null)[] = [],
-        linkList: (string | null)[] = []
+        linkList: (string | null)[] = [],
+        commentList?: (string | undefined)[],
     )
     {
         const mediaDataArray: MediaData[] = [];
@@ -56,6 +57,7 @@ export class MediaParsing
                 bitRate: bitRateList[i],
                 lyrics: lyricsList[i] || null,
                 origin: origin[i] || null,
+                comment: commentList?.[i] || undefined,
                 error: null,
             };
             mediaDataArray.push(mediaData);

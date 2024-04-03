@@ -4,6 +4,7 @@ import { weapi } from './crypto';
 import axios from 'axios';
 import { MusicDetail, SongList, xcSongResource } from './interface';
 import { Lyric } from './LyricInterface';
+import { NeteaseComment } from './CommentInterface';
 export class NeteaseApi
 {
     async getNeteaseMusicSearchData(keyWord: string)
@@ -72,6 +73,23 @@ export class NeteaseApi
         });
         return response.data as xcSongResource;
 
+    }
+
+    async getComment(id: number){
+        const url = `https://xc.null.red:8043/api/netease/comment/music`;
+        const params = {
+            id: id.toString(),
+            limit: '1'
+        }
+        const fullUrl = `${url}?${new URLSearchParams(params).toString()}`
+        const response = await fetch(fullUrl, {
+            method: 'GET',
+        });
+        if(response.ok){
+            const data:NeteaseComment = await response.json();
+            return data;
+        }
+        return null;
     }
 
 

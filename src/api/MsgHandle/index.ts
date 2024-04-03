@@ -81,12 +81,17 @@ export async function apply(ctx: Context, config: Config)
                                     const cover = escapeSpecialCharacters(info.mediaData.cover);
                                     const lyrics = escapeSpecialCharacters(info.mediaData.lyrics);
                                     const origin = escapeSpecialCharacters(info.mediaData.origin);
+                                    
                                     if (info.mediaData.type === 'music')
                                     {
                                         session.send(`<audio name="${name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${signer}" cover="${cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" lyrics="${lyrics}" origin="${origin}"/>`);
                                     } else
                                     {
                                         session.send(`<video name="${name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${signer}" cover="${cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" origin="${origin}"/>`);
+                                    }
+                                    if(config['hotComment']  && info.mediaData.comment){
+                                        const comment = escapeSpecialCharacters(info.mediaData.comment);
+                                        session.send(`热评: ${comment}`);
                                     }
                                 }
                             }

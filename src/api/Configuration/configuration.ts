@@ -13,6 +13,7 @@ export interface Config
   maxCpuUsage: number;
   privateMsg: boolean;
   LiveDuration:number
+  hotComment:boolean
 }
 
 /**
@@ -34,6 +35,7 @@ export const Config: Schema<Config> = Schema.intersect([
   }).description('bilibili视频相关设置'),
   Schema.object({
     queueRequest: Schema.boolean().default(false).description('针对专辑或者歌单是否排队点播，这是因为网易云的直链好像只能持续30分钟'),
+    hotComment: Schema.boolean().default(true).description('是否显示热评'),
   }).description('网易云相关设置'),
   Schema.object({
     mediaCardColor: Schema.string().default('FFFFFF').description('艾特媒体的时候的媒体卡片颜色，使用HEX，不需要#, 具体参考https://www.sojson.com/web/panel.html'),
