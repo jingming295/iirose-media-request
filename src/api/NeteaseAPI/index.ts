@@ -55,7 +55,11 @@ export class NeteaseApi
     }
 
 
-    async getSongResource(id: number)
+    async getSongResource(
+        id: number,
+        level: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'jyeffect' | 'sky' | 'jymaster' = 'exhigh',
+        type:number=302
+        )
     {
         // const url = new URL(`https://v.iarc.top/`);
         // const params = {
@@ -65,6 +69,8 @@ export class NeteaseApi
         const url = new URL(`https://xc.null.red:8043/meting-api/`);
         const params = {
             id: id.toString(),
+            level: level,
+            type: type.toString()
         };
         url.search = new URLSearchParams(params).toString();
 
