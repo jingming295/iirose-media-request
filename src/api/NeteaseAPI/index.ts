@@ -20,7 +20,7 @@ export class NeteaseApi
         const a = {
             params: we.params,
             encSecKey: we.encSecKey
-        }
+        };
         // const encryptParam = new URLSearchParams(weapi(params)).toString();
         const encryptParam = new URLSearchParams(we);
         // console.log(encryptParam);
@@ -58,41 +58,63 @@ export class NeteaseApi
     async getSongResource(
         id: number,
         level: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'jyeffect' | 'sky' | 'jymaster' = 'exhigh',
-        type:number=302
-        )
+        type: number = 302,
+        timeout: number = 2000 // 默认超时时间为 2 秒
+    )
     {
-        // const url = new URL(`https://v.iarc.top/`);
-        // const params = {
-        //     type: 'song',
-        //     id: id.toString()
-        // };
-        const url = new URL(`https://xc.null.red:8043/meting-api/`);
-        const params = {
-            id: id.toString(),
-            level: level,
-            type: type.toString()
-        };
-        url.search = new URLSearchParams(params).toString();
+        try
+        {
+            const url = new URL(`https://xc.null.red:8043/meting-api/`);
+            const params = {
+                id: id.toString(),
+                level: level,
+                type: type.toString()
+            };
+            url.search = new URLSearchParams(params).toString();
 
-        const response = await axios.get(url.toString(), {
-            headers: this.returnHeader()
-        });
-        return response.data as xcSongResource;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+            const response = await fetch(url.toString(), {
+                headers: this.returnHeader(),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId); // 清除超时计时器
+
+            if (!response.ok)
+            {
+                console.error('请求出错:', response.statusText);
+                return null;
+            }
+
+            const data: xcSongResource = await response.json();
+            return data;
+        } catch (error)
+        {
+            const data = {
+                br: 320000,
+                url: `https://cors-anywhere-iirose-uest-web-gjtxhfvear.cn-beijing.fcapp.run/https://v.iarc.top//?server=netease&type=url&id=${id}#.mp3`
+            }
+            return data;
+        }
     }
 
-    async getComment(id: number){
+
+    async getComment(id: number)
+    {
         const url = `https://xc.null.red:8043/api/netease/comment/music`;
         const params = {
             id: id.toString(),
             limit: '1'
-        }
-        const fullUrl = `${url}?${new URLSearchParams(params).toString()}`
+        };
+        const fullUrl = `${url}?${new URLSearchParams(params).toString()}`;
         const response = await fetch(fullUrl, {
             method: 'GET',
         });
-        if(response.ok){
-            const data:NeteaseComment = await response.json();
+        if (response.ok)
+        {
+            const data: NeteaseComment = await response.json();
             return data;
         }
         return null;
