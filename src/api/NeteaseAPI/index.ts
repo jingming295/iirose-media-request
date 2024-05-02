@@ -57,9 +57,9 @@ export class NeteaseApi
 
     async getSongResource(
         id: number,
-        level: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'jyeffect' | 'sky' | 'jymaster' = 'exhigh',
+        level: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'jyeffect' | 'sky' | 'jymaster' = 'lossless',
         type: number = 302,
-        timeout: number = 2000 // 默认超时时间为 2 秒
+        timeout: number = 5000
     )
     {
         try
@@ -100,7 +100,6 @@ export class NeteaseApi
         }
     }
 
-
     async getComment(id: number)
     {
         const url = `https://xc.null.red:8043/api/netease/comment/music`;
@@ -119,8 +118,6 @@ export class NeteaseApi
         }
         return null;
     }
-
-
 
     async getAlbumData(id: number)
     {
