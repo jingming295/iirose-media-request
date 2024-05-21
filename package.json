@@ -4,7 +4,7 @@
   "author": "Jing Ming <jingming295@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/jingming295/koishi-plugin-iirose-media-request",
-  "version": "0.5.32",
+  "version": "0.5.34",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -25,7 +25,7 @@
   ],
   "peerDependencies": {
     "koishi": "^4.16.8",
-    "koishi-plugin-bilibili-login": "^0.1.48",
+    "koishi-plugin-bilibili-login": "^0.1.50",
     "koishi-plugin-puppeteer": "^3.7.3"
   },
   "dependencies": {

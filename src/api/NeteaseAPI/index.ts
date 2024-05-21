@@ -95,28 +95,35 @@ export class NeteaseApi
             const data = {
                 br: 320000,
                 url: `https://cors-anywhere-iirose-uest-web-gjtxhfvear.cn-beijing.fcapp.run/https://v.iarc.top//?server=netease&type=url&id=${id}#.mp3`
-            }
+            };
             return data;
         }
     }
 
     async getComment(id: number)
     {
-        const url = `https://xc.null.red:8043/api/netease/comment/music`;
-        const params = {
-            id: id.toString(),
-            limit: '1'
-        };
-        const fullUrl = `${url}?${new URLSearchParams(params).toString()}`;
-        const response = await fetch(fullUrl, {
-            method: 'GET',
-        });
-        if (response.ok)
+        try
         {
-            const data: NeteaseComment = await response.json();
-            return data;
+            const url = `https://xc.null.red:8043/api/netease/comment/music`;
+            const params = {
+                id: id.toString(),
+                limit: '1'
+            };
+            const fullUrl = `${url}?${new URLSearchParams(params).toString()}`;
+            const response = await fetch(fullUrl, {
+                method: 'GET',
+            });
+            if (response.ok)
+            {
+                const data: NeteaseComment = await response.json();
+                return data;
+            }
+            return null;
+        } catch (error)
+        {
+            return null;
         }
-        return null;
+
     }
 
     async getAlbumData(id: number)

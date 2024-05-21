@@ -129,7 +129,7 @@ export class MediaHandler
             inc: ["music.163.com", "song"],
             fn: async () =>
             {
-                return await netease.handleNeteaseMedia(originMediaArgument);
+                return await netease.handleNeteaseMedia(originMediaArgument, config);
             }
         }, {
             inc: ["music.163.com", "album"],
@@ -148,7 +148,7 @@ export class MediaHandler
             fn: async () =>
             {
                 originMediaArgument = await mediaParsing.getRedirectUrl(originMediaArgument);
-                return await netease.handleNeteaseMedia(originMediaArgument);
+                return await netease.handleNeteaseMedia(originMediaArgument, config);
             }
         },{
             inc: ['live.bilibili.com'],
