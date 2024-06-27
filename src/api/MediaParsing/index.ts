@@ -1,7 +1,7 @@
 import { ErrorHandle } from '../ErrorHandle';
 import { GetMediaLength } from '../GetVideoDuration';
 import { } from 'koishi-plugin-puppeteer';
-import { Page, CDPSession, ElementHandle } from 'puppeteer-core/lib/types';
+import { Page, CDPSession, ElementHandle } from 'puppeteer-core';
 import { CheckMimeType } from '../tools/checkMimeType';
 import { Context, Dict, Logger } from 'koishi';
 import osUtils from 'os-utils';
@@ -185,8 +185,10 @@ export class MediaParsing
      * @param shortUrl 重定向前的链接
      * @returns 
      */
-    public async getRedirectUrl(shortUrl: string) {
-        try {
+    public async getRedirectUrl(shortUrl: string)
+    {
+        try
+        {
             const maxSize = 1024 * 1024;
             const response = await axios.get(shortUrl, {
                 maxRedirects: 0,  // 阻止自动重定向
@@ -194,28 +196,35 @@ export class MediaParsing
                 headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
                 },
-                validateStatus: (status) => {
+                validateStatus: (status) =>
+                {
                     // 只允许 301 和 302 作为有效的重定向状态码
                     return status === 301 || status === 302;
                 }
             });
-            
+
             // 如果不是重定向状态码，则抛出错误
-            if (response.status !== 301 && response.status !== 302) {
+            if (response.status !== 301 && response.status !== 302)
+            {
                 throw new Error(`getRedirectUrl: ${response.status}`);
             }
-            
+
             const redirectUrl = response.headers['location'];
-            if (redirectUrl) {
+            if (redirectUrl)
+            {
                 return redirectUrl;
-            } else {
+            } else
+            {
                 throw new Error('getRedirectUrl: Location header is missing');
             }
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
+        } catch (error)
+        {
+            if (axios.isAxiosError(error))
+            {
                 // 捕获重定向错误，并手动获取重定向的 URL
                 const redirectUrl = error.response?.headers['location'];
-                if (redirectUrl) {
+                if (redirectUrl)
+                {
                     return redirectUrl;
                 }
             }
@@ -223,7 +232,7 @@ export class MediaParsing
             throw error;
         }
     }
-    
+
 
 
     /**

@@ -24,7 +24,7 @@
     "点视频"
   ],
   "peerDependencies": {
-    "koishi": "^4.16.8",
+    "koishi": "^4.17.9",
     "koishi-plugin-bilibili-login": "^0.1.50",
     "koishi-plugin-puppeteer": "^3.7.3"
   },

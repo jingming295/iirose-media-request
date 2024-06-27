@@ -1,4 +1,4 @@
-import { Context, Extend, Logger, Session } from 'koishi';
+import { Context, Extend, Logger } from 'koishi';
 import { UpdateChecker } from '../CheckForUpdate';
 import { MediaHandler } from './MediaHandler';
 import { Config } from '../Configuration/configuration';
@@ -15,6 +15,7 @@ export async function apply(ctx: Context, config: Config)
     // const nNeteaseApi = new NeteaseApi();
     // const x = await nNeteaseApi.getNeteaseMusicDetail(2013290415);
     // console.log(x.songs[0]);
+    console.log(ctx)
     function escapeSpecialCharacters(text: string | null): string | null
     {
         if (text === null)
@@ -88,7 +89,8 @@ export async function apply(ctx: Context, config: Config)
                                     {
                                         session.send(`<video name="${name}" url="${info.mediaData.url}" link="${info.mediaData.link}" author="${signer}" cover="${cover}" duration="${info.mediaData.duration}" bitRate="${info.mediaData.bitRate}" color="${config['mediaCardColor'] || 'FFFFFF'}" origin="${origin}"/>`);
                                     }
-                                    if(config['hotComment']  && info.mediaData.comment){
+                                    if (config['hotComment'] && info.mediaData.comment)
+                                    {
                                         const comment = escapeSpecialCharacters(info.mediaData.comment);
                                         session.send(`热评: ${comment}`);
                                     }
